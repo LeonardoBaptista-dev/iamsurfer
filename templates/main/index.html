@@ -1,0 +1,324 @@
+{% extends "base.html" %}
+
+{% block title %}IAmSurfer - Início{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Sidebar -->
+    <div class="col-lg-3">
+        {% if current_user.is_authenticated %}
+        <div class="card shadow mb-4">
+            <div class="card-body text-center">
+                <img src="{{ url_for('static', filename=current_user.profile_image) }}" class="rounded-circle img-fluid mb-3" style="max-width: 100px;">
+                <h5>{{ current_user.username }}</h5>
+                <p class="text-muted small">
+                    {% if current_user.location %}
+                        <i class="bi bi-geo-alt"></i> {{ current_user.location }}
+                    {% endif %}
+                </p>
+                <div class="row text-center mt-3">
+                    <div class="col">
+                        <h6>{{ current_user.posts.count() }}</h6>
+                        <small class="text-muted">Posts</small>
+                    </div>
+                    <div class="col">
+                        <h6>{{ current_user.followers.count() }}</h6>
+                        <small class="text-muted">Seguidores</small>
+                    </div>
+                    <div class="col">
+                        <h6>{{ current_user.followed.count() }}</h6>
+                        <small class="text-muted">Seguindo</small>
+                    </div>
+                </div>
+                <a href="{{ url_for('main.user_profile', username=current_user.username) }}" class="btn btn-outline-primary btn-sm mt-3 w-100">
+                    Ver Perfil
+                </a>
+            </div>
+        </div>
+        {% else %}
+        <div class="card shadow mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Bem-vindo ao IAmSurfer!</h5>
+            </div>
+            <div class="card-body">
+                <p>A rede social exclusiva para surfistas compartilharem suas experiências.</p>
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('auth.signup') }}" class="btn btn-primary">Cadastre-se</a>
+                    <a href="{{ url_for('auth.login') }}" class="btn btn-outline-primary">Entrar</a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <div class="card shadow mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Navegação</h5>
+            </div>
+            <div class="card-body p-0">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">
+                        <a href="{{ url_for('main.index') }}" class="text-decoration-none text-dark d-flex align-items-center">
+                            <i class="bi bi-house-door me-2 text-primary"></i> Página Inicial
+                        </a>
+                    </li>
+                    <li class="list-group-item">
+                        <a href="{{ url_for('main.explore') }}" class="text-decoration-none text-dark d-flex align-items-center">
+                            <i class="bi bi-compass me-2 text-primary"></i> Explorar
+                        </a>
+                    </li>
+                    {% if current_user.is_authenticated %}
+                    <li class="list-group-item">
+                        <a href="{{ url_for('posts.new_post') }}" class="text-decoration-none text-dark d-flex align-items-center">
+                            <i class="bi bi-plus-square me-2 text-primary"></i> Novo Post
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+        
+        <div class="card shadow">
+            <div class="card-header">
+                <h5 class="mb-0">Sobre IAmSurfer</h5>
+            </div>
+            <div class="card-body">
+                <p class="small">IAmSurfer é uma comunidade para surfistas compartilharem suas experiências, dicas de spots de surf, e se conectarem com outros apaixonados pelo esporte.</p>
+                <div class="d-flex justify-content-around text-center mt-3">
+                    <div>
+                        <i class="bi bi-camera fs-4 text-primary"></i>
+                        <p class="small mb-0">Compartilhe Fotos</p>
+                    </div>
+                    <div>
+                        <i class="bi bi-people fs-4 text-primary"></i>
+                        <p class="small mb-0">Conecte-se</p>
+                    </div>
+                    <div>
+                        <i class="bi bi-water fs-4 text-primary"></i>
+                        <p class="small mb-0">Surfe</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Main Feed -->
+    <div class="col-lg-6">
+        {% if current_user.is_authenticated %}
+        <div class="card shadow mb-4">
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-3">
+                    <img src="{{ url_for('static', filename=current_user.profile_image) }}" class="rounded-circle me-2" width="40" height="40">
+                    <a href="{{ url_for('posts.new_post') }}" class="form-control text-start text-muted border-0 bg-light rounded-pill" style="cursor: pointer">
+                        No que você está pensando, {{ current_user.username }}?
+                    </a>
+                </div>
+                <div class="d-flex justify-content-around">
+                    <a href="{{ url_for('posts.new_post') }}" class="btn btn-outline-primary btn-sm flex-grow-1 mx-1">
+                        <i class="bi bi-camera"></i> Foto
+                    </a>
+                    <a href="{{ url_for('posts.new_post') }}" class="btn btn-outline-primary btn-sm flex-grow-1 mx-1">
+                        <i class="bi bi-camera-video"></i> Vídeo
+                    </a>
+                    <a href="{{ url_for('posts.new_post') }}" class="btn btn-outline-primary btn-sm flex-grow-1 mx-1">
+                        <i class="bi bi-chat-dots"></i> Texto
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        {% if posts %}
+            {% for post in posts %}
+            <div class="card shadow mb-4">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center p-3">
+                    <div class="d-flex align-items-center">
+                        <img src="{{ url_for('static', filename=post.author.profile_image) }}" class="rounded-circle me-2" width="40" height="40">
+                        <div>
+                            <a href="{{ url_for('main.user_profile', username=post.author.username) }}" class="text-decoration-none text-dark">
+                                <strong>{{ post.author.username }}</strong>
+                            </a>
+                            {% if post.author.location %}
+                            <p class="text-muted small mb-0">
+                                <i class="bi bi-geo-alt"></i> {{ post.author.location }}
+                            </p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <span class="text-muted small">{{ post.created_at.strftime('%d/%m/%Y %H:%M') }}</span>
+                </div>
+                
+                <div class="card-body">
+                    {% if post.content %}
+                        <p>{{ post.content }}</p>
+                    {% endif %}
+                    
+                    {% if post.image_url %}
+                        <img src="{{ url_for('static', filename=post.image_url) }}" class="img-fluid rounded mb-3">
+                    {% endif %}
+                    
+                    {% if post.video_url %}
+                        <video src="{{ url_for('static', filename=post.video_url) }}" class="img-fluid rounded mb-3" controls></video>
+                    {% endif %}
+                </div>
+                
+                <div class="card-footer bg-white border-top-0">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            {% if current_user.is_authenticated %}
+                                <form action="{{ url_for('posts.like_post', post_id=post.id) }}" method="POST" class="d-inline">
+                                    <button type="submit" class="btn btn-sm {% if current_user.likes.filter_by(post_id=post.id).first() %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                                        <i class="bi bi-heart"></i> {{ post.likes.count() }} Curtidas
+                                    </button>
+                                </form>
+                            {% else %}
+                                <span class="btn btn-sm btn-outline-primary disabled">
+                                    <i class="bi bi-heart"></i> {{ post.likes.count() }} Curtidas
+                                </span>
+                            {% endif %}
+                            <a href="{{ url_for('posts.view_post', post_id=post.id) }}" class="btn btn-sm btn-outline-primary ms-2">
+                                <i class="bi bi-chat"></i> {{ post.comments.count() }} Comentários
+                            </a>
+                        </div>
+                        
+                        {% if current_user.is_authenticated and (post.user_id == current_user.id or current_user.is_admin) %}
+                        <form action="{{ url_for('posts.delete_post', post_id=post.id) }}" method="POST" onsubmit="return confirm('Tem certeza que deseja excluir este post?');">
+                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                <i class="bi bi-trash"></i> Excluir
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="card shadow text-center p-5">
+                <i class="bi bi-camera fs-1 text-muted"></i>
+                <h4 class="mt-3">Nenhum post para mostrar</h4>
+                {% if current_user.is_authenticated %}
+                    <p class="text-muted">Comece a seguir outros surfistas ou crie seu primeiro post!</p>
+                    <div class="mt-3">
+                        <a href="{{ url_for('main.explore') }}" class="btn btn-primary me-2">
+                            <i class="bi bi-compass"></i> Explorar
+                        </a>
+                        <a href="{{ url_for('posts.new_post') }}" class="btn btn-outline-primary">
+                            <i class="bi bi-plus-circle"></i> Criar Post
+                        </a>
+                    </div>
+                {% else %}
+                    <p class="text-muted">Faça login ou crie uma conta para ver posts de surfistas!</p>
+                    <div class="mt-3">
+                        <a href="{{ url_for('auth.signup') }}" class="btn btn-primary me-2">Cadastre-se</a>
+                        <a href="{{ url_for('auth.login') }}" class="btn btn-outline-primary">Entrar</a>
+                    </div>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+    
+    <!-- Right Sidebar -->
+    <div class="col-lg-3">
+        <div class="card shadow mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Surfistas para Seguir</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    <!-- Exibir surfistas sugeridos (exemplo estático) -->
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center">
+                            <img src="{{ url_for('static', filename='uploads/default_profile.jpg') }}" class="rounded-circle me-2" width="40" height="40">
+                            <div>
+                                <strong>GabrielMedina</strong>
+                                <p class="mb-0 small text-muted">Maresias, SP</p>
+                            </div>
+                        </div>
+                        <a href="#" class="btn btn-sm btn-primary">Seguir</a>
+                    </div>
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center">
+                            <img src="{{ url_for('static', filename='uploads/default_profile.jpg') }}" class="rounded-circle me-2" width="40" height="40">
+                            <div>
+                                <strong>FilipoToledo</strong>
+                                <p class="mb-0 small text-muted">Ubatuba, SP</p>
+                            </div>
+                        </div>
+                        <a href="#" class="btn btn-sm btn-primary">Seguir</a>
+                    </div>
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center">
+                            <img src="{{ url_for('static', filename='uploads/default_profile.jpg') }}" class="rounded-circle me-2" width="40" height="40">
+                            <div>
+                                <strong>ItaloFerreira</strong>
+                                <p class="mb-0 small text-muted">Baía Formosa, RN</p>
+                            </div>
+                        </div>
+                        <a href="#" class="btn btn-sm btn-primary">Seguir</a>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer text-center">
+                <a href="{{ url_for('main.explore') }}" class="text-decoration-none">Ver mais</a>
+            </div>
+        </div>
+        
+        <div class="card shadow mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Previsão do Surf</h5>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-3">
+                    <p class="mb-0">Florianópolis, SC</p>
+                    <div class="d-flex justify-content-center align-items-center">
+                        <i class="bi bi-water fs-1 text-primary me-2"></i>
+                        <h3 class="mb-0">1.5m</h3>
+                    </div>
+                    <p class="text-primary">Ondas boas para iniciantes</p>
+                </div>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>Vento</span>
+                        <span>NE 12 km/h</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>Período</span>
+                        <span>8s</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>Maré</span>
+                        <span>Baixa 14:30h</span>
+                    </li>
+                </ul>
+                <div class="text-center mt-3">
+                    <a href="#" class="btn btn-sm btn-outline-primary">Ver previsão completa</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card shadow">
+            <div class="card-header">
+                <h5 class="mb-0">Links Úteis</h5>
+            </div>
+            <div class="card-body p-0">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">
+                        <a href="#" class="text-decoration-none text-dark">Sobre</a>
+                    </li>
+                    <li class="list-group-item">
+                        <a href="#" class="text-decoration-none text-dark">Ajuda</a>
+                    </li>
+                    <li class="list-group-item">
+                        <a href="#" class="text-decoration-none text-dark">Termos</a>
+                    </li>
+                    <li class="list-group-item">
+                        <a href="#" class="text-decoration-none text-dark">Privacidade</a>
+                    </li>
+                </ul>
+            </div>
+            <div class="card-footer text-center text-muted">
+                <small>&copy; 2023 IAmSurfer</small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

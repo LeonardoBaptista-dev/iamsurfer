@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% block title %}{{ user.username }} - IAmSurfer{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <!-- Informações do perfil -->
+        <div class="col-md-4 mb-4">
+            <div class="card">
+                <div class="text-center pt-4">
+                    <img src="{{ url_for('static', filename=user.profile_image) }}" class="rounded-circle img-fluid mb-3" style="max-width: 150px;">
+                    <h3 class="card-title">{{ user.username }}</h3>
+                    {% if user.location %}
+                        <p class="text-muted"><i class="bi bi-geo-alt"></i> {{ user.location }}</p>
+                    {% endif %}
+                </div>
+
+                <div class="card-body">
+                    {% if user.bio %}
+                        <p class="card-text">{{ user.bio|nl2br }}</p>
+                    {% else %}
+                        <p class="card-text text-muted">Sem biografia</p>
+                    {% endif %}
+
+                    <div class="d-flex justify-content-center text-center mt-3">
+                        <div class="px-3">
+                            <h5>{{ followers_count }}</h5>
+                            <a href="{{ url_for('main.followers', username=user.username) }}" class="text-decoration-none">Seguidores</a>
+                        </div>
+                        <div class="px-3">
+                            <h5>{{ following_count }}</h5>
+                            <a href="{{ url_for('main.following', username=user.username) }}" class="text-decoration-none">Seguindo</a>
+                        </div>
+                        <div class="px-3">
+                            <h5>{{ posts|length }}</h5>
+                            <span>Posts</span>
+                        </div>
+                    </div>
+
+                    <!-- Botões de ação -->
+                    <div class="mt-4">
+                        {% if current_user.is_authenticated and current_user.id != user.id %}
+                            <div class="d-grid gap-2 mb-2">
+                                {% if is_following %}
+                                    <a href="{{ url_for('main.unfollow', username=user.username) }}" class="btn btn-outline-primary">
+                                        <i class="bi bi-person-dash"></i> Deixar de Seguir
+                                    </a>
+                                {% else %}
+                                    <a href="{{ url_for('main.follow', username=user.username) }}" class="btn btn-primary">
+                                        <i class="bi bi-person-plus"></i> Seguir
+                                    </a>
+                                {% endif %}
+                            </div>
+                            <div class="d-grid">
+                                <a href="{{ url_for('messages.send_message', username=user.username) }}" class="btn btn-outline-secondary">
+                                    <i class="bi bi-envelope"></i> Enviar Mensagem
+                                </a>
+                            </div>
+                        {% elif current_user.is_authenticated and current_user.id == user.id %}
+                            <div class="d-grid">
+                                <a href="{{ url_for('auth.edit_profile') }}" class="btn btn-outline-primary">
+                                    <i class="bi bi-pencil"></i> Editar Perfil
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-footer text-muted">
+                    <small>Membro desde {{ user.joined_at.strftime('%d/%m/%Y') }}</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Posts do usuário -->
+        <div class="col-md-8">
+            <div class="mb-4">
+                <h3>Posts de {{ user.username }}</h3>
+            </div>
+            
+            {% if posts %}
+                {% for post in posts %}
+                    <div class="card mb-4">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <div>
+                                <img src="{{ url_for('static', filename=user.profile_image) }}" class="rounded-circle me-2" width="32" height="32">
+                                <a href="{{ url_for('main.user_profile', username=user.username) }}" class="fw-bold text-decoration-none">{{ user.username }}</a>
+                            </div>
+                            <small class="text-muted">{{ post.created_at.strftime('%d/%m/%Y %H:%M') }}</small>
+                        </div>
+                        
+                        <div class="card-body">
+                            {% if post.content %}
+                                <p class="card-text">{{ post.content|nl2br }}</p>
+                            {% endif %}
+                            
+                            {% if post.image_url %}
+                                <img src="{{ url_for('static', filename=post.image_url) }}" class="img-fluid rounded mb-3">
+                            {% endif %}
+                            
+                            {% if post.video_url %}
+                                <video src="{{ url_for('static', filename=post.video_url) }}" class="img-fluid rounded mb-3" controls></video>
+                            {% endif %}
+                            
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <span class="me-3">
+                                        <i class="bi bi-heart{% if current_user.is_authenticated and current_user.likes.filter_by(post_id=post.id).first() %}-fill text-danger{% endif %}"></i> 
+                                        {{ post.likes.count() }} curtidas
+                                    </span>
+                                    <span>
+                                        <i class="bi bi-chat"></i> 
+                                        {{ post.comments.count() }} comentários
+                                    </span>
+                                </div>
+                                <a href="{{ url_for('posts.view_post', post_id=post.id) }}" class="btn btn-sm btn-outline-primary">
+                                    Ver post completo
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="card">
+                    <div class="card-body text-center p-5">
+                        <i class="bi bi-camera display-1 text-muted"></i>
+                        <p class="mt-3">{{ user.username }} ainda não possui posts.</p>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %} 

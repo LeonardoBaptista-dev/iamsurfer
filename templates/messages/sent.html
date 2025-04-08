@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}Mensagens Enviadas - IAmSurfer{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <h2>Mensagens Enviadas</h2>
+        </div>
+        <div class="col-auto">
+            <a href="{{ url_for('messages.new_message') }}" class="btn btn-primary">
+                <i class="bi bi-envelope-plus"></i> Nova Mensagem
+            </a>
+            <a href="{{ url_for('messages.inbox') }}" class="btn btn-outline-primary">
+                <i class="bi bi-inbox"></i> Caixa de Entrada
+            </a>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="list-group list-group-flush">
+            {% if messages %}
+                {% for message in messages %}
+                <a href="{{ url_for('messages.view_message', message_id=message.id) }}" class="list-group-item list-group-item-action">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>Para: {{ message.recipient.username }}</strong>
+                            <p class="mb-1 text-truncate" style="max-width: 50vw;">{{ message.content }}</p>
+                        </div>
+                        <div class="text-end">
+                            <small class="text-muted">{{ message.timestamp.strftime('%d/%m/%Y %H:%M') }}</small>
+                            <div>
+                                {% if message.read %}
+                                <span class="badge bg-success">Lida</span>
+                                {% else %}
+                                <span class="badge bg-secondary">Não lida</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </a>
+                {% endfor %}
+            {% else %}
+                <div class="list-group-item text-center p-4">
+                    <i class="bi bi-send display-4 text-muted mb-3"></i>
+                    <p>Você não enviou nenhuma mensagem.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,188 @@
+/* IAmSurfer - CSS Personalizado */
+
+/* Cores principais */
+:root {
+    --primary: #0d6efd;
+    --primary-dark: #0b5ed7;
+    --primary-light: #cfe2ff;
+    --secondary: #6c757d;
+    --success: #198754;
+    --info: #0dcaf0;
+    --warning: #ffc107;
+    --danger: #dc3545;
+    --light: #f8f9fa;
+    --dark: #212529;
+    --ocean-blue: #1a73e8;
+    --ocean-light: #e8f0fe;
+    --wave-blue: #40c4ff;
+    --sand: #f5deb3;
+}
+
+/* Estilo para o corpo */
+body {
+    background-color: #f0f2f5;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Estilo para o navbar */
+.navbar-brand {
+    font-weight: bold;
+    letter-spacing: 0.5px;
+}
+
+/* Estilo para cards */
+.card {
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+    overflow: hidden;
+}
+
+.card-header {
+    background-color: white;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+    font-weight: 600;
+}
+
+/* Estilo para botões */
+.btn {
+    border-radius: 5px;
+    font-weight: 500;
+}
+
+.btn-primary {
+    background-color: var(--ocean-blue);
+    border-color: var(--ocean-blue);
+}
+
+.btn-primary:hover {
+    background-color: var(--primary-dark);
+    border-color: var(--primary-dark);
+}
+
+/* Estilo para formulários */
+.form-control {
+    border-radius: 5px;
+    border: 1px solid #ced4da;
+}
+
+.form-control:focus {
+    border-color: var(--ocean-blue);
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+/* Estilos para o feed */
+.post-card {
+    transition: transform 0.2s;
+}
+
+.post-card:hover {
+    transform: translateY(-2px);
+}
+
+/* Estilo para avatares */
+.avatar-sm {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.avatar-md {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.avatar-lg {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+/* Estilos para o footer */
+footer {
+    background-color: #ffffff;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+/* Animações */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.fade-in {
+    animation: fadeIn 0.5s;
+}
+
+/* Estilos responsivos */
+@media (max-width: 768px) {
+    .container {
+        padding: 0 10px;
+    }
+    
+    .card {
+        margin-bottom: 15px;
+    }
+    
+    .avatar-lg {
+        width: 80px;
+        height: 80px;
+    }
+}
+
+/* Estilo para mensagens de curtida */
+.like-heart {
+    color: #ff4757;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.like-heart:hover {
+    transform: scale(1.2);
+}
+
+/* Estilo para a página de exploração */
+.explore-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    grid-gap: 15px;
+}
+
+.explore-item {
+    position: relative;
+    border-radius: 8px;
+    overflow: hidden;
+    aspect-ratio: 1/1;
+}
+
+.explore-item img, .explore-item video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s;
+}
+
+.explore-item:hover img, .explore-item:hover video {
+    transform: scale(1.05);
+}
+
+.explore-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 100%);
+    color: white;
+    padding: 15px;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.explore-item:hover .explore-overlay {
+    opacity: 1;
+} 

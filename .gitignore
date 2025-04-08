@@ -1,0 +1,56 @@
+# Arquivos e diretórios Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Flask
+instance/
+.webassets-cache
+iamsurfer.db
+*.db
+
+# Virtualenv
+venv/
+ENV/
+
+# Docker
+.dockerignore
+
+# Diretórios de uploads (apenas para desenvolvimento)
+static/uploads/posts/*
+static/uploads/profile_pics/*
+!static/uploads/posts/.gitkeep
+!static/uploads/profile_pics/.gitkeep
+!static/uploads/default_profile.jpg
+
+# Arquivos de ambiente
+.env
+.flaskenv
+
+# Logs
+logs/
+*.log
+
+# Outros
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo 

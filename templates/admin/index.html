@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block title %}IAmSurfer - Painel Administrativo{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h2 class="mb-4">Painel Administrativo</h2>
+        
+        <nav class="nav nav-tabs mb-4">
+            <a class="nav-link active" href="{{ url_for('admin.index') }}">Dashboard</a>
+            <a class="nav-link" href="{{ url_for('admin.users') }}">Usuários</a>
+            <a class="nav-link" href="{{ url_for('admin.posts') }}">Posts</a>
+            <a class="nav-link" href="{{ url_for('admin.comments') }}">Comentários</a>
+            <a class="nav-link" href="{{ url_for('admin.reports') }}">Relatórios</a>
+        </nav>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card shadow text-center bg-primary text-white mb-4">
+            <div class="card-body">
+                <h2 class="display-4">{{ users_count }}</h2>
+                <h5>Usuários Registrados</h5>
+            </div>
+            <div class="card-footer bg-white">
+                <a href="{{ url_for('admin.users') }}" class="text-primary text-decoration-none">Ver todos <i class="bi bi-arrow-right"></i></a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card shadow text-center bg-success text-white mb-4">
+            <div class="card-body">
+                <h2 class="display-4">{{ posts_count }}</h2>
+                <h5>Posts Publicados</h5>
+            </div>
+            <div class="card-footer bg-white">
+                <a href="{{ url_for('admin.posts') }}" class="text-success text-decoration-none">Ver todos <i class="bi bi-arrow-right"></i></a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card shadow text-center bg-info text-white mb-4">
+            <div class="card-body">
+                <h2 class="display-4">{{ comments_count }}</h2>
+                <h5>Comentários</h5>
+            </div>
+            <div class="card-footer bg-white">
+                <a href="{{ url_for('admin.comments') }}" class="text-info text-decoration-none">Ver todos <i class="bi bi-arrow-right"></i></a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card shadow mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Usuários Recentes</h5>
+            </div>
+            <div class="card-body p-0">
+                <ul class="list-group list-group-flush">
+                    {% for user in recent_users %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center">
+                            <img src="{{ url_for('static', filename=user.profile_image) }}" class="rounded-circle me-3" width="40" height="40">
+                            <div>
+                                <h6 class="mb-0">{{ user.username }}</h6>
+                                <small class="text-muted">{{ user.email }}</small>
+                            </div>
+                        </div>
+                        <span class="badge bg-primary rounded-pill">{{ user.joined_at.strftime('%d/%m/%Y') }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <div class="card-footer text-center">
+                <a href="{{ url_for('admin.users') }}" class="text-decoration-none">Ver todos os usuários</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card shadow mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Posts Recentes</h5>
+            </div>
+            <div class="card-body p-0">
+                <ul class="list-group list-group-flush">
+                    {% for post in recent_posts %}
+                    <li class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center">
+                                <img src="{{ url_for('static', filename=post.author.profile_image) }}" class="rounded-circle me-3" width="40" height="40">
+                                <div>
+                                    <h6 class="mb-0">{{ post.author.username }}</h6>
+                                    <small class="text-muted">
+                                        {% if post.content %}
+                                            {{ post.content[:50] }}{% if post.content|length > 50 %}...{% endif %}
+                                        {% elif post.image_url %}
+                                            [Imagem]
+                                        {% elif post.video_url %}
+                                            [Vídeo]
+                                        {% endif %}
+                                    </small>
+                                </div>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge bg-primary rounded-pill">{{ post.created_at.strftime('%d/%m/%Y') }}</span>
+                                <a href="{{ url_for('posts.view_post', post_id=post.id) }}" class="btn btn-sm btn-outline-primary ms-2">Ver</a>
+                            </div>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <div class="card-footer text-center">
+                <a href="{{ url_for('admin.posts') }}" class="text-decoration-none">Ver todos os posts</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

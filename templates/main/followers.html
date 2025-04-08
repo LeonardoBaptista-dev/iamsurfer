@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}Seguidores de {{ user.username }} - IAmSurfer{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <h2>Seguidores de {{ user.username }}</h2>
+            <p class="text-muted">Pessoas que seguem {{ user.username }}</p>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-lg-8">
+            {% if followers %}
+                <div class="card">
+                    <ul class="list-group list-group-flush">
+                        {% for follower in followers %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center">
+                                    <img src="{{ url_for('static', filename=follower.profile_image) }}" class="rounded-circle me-3" style="width: 50px; height: 50px; object-fit: cover;">
+                                    <div>
+                                        <h5 class="mb-0">{{ follower.username }}</h5>
+                                        {% if follower.location %}
+                                            <small class="text-muted"><i class="bi bi-geo-alt"></i> {{ follower.location }}</small>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <a href="{{ url_for('main.user_profile', username=follower.username) }}" class="btn btn-sm btn-outline-primary">Ver Perfil</a>
+                                    
+                                    {% if current_user.is_authenticated and current_user.id != follower.id %}
+                                        {% if current_user.is_following(follower) %}
+                                            <a href="{{ url_for('main.unfollow', username=follower.username) }}" class="btn btn-sm btn-outline-secondary">
+                                                <i class="bi bi-person-dash"></i> Deixar de Seguir
+                                            </a>
+                                        {% else %}
+                                            <a href="{{ url_for('main.follow', username=follower.username) }}" class="btn btn-sm btn-primary">
+                                                <i class="bi bi-person-plus"></i> Seguir
+                                            </a>
+                                        {% endif %}
+                                    {% endif %}
+                                </div>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% else %}
+                <div class="card p-5 text-center">
+                    <i class="bi bi-people display-1 text-muted mb-3"></i>
+                    <h4>Sem Seguidores</h4>
+                    <p class="text-muted">{{ user.username }} ainda não tem seguidores.</p>
+                </div>
+            {% endif %}
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Sobre {{ user.username }}</h5>
+                </div>
+                <div class="card-body text-center">
+                    <img src="{{ url_for('static', filename=user.profile_image) }}" class="rounded-circle mb-3" style="width: 100px; height: 100px; object-fit: cover;">
+                    <h4>{{ user.username }}</h4>
+                    {% if user.location %}
+                        <p class="text-muted"><i class="bi bi-geo-alt"></i> {{ user.location }}</p>
+                    {% endif %}
+                    
+                    <div class="d-flex justify-content-center mt-3">
+                        <div class="px-3 border-end">
+                            <h5 class="mb-0">{{ user.followers.count() }}</h5>
+                            <small>Seguidores</small>
+                        </div>
+                        <div class="px-3">
+                            <h5 class="mb-0">{{ user.followed.count() }}</h5>
+                            <a href="{{ url_for('main.following', username=user.username) }}" class="text-decoration-none">Seguindo</a>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <a href="{{ url_for('main.user_profile', username=user.username) }}" class="btn btn-primary">
+                            Ver Perfil Completo
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,29 @@
+version: '3'
+
+services:
+  web:
+    build: .
+    ports:
+      - "5001:5000"
+    volumes:
+      - .:/app
+    environment:
+      - FLASK_APP=app.py
+      - FLASK_ENV=development
+      - DATABASE_URL=postgresql://iamsurfer:iamsurfer@db/iamsurfer
+    depends_on:
+      - db
+  
+  db:
+    image: postgres:13
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_PASSWORD=iamsurfer
+      - POSTGRES_USER=iamsurfer
+      - POSTGRES_DB=iamsurfer
+    ports:
+      - "5432:5432"
+
+volumes:
+  postgres_data: 

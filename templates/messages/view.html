@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block title %}Ver Mensagem - IAmSurfer{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">
+                        {% if current_user.id == message.sender_id %}
+                            Mensagem para {{ message.recipient.username }}
+                        {% else %}
+                            Mensagem de {{ message.sender.username }}
+                        {% endif %}
+                    </h4>
+                    <small class="text-white">{{ message.timestamp.strftime('%d/%m/%Y %H:%M') }}</small>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        {{ message.content|nl2br }}
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            {% if current_user.id == message.recipient_id %}
+                                <a href="{{ url_for('messages.send_message', username=message.sender.username) }}" class="btn btn-primary">
+                                    <i class="bi bi-reply"></i> Responder
+                                </a>
+                            {% endif %}
+                        </div>
+                        <form action="{{ url_for('messages.delete_message', message_id=message.id) }}" method="POST" onsubmit="return confirm('Tem certeza que deseja excluir esta mensagem?');">
+                            <button type="submit" class="btn btn-danger">
+                                <i class="bi bi-trash"></i> Excluir
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-3">
+                {% if current_user.id == message.sender_id %}
+                    <a href="{{ url_for('messages.sent') }}" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left"></i> Voltar para mensagens enviadas
+                    </a>
+                {% else %}
+                    <a href="{{ url_for('messages.inbox') }}" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left"></i> Voltar para caixa de entrada
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Filtro personalizado para substituir quebras de linha por <br>
+    (function() {
+        var filters = document.getElementsByClassName('message-content');
+        for (var i = 0; i < filters.length; i++) {
+            var content = filters[i].innerHTML;
+            filters[i].innerHTML = content.replace(/\n/g, '<br>');
+        }
+    })();
+</script>
+{% endblock %} 

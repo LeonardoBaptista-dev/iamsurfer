@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+
+{% block title %}IAmSurfer - Gerenciar Usuários{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h2 class="mb-4">Painel Administrativo</h2>
+        
+        <nav class="nav nav-tabs mb-4">
+            <a class="nav-link" href="{{ url_for('admin.index') }}">Dashboard</a>
+            <a class="nav-link active" href="{{ url_for('admin.users') }}">Usuários</a>
+            <a class="nav-link" href="{{ url_for('admin.posts') }}">Posts</a>
+            <a class="nav-link" href="{{ url_for('admin.comments') }}">Comentários</a>
+            <a class="nav-link" href="{{ url_for('admin.reports') }}">Relatórios</a>
+        </nav>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Gerenciar Usuários</h5>
+                <div class="input-group" style="max-width: 300px;">
+                    <input type="text" class="form-control" placeholder="Buscar usuário" id="searchInput">
+                    <button class="btn btn-light" type="button" id="searchButton">
+                        <i class="bi bi-search"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th scope="col">ID</th>
+                                <th scope="col">Usuário</th>
+                                <th scope="col">Email</th>
+                                <th scope="col">Data de Cadastro</th>
+                                <th scope="col">Posts</th>
+                                <th scope="col">Status</th>
+                                <th scope="col">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in users.items %}
+                            <tr>
+                                <td>{{ user.id }}</td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <img src="{{ url_for('static', filename=user.profile_image) }}" class="rounded-circle me-2" width="32" height="32">
+                                        <a href="{{ url_for('main.user_profile', username=user.username) }}" class="text-decoration-none">
+                                            {{ user.username }}
+                                        </a>
+                                    </div>
+                                </td>
+                                <td>{{ user.email }}</td>
+                                <td>{{ user.joined_at.strftime('%d/%m/%Y') }}</td>
+                                <td>{{ user.posts.count() }}</td>
+                                <td>
+                                    {% if user.is_admin %}
+                                        <span class="badge bg-danger">Admin</span>
+                                    {% else %}
+                                        <span class="badge bg-success">Usuário</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group">
+                                        <a href="{{ url_for('main.user_profile', username=user.username) }}" class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        {% if user.id != current_user.id %}
+                                            <form action="{{ url_for('admin.toggle_admin', user_id=user.id) }}" method="POST" class="d-inline">
+                                                <button type="submit" class="btn btn-sm btn-outline-warning" title="{% if user.is_admin %}Remover admin{% else %}Tornar admin{% endif %}">
+                                                    <i class="bi bi-shield{% if user.is_admin %}-x{% else %}-plus{% endif %}"></i>
+                                                </button>
+                                            </form>
+                                            
+                                            <form action="{{ url_for('admin.delete_user', user_id=user.id) }}" method="POST" class="d-inline" onsubmit="return confirm('Tem certeza que deseja excluir esse usuário? Essa ação não pode ser desfeita.');">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Excluir usuário">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </form>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card-footer">
+                <nav>
+                    <ul class="pagination justify-content-center mb-0">
+                        {% if users.has_prev %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('admin.users', page=users.prev_num) }}">Anterior</a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled">
+                                <a class="page-link" href="#">Anterior</a>
+                            </li>
+                        {% endif %}
+                        
+                        {% for page_num in users.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                            {% if page_num %}
+                                {% if users.page == page_num %}
+                                    <li class="page-item active">
+                                        <a class="page-link" href="{{ url_for('admin.users', page=page_num) }}">{{ page_num }}</a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="{{ url_for('admin.users', page=page_num) }}">{{ page_num }}</a>
+                                    </li>
+                                {% endif %}
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <a class="page-link" href="#">...</a>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if users.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('admin.users', page=users.next_num) }}">Próximo</a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled">
+                                <a class="page-link" href="#">Próximo</a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('searchInput');
+        const searchButton = document.getElementById('searchButton');
+        
+        searchButton.addEventListener('click', function() {
+            const searchTerm = searchInput.value.trim();
+            if (searchTerm) {
+                window.location.href = "{{ url_for('admin.users') }}?q=" + encodeURIComponent(searchTerm);
+            }
+        });
+        
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                const searchTerm = searchInput.value.trim();
+                if (searchTerm) {
+                    window.location.href = "{{ url_for('admin.users') }}?q=" + encodeURIComponent(searchTerm);
+                }
+            }
+        });
+    });
+</script>
+{% endblock %} 

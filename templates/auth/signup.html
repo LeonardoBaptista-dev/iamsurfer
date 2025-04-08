@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}IAmSurfer - Cadastro{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-6">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white text-center py-3">
+                <h3 class="mb-0"><i class="bi bi-water me-2"></i>IAmSurfer</h3>
+                <p class="mb-0">A rede social para surfistas</p>
+            </div>
+            <div class="card-body p-4">
+                <h4 class="card-title text-center mb-4">Criar uma nova conta</h4>
+                
+                <form method="POST" action="{{ url_for('auth.signup') }}">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Nome de usuário</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-person"></i></span>
+                            <input type="text" class="form-control" id="username" name="username" required>
+                        </div>
+                        <small class="text-muted">O nome será utilizado para seu perfil público (ex: @seunome)</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                            <input type="email" class="form-control" id="email" name="email" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Senha</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                            <input type="password" class="form-control" id="password" name="password" required minlength="6">
+                        </div>
+                        <small class="text-muted">Mínimo de 6 caracteres</small>
+                    </div>
+                    
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="terms" required>
+                        <label class="form-check-label" for="terms">
+                            Concordo com os <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal">Termos de Serviço</a>
+                        </label>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">Cadastrar</button>
+                    </div>
+                </form>
+            </div>
+            <div class="card-footer text-center py-3">
+                <p class="mb-0">Já tem uma conta? <a href="{{ url_for('auth.login') }}" class="text-primary">Faça login</a></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Terms Modal -->
+<div class="modal fade" id="termsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Termos de Serviço</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <h6>Termos e Condições de Uso do IAmSurfer</h6>
+                <p>Bem-vindo ao IAmSurfer, a rede social para surfistas! Estes termos e condições regem o uso do nosso serviço.</p>
+                
+                <h6>1. Aceitação dos Termos</h6>
+                <p>Ao criar uma conta no IAmSurfer, você concorda com estes termos de serviço.</p>
+                
+                <h6>2. Conta do Usuário</h6>
+                <p>Você é responsável por manter a confidencialidade da sua senha e conta, e por todas as atividades que ocorrem em sua conta.</p>
+                
+                <h6>3. Conteúdo do Usuário</h6>
+                <p>Você é responsável pelo conteúdo que publica. Não é permitido conteúdo ilegal, abusivo, ofensivo ou que viole direitos de terceiros.</p>
+                
+                <h6>4. Conduta</h6>
+                <p>Esperamos que todos os usuários mantenham um ambiente amigável e respeitoso. Não toleramos assédio, discriminação ou comportamento abusivo.</p>
+                
+                <h6>5. Privacidade</h6>
+                <p>Respeitamos sua privacidade. Consulte nossa Política de Privacidade para entender como coletamos e usamos seus dados.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Entendi</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

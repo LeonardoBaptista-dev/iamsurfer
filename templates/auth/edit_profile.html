@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}IAmSurfer - Editar Perfil{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Editar Perfil</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('auth.edit_profile') }}" enctype="multipart/form-data">
+                    <div class="row mb-4">
+                        <div class="col-md-4 text-center">
+                            <img src="{{ url_for('static', filename=current_user.profile_image) }}" class="img-fluid rounded-circle mb-3" style="max-width: 150px;">
+                            
+                            <div class="mb-3">
+                                <label for="profile_image" class="form-label">Foto de Perfil</label>
+                                <input class="form-control" type="file" id="profile_image" name="profile_image" accept="image/*">
+                                <small class="text-muted">JPG, PNG ou GIF. Tamanho máximo 5MB.</small>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-8">
+                            <div class="mb-3">
+                                <label for="username" class="form-label">Nome de Usuário</label>
+                                <input type="text" class="form-control" id="username" value="{{ current_user.username }}" disabled>
+                                <small class="text-muted">O nome de usuário não pode ser alterado.</small>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="email" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="email" value="{{ current_user.email }}" disabled>
+                                <small class="text-muted">O email não pode ser alterado.</small>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="location" class="form-label">Localização</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-geo-alt"></i></span>
+                                    <input type="text" class="form-control" id="location" name="location" value="{{ current_user.location or '' }}" placeholder="Ex: Florianópolis, SC">
+                                </div>
+                                <small class="text-muted">Onde você costuma surfar?</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="bio" class="form-label">Biografia</label>
+                        <textarea class="form-control" id="bio" name="bio" rows="4" placeholder="Conte um pouco sobre você e sua relação com o surf...">{{ current_user.bio or '' }}</textarea>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('auth.profile') }}" class="btn btn-outline-secondary">Cancelar</a>
+                        <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="card shadow mt-4">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0">Zona de Perigo</h5>
+            </div>
+            <div class="card-body">
+                <h6>Alterar Senha</h6>
+                <p>Se você precisar alterar sua senha, entre em contato com o suporte.</p>
+                
+                <!-- Opcionalmente, implementar alteração de senha
+                <form method="POST" action="#">
+                    <div class="mb-3">
+                        <label for="current_password" class="form-label">Senha Atual</label>
+                        <input type="password" class="form-control" id="current_password" name="current_password" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="new_password" class="form-label">Nova Senha</label>
+                        <input type="password" class="form-control" id="new_password" name="new_password" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="confirm_password" class="form-label">Confirmar Nova Senha</label>
+                        <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+                    </div>
+                    <button type="submit" class="btn btn-warning">Alterar Senha</button>
+                </form>
+                -->
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

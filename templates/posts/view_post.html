@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block title %}Post de {{ post.author.username }} - IAmSurfer{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Post principal -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <img src="{{ url_for('static', filename=post.author.profile_image) }}" class="rounded-circle me-2" width="32" height="32">
+                        <a href="{{ url_for('main.user_profile', username=post.author.username) }}" class="fw-bold text-decoration-none">{{ post.author.username }}</a>
+                    </div>
+                    <small class="text-muted">{{ post.created_at.strftime('%d/%m/%Y %H:%M') }}</small>
+                </div>
+                
+                <div class="card-body">
+                    {% if post.content %}
+                        <p class="card-text">{{ post.content|nl2br }}</p>
+                    {% endif %}
+                    
+                    {% if post.image_url %}
+                        <img src="{{ url_for('static', filename=post.image_url) }}" class="img-fluid rounded mb-3">
+                    {% endif %}
+                    
+                    {% if post.video_url %}
+                        <video src="{{ url_for('static', filename=post.video_url) }}" class="img-fluid rounded mb-3" controls></video>
+                    {% endif %}
+                    
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <div class="d-flex">
+                            <form action="{{ url_for('posts.like_post', post_id=post.id) }}" method="POST" class="me-3">
+                                <button type="submit" class="btn btn-sm {% if liked %}btn-danger{% else %}btn-outline-danger{% endif %}">
+                                    <i class="bi bi-heart{% if liked %}-fill{% endif %}"></i> 
+                                    {{ post.likes.count() }} curtidas
+                                </button>
+                            </form>
+                            <span>
+                                <i class="bi bi-chat"></i> 
+                                {{ comments|length }} comentários
+                            </span>
+                        </div>
+                        
+                        {% if current_user.is_authenticated and (current_user.id == post.user_id or current_user.is_admin) %}
+                            <form action="{{ url_for('posts.delete_post', post_id=post.id) }}" method="POST" onsubmit="return confirm('Tem certeza que deseja excluir este post?');">
+                                <button type="submit" class="btn btn-sm btn-danger">
+                                    <i class="bi bi-trash"></i> Excluir
+                                </button>
+                            </form>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Formulário de comentário -->
+            {% if current_user.is_authenticated %}
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Adicionar comentário</h5>
+                    </div>
+                    <div class="card-body">
+                        <form action="{{ url_for('posts.add_comment', post_id=post.id) }}" method="POST">
+                            <div class="mb-3">
+                                <textarea class="form-control" name="content" rows="3" placeholder="Escreva seu comentário..." required></textarea>
+                            </div>
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary">Comentar</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            {% endif %}
+            
+            <!-- Lista de comentários -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Comentários ({{ comments|length }})</h5>
+                </div>
+                <div class="list-group list-group-flush">
+                    {% if comments %}
+                        {% for comment in comments %}
+                            <div class="list-group-item">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <div>
+                                        <img src="{{ url_for('static', filename=comment.author.profile_image) }}" class="rounded-circle me-2" width="24" height="24">
+                                        <a href="{{ url_for('main.user_profile', username=comment.author.username) }}" class="fw-bold text-decoration-none">{{ comment.author.username }}</a>
+                                    </div>
+                                    <small class="text-muted">{{ comment.created_at.strftime('%d/%m/%Y %H:%M') }}</small>
+                                </div>
+                                <p class="mb-2">{{ comment.content|nl2br }}</p>
+                                
+                                {% if current_user.is_authenticated and (current_user.id == comment.user_id or current_user.id == post.user_id or current_user.is_admin) %}
+                                    <div class="text-end">
+                                        <form action="{{ url_for('posts.delete_comment', comment_id=comment.id) }}" method="POST" class="d-inline" onsubmit="return confirm('Tem certeza que deseja excluir este comentário?');">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                <i class="bi bi-trash"></i> Excluir
+                                            </button>
+                                        </form>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="list-group-item text-center p-4">
+                            <p class="text-muted mb-0">Nenhum comentário ainda. Seja o primeiro a comentar!</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="mt-3">
+                <a href="{{ url_for('main.index') }}" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left"></i> Voltar
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
