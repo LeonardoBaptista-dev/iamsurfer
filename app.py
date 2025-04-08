@@ -1,4 +1,4 @@
-from flask import Flask, Markup
+from flask import Flask, Markup, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_migrate import Migrate
@@ -39,6 +39,17 @@ def nl2br(value):
 
 # Inicializa o SQLAlchemy
 db = SQLAlchemy(app)
+
+# Rota de health check para monitoramento do Render
+@app.route('/healthz')
+def health_check():
+    try:
+        # Verifica se consegue conectar ao banco de dados
+        with app.app_context():
+            db.engine.execute('SELECT 1')
+        return jsonify(status='healthy', db_connection='ok'), 200
+    except Exception as e:
+        return jsonify(status='unhealthy', error=str(e)), 500
 
 # Inicializa o sistema de login
 login_manager = LoginManager(app)
