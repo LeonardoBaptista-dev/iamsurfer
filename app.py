@@ -94,30 +94,44 @@ def wait_for_db():
 
 # Inicializa o banco de dados e cria usuário admin
 def init_db():
+    """Inicializa o banco de dados e cria usuário admin se necessário."""
     with app.app_context():
-        # Verifica se as tabelas já existem
-        inspector = db.inspect(db.engine)
-        tables_exist = inspector.get_table_names()
-        
-        if not tables_exist:
-            print("Criando tabelas do banco de dados...")
-            db.create_all()
-        
-        # Cria um usuário admin se não existir nenhum usuário
         try:
-            if User.query.count() == 0:
-                admin = User(
-                    username="admin",
-                    email="admin@iamsurfer.com",
-                    is_admin=True,
-                    profile_image="uploads/default_profile.jpg"
-                )
-                admin.set_password("admin123")
-                db.session.add(admin)
-                db.session.commit()
-                print("Usuário admin criado com sucesso!")
+            # Verifica se as tabelas já existem
+            inspector = db.inspect(db.engine)
+            tables_exist = inspector.get_table_names()
+            
+            if not tables_exist:
+                print("Nenhuma tabela encontrada. Criando tabelas do banco de dados...")
+                db.create_all()
+                print("Tabelas criadas com sucesso!")
+            else:
+                print(f"Tabelas já existem no banco de dados: {', '.join(tables_exist)}")
+            
+            # Cria um usuário admin se não existir nenhum usuário
+            try:
+                user_count = User.query.count()
+                if user_count == 0:
+                    print("Nenhum usuário encontrado. Criando usuário admin...")
+                    admin = User(
+                        username="admin",
+                        email="admin@iamsurfer.com",
+                        is_admin=True,
+                        profile_image="uploads/default_profile.jpg"
+                    )
+                    admin.set_password("admin123")
+                    db.session.add(admin)
+                    db.session.commit()
+                    print("Usuário admin criado com sucesso!")
+                else:
+                    print(f"Já existem {user_count} usuários no banco de dados. Pulando criação do admin.")
+            except Exception as e:
+                db.session.rollback()
+                print(f"Erro ao verificar/criar usuário admin: {e}")
+                print("Continuando mesmo assim...")
         except Exception as e:
-            print(f"Erro ao criar usuário admin: {e}")
+            print(f"Erro ao inicializar banco de dados: {e}")
+            print("Continuando mesmo assim...")
 
 # Importa e registra os blueprints
 try:

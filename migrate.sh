@@ -30,8 +30,20 @@ while retry_count < max_retries:
             print('Máximo de tentativas atingido. Continuando mesmo assim...')
 "
 
-# Executa as migrações
-echo "Executando flask db upgrade..."
-flask db upgrade
+# Verifica se já existe uma pasta de migrações
+if [ -d "migrations" ]; then
+    echo "Diretório de migrações encontrado. Executando flask db upgrade..."
+    flask db upgrade
+else
+    echo "Inicializando sistema de migrações..."
+    # Tenta inicializar as migrações - se falhar, prossegue mesmo assim
+    flask db init || echo "Inicialização de migrações falhou, possivelmente já existem."
+    
+    # Tenta criar a primeira migração
+    flask db migrate -m "Initial migration" || echo "Migração inicial falhou, possivelmente já existe."
+    
+    # Executa as migrações
+    flask db upgrade || echo "Upgrade falhou, mas continuando..."
+fi
 
-echo "Migrações concluídas!" 
+echo "Processo de migração concluído!" 
