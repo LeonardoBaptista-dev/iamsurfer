@@ -10,6 +10,9 @@ auth = Blueprint('auth', __name__)
 @auth.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
+        # Se já estiver autenticado e for admin, redireciona para o painel admin
+        if current_user.is_admin:
+            return redirect(url_for('admin.index'))
         return redirect(url_for('main.index'))
     
     if request.method == 'POST':
@@ -27,7 +30,11 @@ def login():
         
         next_page = request.args.get('next')
         if not next_page or url_parse(next_page).netloc != '':
-            next_page = url_for('main.index')
+            # Se o usuário for administrador, redireciona para o painel admin
+            if user.is_admin:
+                next_page = url_for('admin.index')
+            else:
+                next_page = url_for('main.index')
         
         flash('Login realizado com sucesso!', 'success')
         return redirect(next_page)
