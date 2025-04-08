@@ -10,7 +10,10 @@ services:
     environment:
       - FLASK_APP=app.py
       - FLASK_ENV=development
+      # Configuração para desenvolvimento local
       - DATABASE_URL=postgresql://iamsurfer:iamsurfer@db/iamsurfer
+      # Configuração para produção no Render (comentada)
+      # - DATABASE_URL=postgresql://iamsurfer_db_user:9sdJXz63jfoSV1lxfQN8bGgPzQaATmSU@dpg-cvqp848gjchc7395pfhg-a/iamsurfer_db
     depends_on:
       - db
   

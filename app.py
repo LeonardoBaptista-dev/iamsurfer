@@ -5,6 +5,7 @@ from flask_migrate import Migrate
 import os
 from dotenv import load_dotenv
 import time
+import re
 
 # Carrega variáveis de ambiente
 load_dotenv()
@@ -12,9 +13,19 @@ load_dotenv()
 # Inicializa a aplicação Flask
 app = Flask(__name__, instance_relative_config=True)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'uma_chave_secreta_temporaria')
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///iamsurfer.db')
+
+# Configuração do banco de dados
+database_url = os.environ.get('DATABASE_URL')
+if database_url and database_url.startswith("postgres://"):
+    # O Render usa 'postgresql://' em vez de 'postgres://'
+    database_url = database_url.replace("postgres://", "postgresql://", 1)
+
+app.config['SQLALCHEMY_DATABASE_URI'] = database_url or 'sqlite:///iamsurfer.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = os.path.join(app.root_path, 'static/uploads')
+
+# Verificar se está em ambiente de produção (Render)
+is_production = os.environ.get('RENDER', False) or os.environ.get('FLASK_ENV') == 'production'
 
 # Certifica-se de que a pasta instance existe
 os.makedirs(app.instance_path, exist_ok=True)
@@ -73,20 +84,29 @@ def wait_for_db():
 # Inicializa o banco de dados e cria usuário admin
 def init_db():
     with app.app_context():
-        db.create_all()
+        # Verifica se as tabelas já existem
+        inspector = db.inspect(db.engine)
+        tables_exist = inspector.get_table_names()
+        
+        if not tables_exist:
+            print("Criando tabelas do banco de dados...")
+            db.create_all()
         
         # Cria um usuário admin se não existir nenhum usuário
-        if User.query.count() == 0:
-            admin = User(
-                username="admin",
-                email="admin@iamsurfer.com",
-                is_admin=True,
-                profile_image="uploads/default_profile.jpg"
-            )
-            admin.set_password("admin123")
-            db.session.add(admin)
-            db.session.commit()
-            print("Usuário admin criado com sucesso!")
+        try:
+            if User.query.count() == 0:
+                admin = User(
+                    username="admin",
+                    email="admin@iamsurfer.com",
+                    is_admin=True,
+                    profile_image="uploads/default_profile.jpg"
+                )
+                admin.set_password("admin123")
+                db.session.add(admin)
+                db.session.commit()
+                print("Usuário admin criado com sucesso!")
+        except Exception as e:
+            print(f"Erro ao criar usuário admin: {e}")
 
 # Importa e registra os blueprints
 try:

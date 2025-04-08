@@ -8,15 +8,30 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app
 
+# Copiar requirements e instalar dependências primeiro (para melhor utilização de cache)
 COPY requirements.txt .
-
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Copiar o restante do código
 COPY . .
 
-ENV FLASK_APP=app.py
-ENV FLASK_ENV=development
+# Tornar o script de migração executável
+RUN chmod +x migrate.sh
 
+# Variáveis de ambiente
+ENV FLASK_APP=app.py
+ENV FLASK_ENV=production
+ENV PYTHONUNBUFFERED=1
+
+# Criar diretórios necessários
+RUN mkdir -p static/uploads/posts static/uploads/profile_pics
+
+# Expor porta
 EXPOSE 5000
 
-CMD ["flask", "run", "--host=0.0.0.0"] 
+# Script de inicialização para executar migrações e depois iniciar a aplicação
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+# Executar usando o script de entrada
+CMD ["/entrypoint.sh"] 
