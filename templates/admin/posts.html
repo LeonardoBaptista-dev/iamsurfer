@@ -78,14 +78,17 @@
                         <tr>
                             <td>{{ post.id }}</td>
                             <td>
-                                <a href="{{ url_for('main.profile', username=post.author.username) }}">
-                                    {{ post.author.username }}
-                                </a>
+                                <div class="d-flex align-items-center">
+                                    <img src="{{ post.author.profile_image|img_url }}" class="rounded-circle me-2" width="32" height="32">
+                                    <a href="{{ url_for('main.user_profile', username=post.author.username) }}">
+                                        {{ post.author.username }}
+                                    </a>
+                                </div>
                             </td>
                             <td>{{ post.content[:50] + '...' if post.content|length > 50 else post.content }}</td>
                             <td>{{ post.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
-                            <td>{{ post.likes|length }}</td>
-                            <td>{{ post.comments|length }}</td>
+                            <td>{{ post.likes.count() }}</td>
+                            <td>{{ post.comments.count() }}</td>
                             <td>
                                 <div class="btn-group">
                                     <a href="{{ url_for('posts.view_post', post_id=post.id) }}" class="btn btn-sm btn-info" title="Ver">

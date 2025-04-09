@@ -27,26 +27,28 @@
                     <div class="col-md-4 mb-4">
                         <div class="card">
                             <div class="card-body text-center">
-                                <img src="{{ url_for('static', filename=user.profile_image) }}" class="rounded-circle mb-3" style="width: 80px; height: 80px; object-fit: cover;">
-                                <h5 class="card-title">{{ user.username }}</h5>
-                                {% if user.location %}
-                                    <p class="text-muted"><i class="bi bi-geo-alt"></i> {{ user.location }}</p>
-                                {% endif %}
-                                
-                                <div class="d-grid gap-2">
-                                    <a href="{{ url_for('main.user_profile', username=user.username) }}" class="btn btn-outline-primary">Ver Perfil</a>
-                                    
-                                    {% if current_user.is_authenticated and current_user.id != user.id %}
-                                        {% if current_user.is_following(user) %}
-                                            <a href="{{ url_for('main.unfollow', username=user.username) }}" class="btn btn-outline-secondary">
-                                                <i class="bi bi-person-dash"></i> Deixar de Seguir
-                                            </a>
-                                        {% else %}
-                                            <a href="{{ url_for('main.follow', username=user.username) }}" class="btn btn-primary">
-                                                <i class="bi bi-person-plus"></i> Seguir
-                                            </a>
-                                        {% endif %}
+                                <div class="text-center">
+                                    <img src="{{ user.profile_image|img_url }}" class="rounded-circle mb-3" style="width: 80px; height: 80px; object-fit: cover;">
+                                    <h5 class="card-title">{{ user.username }}</h5>
+                                    {% if user.location %}
+                                        <p class="text-muted"><i class="bi bi-geo-alt"></i> {{ user.location }}</p>
                                     {% endif %}
+                                    
+                                    <div class="d-grid gap-2">
+                                        <a href="{{ url_for('main.user_profile', username=user.username) }}" class="btn btn-outline-primary">Ver Perfil</a>
+                                        
+                                        {% if current_user.is_authenticated and current_user.id != user.id %}
+                                            {% if current_user.is_following(user) %}
+                                                <a href="{{ url_for('main.unfollow', username=user.username) }}" class="btn btn-outline-secondary">
+                                                    <i class="bi bi-person-dash"></i> Deixar de Seguir
+                                                </a>
+                                            {% else %}
+                                                <a href="{{ url_for('main.follow', username=user.username) }}" class="btn btn-primary">
+                                                    <i class="bi bi-person-plus"></i> Seguir
+                                                </a>
+                                            {% endif %}
+                                        {% endif %}
+                                    </div>
                                 </div>
                             </div>
                         </div>

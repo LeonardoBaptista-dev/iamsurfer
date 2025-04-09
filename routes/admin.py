@@ -143,6 +143,7 @@ def reports():
     # Top usuários com mais posts
     top_posters = db.session.query(
         User.username,
+        User.profile_image,
         func.count(Post.id).label('post_count')
     ).join(Post, User.id == Post.user_id).group_by(User.id).order_by(func.count(Post.id).desc()).limit(10).all()
     

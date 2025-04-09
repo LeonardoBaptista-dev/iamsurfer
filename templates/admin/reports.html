@@ -105,12 +105,17 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {% for username, post_count in top_posters %}
+                                        {% for username, profile_image, post_count in top_posters %}
                                         <tr>
-                                            <td>{{ username }}</td>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <img src="{{ profile_image|img_url }}" class="rounded-circle me-2" width="32" height="32">
+                                                    <a href="{{ url_for('main.user_profile', username=username) }}" class="text-decoration-none">{{ username }}</a>
+                                                </div>
+                                            </td>
                                             <td>{{ post_count }}</td>
                                             <td>
-                                                <a href="{{ url_for('main.profile', username=username) }}" class="btn btn-sm btn-info">
+                                                <a href="{{ url_for('main.user_profile', username=username) }}" class="btn btn-sm btn-info">
                                                     <i class="fas fa-user"></i> Ver Perfil
                                                 </a>
                                             </td>
@@ -192,10 +197,10 @@ document.addEventListener('DOMContentLoaded', function() {
     var topPostersChart = new Chart(topPostersCtx, {
         type: 'bar',
         data: {
-            labels: [{% for username, post_count in top_posters %}'{{ username }}',{% endfor %}],
+            labels: [{% for username, profile_image, post_count in top_posters %}'{{ username }}',{% endfor %}],
             datasets: [{
                 label: 'Número de Posts',
-                data: [{% for username, post_count in top_posters %}{{ post_count }},{% endfor %}],
+                data: [{% for username, profile_image, post_count in top_posters %}{{ post_count }},{% endfor %}],
                 backgroundColor: [
                     'rgba(255, 99, 132, 0.2)',
                     'rgba(54, 162, 235, 0.2)',

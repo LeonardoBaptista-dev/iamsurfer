@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 import time
 import re
 from cloud_storage import init_cloudinary
+from flask import url_for
 
 # Carrega variáveis de ambiente
 load_dotenv()
@@ -40,6 +41,15 @@ def nl2br(value):
     if value:
         return Markup(value.replace('\n', '<br>'))
     return value
+
+# Filtro para processar URLs de imagem
+@app.template_filter('img_url')
+def img_url(path):
+    if not path:
+        return url_for('static', filename='uploads/default_profile.jpg')
+    if 'cloudinary.com' in path or path.startswith('http://') or path.startswith('https://'):
+        return path  # Retorna a URL externa diretamente
+    return url_for('static', filename=path)  # Arquivo local
 
 # Inicializa o SQLAlchemy
 db = SQLAlchemy(app)
