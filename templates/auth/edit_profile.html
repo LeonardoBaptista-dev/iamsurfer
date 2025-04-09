@@ -13,7 +13,11 @@
                 <form method="POST" action="{{ url_for('auth.edit_profile') }}" enctype="multipart/form-data">
                     <div class="row mb-4">
                         <div class="col-md-4 text-center">
-                            <img src="{{ url_for('static', filename=current_user.profile_image) }}" class="img-fluid rounded-circle mb-3" style="max-width: 150px;">
+                            {% if 'cloudinary.com' in current_user.profile_image %}
+                                <img src="{{ current_user.profile_image }}" class="img-fluid rounded-circle mb-3" style="max-width: 150px;">
+                            {% else %}
+                                <img src="{{ url_for('static', filename=current_user.profile_image) }}" class="img-fluid rounded-circle mb-3" style="max-width: 150px;">
+                            {% endif %}
                             
                             <div class="mb-3">
                                 <label for="profile_image" class="form-label">Foto de Perfil</label>
