@@ -7,6 +7,8 @@ from werkzeug.urls import url_parse
 import os
 import uuid
 from werkzeug.utils import secure_filename
+# Importa o módulo de armazenamento em nuvem
+from cloud_storage import upload_file as cloud_upload, delete_file as cloud_delete
 
 auth = Blueprint('auth', __name__)
 
@@ -128,21 +130,22 @@ def edit_profile():
                 
                 if file_ext in allowed_extensions:
                     try:
-                        # Gera um nome de arquivo seguro e único
-                        filename = secure_filename(f"profile_{current_user.id}_{str(uuid.uuid4())}.{file_ext}")
+                        # Define a pasta no Cloudinary
+                        folder = 'profile_pics'
                         
-                        # Diretório para imagens de perfil
-                        profile_upload_folder = os.path.join(app.root_path, 'static', 'uploads', 'profile_pics')
-                        os.makedirs(profile_upload_folder, exist_ok=True)
+                        # Exclui a imagem anterior se não for a padrão
+                        if current_user.profile_image and 'default_profile' not in current_user.profile_image and 'cloudinary' in current_user.profile_image:
+                            cloud_delete(current_user.profile_image)
                         
-                        # Salva o arquivo
-                        file_path = os.path.join(profile_upload_folder, filename)
-                        file.save(file_path)
+                        # Upload para Cloudinary
+                        file_url = cloud_upload(file, folder=folder)
                         
-                        # Atualiza o caminho da imagem no perfil do usuário
-                        # O caminho é relativo ao diretório static
-                        current_user.profile_image = os.path.join('uploads', 'profile_pics', filename)
-                        profile_image_updated = True
+                        if file_url:
+                            # Atualiza o caminho da imagem no perfil do usuário
+                            current_user.profile_image = file_url
+                            profile_image_updated = True
+                        else:
+                            flash('Erro ao fazer upload da imagem. Tente novamente.', 'danger')
                     except Exception as e:
                         app.logger.error(f"Erro ao salvar imagem de perfil: {str(e)}")
                         flash(f'Erro ao salvar imagem: {str(e)}', 'danger')

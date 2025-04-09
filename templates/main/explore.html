@@ -30,11 +30,19 @@
                             {% endif %}
                             
                             {% if post.image_url %}
-                                <img src="{{ url_for('static', filename=post.image_url) }}" class="img-fluid rounded mb-3">
+                                {% if 'cloudinary.com' in post.image_url %}
+                                    <img src="{{ post.image_url }}" class="img-fluid rounded mb-3">
+                                {% else %}
+                                    <img src="{{ url_for('static', filename=post.image_url) }}" class="img-fluid rounded mb-3">
+                                {% endif %}
                             {% endif %}
                             
                             {% if post.video_url %}
-                                <video src="{{ url_for('static', filename=post.video_url) }}" class="img-fluid rounded mb-3" controls></video>
+                                {% if 'cloudinary.com' in post.video_url %}
+                                    <video src="{{ post.video_url }}" class="img-fluid rounded mb-3" controls></video>
+                                {% else %}
+                                    <video src="{{ url_for('static', filename=post.video_url) }}" class="img-fluid rounded mb-3" controls></video>
+                                {% endif %}
                             {% endif %}
                             
                             <div class="d-flex justify-content-between">

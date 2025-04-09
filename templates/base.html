@@ -61,7 +61,11 @@
                         {% endif %}
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                                <img src="{{ url_for('static', filename=current_user.profile_image) }}" class="rounded-circle me-1" width="24" height="24">
+                                {% if 'cloudinary.com' in current_user.profile_image %}
+                                    <img src="{{ current_user.profile_image }}" class="rounded-circle me-1" width="24" height="24">
+                                {% else %}
+                                    <img src="{{ url_for('static', filename=current_user.profile_image) }}" class="rounded-circle me-1" width="24" height="24">
+                                {% endif %}
                                 {{ current_user.username }}
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end">

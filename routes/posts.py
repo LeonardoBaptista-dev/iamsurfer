@@ -8,6 +8,8 @@ from datetime import datetime
 import uuid
 import io
 from io import BytesIO
+# Importa o módulo de armazenamento em nuvem
+from cloud_storage import upload_file as cloud_upload, delete_file as cloud_delete
 
 posts = Blueprint('posts', __name__)
 
@@ -24,31 +26,31 @@ def new_post():
         # Cria post inicialmente sem mídia
         post = Post(content=content, user_id=current_user.id)
         
-        # Processamento de imagem ou vídeo, salvando no sistema de arquivos
+        # Processamento de imagem ou vídeo
         if 'media' in request.files and request.files['media'].filename:
             file = request.files['media']
             
             if file and allowed_file(file.filename):
-                # Gera um nome de arquivo seguro e único
+                # Determina o tipo de mídia
                 file_ext = file.filename.rsplit('.', 1)[1].lower()
-                filename = secure_filename(f"post_{str(uuid.uuid4())}.{file_ext}")
+                is_image = file_ext in ['jpg', 'jpeg', 'png', 'gif']
+                is_video = file_ext in ['mp4', 'mov']
                 
-                # Diretório para posts
-                posts_upload_folder = os.path.join(app.root_path, 'static', 'uploads', 'posts')
-                os.makedirs(posts_upload_folder, exist_ok=True)
+                # Define a pasta no Cloudinary
+                folder = 'posts'
                 
-                # Salva o arquivo
-                file_path = os.path.join(posts_upload_folder, filename)
-                file.save(file_path)
+                # Upload para Cloudinary
+                file_url = cloud_upload(file, folder=folder)
                 
-                # URL relativa para o arquivo salvo - apenas o caminho relativo ao diretório static
-                file_url = os.path.join('uploads', 'posts', filename)
-                
-                # Determina se é imagem ou vídeo
-                if file_ext in ['jpg', 'jpeg', 'png', 'gif']:
-                    post.image_url = file_url
-                elif file_ext in ['mp4', 'mov']:
-                    post.video_url = file_url
+                if file_url:
+                    # Atribui a URL ao campo apropriado
+                    if is_image:
+                        post.image_url = file_url
+                    elif is_video:
+                        post.video_url = file_url
+                else:
+                    flash('Erro ao fazer upload do arquivo. Tente novamente.', 'danger')
+                    return redirect(url_for('posts.new_post'))
             else:
                 flash('Formato de arquivo não permitido.', 'danger')
                 return redirect(url_for('posts.new_post'))
@@ -97,20 +99,16 @@ def delete_post(post_id):
     # Remove arquivo de imagem ou vídeo caso exista
     if post.image_url:
         try:
-            # O caminho completo do arquivo (inclui o diretório static)
-            file_path = os.path.join(app.root_path, 'static', post.image_url)
-            if os.path.exists(file_path):
-                os.remove(file_path)
+            # Excluir do Cloudinary
+            cloud_delete(post.image_url)
         except Exception as e:
             # Log do erro, mas continua com a exclusão do post
             print(f"Erro ao excluir arquivo de imagem: {str(e)}")
     
     if post.video_url:
         try:
-            # O caminho completo do arquivo (inclui o diretório static)
-            file_path = os.path.join(app.root_path, 'static', post.video_url)
-            if os.path.exists(file_path):
-                os.remove(file_path)
+            # Excluir do Cloudinary
+            cloud_delete(post.video_url)
         except Exception as e:
             # Log do erro, mas continua com a exclusão do post
             print(f"Erro ao excluir arquivo de vídeo: {str(e)}")

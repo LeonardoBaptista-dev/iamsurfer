@@ -15,6 +15,11 @@ services:
       - DATABASE_URL=postgresql://iamsurfer:iamsurfer@db/iamsurfer
       # Configuração para produção no Render (comentada)
       # - DATABASE_URL=postgresql://iamsurfer_db_user:9sdJXz63jfoSV1lxfQN8bGgPzQaATmSU@dpg-cvqp848gjchc7395pfhg-a/iamsurfer_db
+      # Configuração do Cloudinary
+      - CLOUDINARY_CLOUD_NAME=dekstvey2
+      - CLOUDINARY_API_KEY=337715259474895
+      - CLOUDINARY_API_SECRET=6smIGE34t2zFBBHPNsDAa7BePG8
+      - CLOUDINARY_URL=cloudinary://337715259474895:6smIGE34t2zFBBHPNsDAa7BePG8@dekstvey2
     depends_on:
       - db
   

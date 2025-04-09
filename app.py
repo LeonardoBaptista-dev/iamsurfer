@@ -6,6 +6,7 @@ import os
 from dotenv import load_dotenv
 import time
 import re
+from cloud_storage import init_cloudinary
 
 # Carrega variáveis de ambiente
 load_dotenv()
@@ -135,6 +136,13 @@ def init_db():
         except Exception as e:
             print(f"Erro ao inicializar banco de dados: {e}")
             print("Continuando mesmo assim...")
+
+# Inicializa o Cloudinary se as credenciais estiverem definidas
+if os.environ.get('CLOUDINARY_CLOUD_NAME') or os.environ.get('CLOUDINARY_URL'):
+    init_cloudinary()
+    print("Cloudinary configurado para armazenamento de arquivos.")
+else:
+    print("Aviso: Credenciais do Cloudinary não encontradas. O armazenamento de arquivos utilizará o sistema de arquivos local.")
 
 # Importa e registra os blueprints
 try:

@@ -10,6 +10,11 @@ WORKDIR /app
 
 # Copiar requirements e instalar dependências primeiro (para melhor utilização de cache)
 COPY requirements.txt .
+
+# Instalar SQLAlchemy explicitamente primeiro (versão 1.4.46 para compatibilidade com Flask-SQLAlchemy 2.5.1)
+RUN pip install --no-cache-dir SQLAlchemy==1.4.46
+
+# Instalar as demais dependências
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copiar o restante do código
