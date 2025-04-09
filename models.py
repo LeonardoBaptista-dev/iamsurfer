@@ -72,6 +72,13 @@ class User(UserMixin, db.Model):
     @property
     def followers(self):
         return Follow.query.filter_by(followed_id=self.id)
+    
+    def has_liked_post(self, post):
+        """Verifica se o usuário já curtiu um post específico"""
+        return Like.query.filter(
+            Like.user_id == self.id,
+            Like.post_id == post.id
+        ).first() is not None
 
 class Post(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -114,6 +121,12 @@ class Like(db.Model):
     
     def __repr__(self):
         return f'<Like {self.id} by {self.user.username} on Post {self.post_id}>'
+    
+    @classmethod
+    def count(cls, count=None):
+        """Método para contar likes que aceita um parâmetro opcional para compatibilidade"""
+        # O parâmetro count é ignorado, mantido apenas para compatibilidade com chamadas existentes
+        return cls.query.count()
 
 class Follow(db.Model):
     id = db.Column(db.Integer, primary_key=True)
