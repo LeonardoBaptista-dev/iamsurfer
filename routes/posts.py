@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request, abort
+from flask import Blueprint, render_template, redirect, url_for, flash, request, abort, send_file, send_from_directory
 from flask_login import login_required, current_user
 from models import Post, Comment, Like
 from app import db, app
@@ -6,6 +6,8 @@ import os
 from werkzeug.utils import secure_filename
 from datetime import datetime
 import uuid
+import io
+from io import BytesIO
 
 posts = Blueprint('posts', __name__)
 
@@ -18,41 +20,44 @@ def allowed_file(filename):
 def new_post():
     if request.method == 'POST':
         content = request.form.get('content')
-        image_url = None
-        video_url = None
         
-        # Salva imagem ou vídeo
+        # Cria post inicialmente sem mídia
+        post = Post(content=content, user_id=current_user.id)
+        
+        # Processamento de imagem ou vídeo, salvando no sistema de arquivos
         if 'media' in request.files and request.files['media'].filename:
             file = request.files['media']
             
             if file and allowed_file(file.filename):
-                # Cria nome de arquivo único
-                original_filename = secure_filename(file.filename)
-                file_ext = original_filename.rsplit('.', 1)[1].lower()
-                filename = f"{uuid.uuid4().hex}.{file_ext}"
+                # Gera um nome de arquivo seguro e único
+                file_ext = file.filename.rsplit('.', 1)[1].lower()
+                filename = secure_filename(f"post_{str(uuid.uuid4())}.{file_ext}")
                 
-                # Define o caminho onde salvar
-                filepath = os.path.join(app.config['UPLOAD_FOLDER'], 'posts', filename)
-                os.makedirs(os.path.dirname(filepath), exist_ok=True)
+                # Diretório para posts
+                posts_upload_folder = os.path.join(app.root_path, 'static', 'uploads', 'posts')
+                os.makedirs(posts_upload_folder, exist_ok=True)
                 
                 # Salva o arquivo
-                file.save(filepath)
+                file_path = os.path.join(posts_upload_folder, filename)
+                file.save(file_path)
+                
+                # URL relativa para o arquivo salvo - apenas o caminho relativo ao diretório static
+                file_url = os.path.join('uploads', 'posts', filename)
                 
                 # Determina se é imagem ou vídeo
                 if file_ext in ['jpg', 'jpeg', 'png', 'gif']:
-                    image_url = f"uploads/posts/{filename}"
+                    post.image_url = file_url
                 elif file_ext in ['mp4', 'mov']:
-                    video_url = f"uploads/posts/{filename}"
+                    post.video_url = file_url
             else:
                 flash('Formato de arquivo não permitido.', 'danger')
                 return redirect(url_for('posts.new_post'))
         
-        # Verifica se há conteúdo ou mídia para postar
-        if not content and not image_url and not video_url:
+        # Verifica se há conteúdo para postar
+        if not content and not post.image_url and not post.video_url:
             flash('O post deve ter texto, imagem ou vídeo.', 'danger')
             return redirect(url_for('posts.new_post'))
         
-        post = Post(content=content, image_url=image_url, video_url=video_url, user_id=current_user.id)
         db.session.add(post)
         db.session.commit()
         
@@ -89,18 +94,26 @@ def delete_post(post_id):
     if post.user_id != current_user.id and not current_user.is_admin:
         abort(403)
     
-    # Remove arquivos de mídia se existirem
+    # Remove arquivo de imagem ou vídeo caso exista
     if post.image_url:
         try:
-            os.remove(os.path.join(app.root_path, 'static', post.image_url))
-        except:
-            pass
+            # O caminho completo do arquivo (inclui o diretório static)
+            file_path = os.path.join(app.root_path, 'static', post.image_url)
+            if os.path.exists(file_path):
+                os.remove(file_path)
+        except Exception as e:
+            # Log do erro, mas continua com a exclusão do post
+            print(f"Erro ao excluir arquivo de imagem: {str(e)}")
     
     if post.video_url:
         try:
-            os.remove(os.path.join(app.root_path, 'static', post.video_url))
-        except:
-            pass
+            # O caminho completo do arquivo (inclui o diretório static)
+            file_path = os.path.join(app.root_path, 'static', post.video_url)
+            if os.path.exists(file_path):
+                os.remove(file_path)
+        except Exception as e:
+            # Log do erro, mas continua com a exclusão do post
+            print(f"Erro ao excluir arquivo de vídeo: {str(e)}")
     
     db.session.delete(post)
     db.session.commit()
@@ -178,4 +191,49 @@ def like_post(post_id):
 @posts.route('/posts/<int:post_id>/like', methods=['POST'])
 @login_required
 def like_post_alt(post_id):
-    return like_post(post_id) 
+    return like_post(post_id)
+
+@posts.route('/create', methods=['GET', 'POST'])
+@login_required
+def create_post():
+    if request.method == 'POST':
+        content = request.form.get('content')
+        
+        # Cria post inicialmente sem mídia
+        post = Post(content=content, user_id=current_user.id)
+        
+        if 'media' in request.files and request.files['media'].filename:
+            file = request.files['media']
+            
+            if file and file.filename:
+                # Gera um nome de arquivo seguro e único
+                file_ext = file.filename.rsplit('.', 1)[1].lower() if '.' in file.filename else ''
+                filename = secure_filename(f"post_{str(uuid.uuid4())}.{file_ext}")
+                
+                # Diretório para posts
+                posts_upload_folder = os.path.join(app.root_path, 'static', 'uploads', 'posts')
+                os.makedirs(posts_upload_folder, exist_ok=True)
+                
+                # Salva o arquivo
+                file_path = os.path.join(posts_upload_folder, filename)
+                file.save(file_path)
+                
+                # URL relativa para o arquivo salvo - apenas o caminho relativo ao diretório static
+                file_url = os.path.join('uploads', 'posts', filename)
+                
+                # Verifica se é uma imagem ou vídeo
+                import mimetypes
+                mimetype = file.content_type
+                
+                if mimetype.startswith('image/'):
+                    post.image_url = file_url
+                elif mimetype.startswith('video/'):
+                    post.video_url = file_url
+        
+        db.session.add(post)
+        db.session.commit()
+        
+        flash('Post criado com sucesso!', 'success')
+        return redirect(url_for('main.index'))
+        
+    return render_template('posts/create.html') 

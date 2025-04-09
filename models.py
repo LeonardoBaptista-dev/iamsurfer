@@ -39,13 +39,16 @@ class User(UserMixin, db.Model):
         cascade='all, delete-orphan'
     )
     
-    followers = db.relationship(
+    following = db.relationship(
         'Follow',
         foreign_keys='Follow.followed_id',
         backref=db.backref('followed', lazy='joined'),
         lazy='dynamic',
         cascade='all, delete-orphan'
     )
+    
+    def __repr__(self):
+        return f'<User {self.username}>'
     
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -55,7 +58,7 @@ class User(UserMixin, db.Model):
     
     def follow(self, user):
         if not self.is_following(user):
-            follow = Follow(follower=self, followed=user)
+            follow = Follow(follower_id=self.id, followed_id=user.id)
             db.session.add(follow)
     
     def unfollow(self, user):
@@ -66,24 +69,29 @@ class User(UserMixin, db.Model):
     def is_following(self, user):
         return self.followed.filter_by(followed_id=user.id).first() is not None
     
-    def __repr__(self):
-        return f'<User {self.username}>'
+    @property
+    def followers(self):
+        return Follow.query.filter_by(followed_id=self.id)
 
 class Post(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    content = db.Column(db.Text)
-    image_url = db.Column(db.String(255))
-    video_url = db.Column(db.String(255))
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    content = db.Column(db.Text, nullable=False)
+    image_url = db.Column(db.String(255), nullable=True)
+    video_url = db.Column(db.String(255), nullable=True)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, nullable=True, onupdate=datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     
     # Relacionamentos
-    comments = db.relationship('Comment', backref='post', lazy='dynamic', cascade='all, delete-orphan')
-    likes = db.relationship('Like', backref='post', lazy='dynamic', cascade='all, delete-orphan')
-    
+    comments = db.relationship('Comment', backref='post', lazy=True, cascade="all, delete-orphan")
+    likes = db.relationship('Like', backref='post', lazy=True, cascade="all, delete-orphan")
+
+    @property
+    def date_posted(self):
+        return self.created_at
+
     def __repr__(self):
-        return f'<Post {self.id} by {self.author.username}>'
+        return f"Post('{self.content[:20]}...', '{self.created_at}')"
 
 class Comment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -101,12 +109,11 @@ class Like(db.Model):
     post_id = db.Column(db.Integer, db.ForeignKey('post.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
-    __table_args__ = (
-        db.UniqueConstraint('user_id', 'post_id', name='_user_post_like_uc'),
-    )
+    # Garantir que um usuário só pode curtir um post uma vez
+    __table_args__ = (db.UniqueConstraint('user_id', 'post_id', name='_user_post_like_uc'),)
     
     def __repr__(self):
-        return f'<Like by {self.user.username} on post {self.post_id}>'
+        return f'<Like {self.id} by {self.user.username} on Post {self.post_id}>'
 
 class Follow(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -114,9 +121,8 @@ class Follow(db.Model):
     followed_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
-    __table_args__ = (
-        db.UniqueConstraint('follower_id', 'followed_id', name='_follower_followed_uc'),
-    )
+    # Garantir que um usuário só pode seguir outro usuário uma vez
+    __table_args__ = (db.UniqueConstraint('follower_id', 'followed_id', name='_follower_followed_uc'),)
     
     def __repr__(self):
         return f'<Follow {self.follower.username} -> {self.followed.username}>'
@@ -130,4 +136,4 @@ class Message(db.Model):
     read = db.Column(db.Boolean, default=False)
     
     def __repr__(self):
-        return f'<Message {self.id}: {self.sender.username} -> {self.recipient.username}>' 
+        return f'<Message {self.id} from {self.sender.username} to {self.recipient.username}>' 

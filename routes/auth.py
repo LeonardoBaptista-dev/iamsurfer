@@ -1,9 +1,12 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request
+from flask import Blueprint, render_template, redirect, url_for, flash, request, send_file
 from flask_login import login_user, logout_user, current_user, login_required
 from werkzeug.security import generate_password_hash, check_password_hash
 from models import User
-from app import db
+from app import db, app
 from werkzeug.urls import url_parse
+import os
+import uuid
+from werkzeug.utils import secure_filename
 
 auth = Blueprint('auth', __name__)
 
@@ -99,21 +102,33 @@ def edit_profile():
         current_user.location = request.form.get('location')
         
         if 'profile_image' in request.files and request.files['profile_image'].filename:
-            from werkzeug.utils import secure_filename
-            import os
-            from app import app
-            
             file = request.files['profile_image']
-            filename = secure_filename(file.filename)
-            filepath = os.path.join(app.config['UPLOAD_FOLDER'], 'profile_pics', filename)
             
-            os.makedirs(os.path.dirname(filepath), exist_ok=True)
-            file.save(filepath)
-            
-            current_user.profile_image = f'uploads/profile_pics/{filename}'
+            if file and file.filename:
+                # Verifica extensões permitidas
+                allowed_extensions = {'png', 'jpg', 'jpeg', 'gif'}
+                file_ext = file.filename.rsplit('.', 1)[1].lower() if '.' in file.filename else ''
+                
+                if file_ext in allowed_extensions:
+                    # Gera um nome de arquivo seguro e único
+                    filename = secure_filename(f"profile_{current_user.id}_{str(uuid.uuid4())}.{file_ext}")
+                    
+                    # Diretório para imagens de perfil
+                    profile_upload_folder = os.path.join(app.root_path, 'static', 'uploads', 'profile_pics')
+                    os.makedirs(profile_upload_folder, exist_ok=True)
+                    
+                    # Salva o arquivo
+                    file_path = os.path.join(profile_upload_folder, filename)
+                    file.save(file_path)
+                    
+                    # Atualiza o caminho da imagem no perfil do usuário
+                    # O caminho é relativo ao diretório static
+                    current_user.profile_image = os.path.join('uploads', 'profile_pics', filename)
+                else:
+                    flash('Formato de arquivo não permitido. Use PNG, JPG, JPEG ou GIF.', 'danger')
         
         db.session.commit()
         flash('Perfil atualizado com sucesso!', 'success')
-        return redirect(url_for('auth.profile'))
+        return redirect(url_for('auth.profile', username=current_user.username))
     
     return render_template('auth/edit_profile.html') 

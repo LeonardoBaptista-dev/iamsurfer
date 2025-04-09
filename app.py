@@ -24,6 +24,9 @@ app.config['SQLALCHEMY_DATABASE_URI'] = database_url or 'sqlite:///iamsurfer.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = os.path.join(app.root_path, 'static/uploads')
 
+# Aumenta o limite máximo de upload para 16MB
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
+
 # Verificar se está em ambiente de produção (Render)
 is_production = os.environ.get('RENDER', False) or os.environ.get('FLASK_ENV') == 'production'
 

@@ -14,10 +14,10 @@ def index():
         following_ids.append(current_user.id)  # Inclui os próprios posts do usuário
         
         # Busca posts dos usuários seguidos e do próprio usuário
-        posts = Post.query.filter(Post.user_id.in_(following_ids)).order_by(Post.created_at.desc()).all()
+        posts = Post.query.filter(Post.user_id.in_(following_ids)).order_by(desc(Post.created_at)).all()
     else:
         # Para usuários não logados, mostra os posts mais recentes
-        posts = Post.query.order_by(Post.created_at.desc()).limit(10).all()
+        posts = Post.query.order_by(desc(Post.created_at)).limit(10).all()
     
     return render_template('main/index.html', posts=posts)
 
@@ -30,7 +30,7 @@ def explore():
 @main.route('/user/<username>')
 def user_profile(username):
     user = User.query.filter_by(username=username).first_or_404()
-    posts = Post.query.filter_by(user_id=user.id).order_by(Post.created_at.desc()).all()
+    posts = Post.query.filter_by(user_id=user.id).order_by(desc(Post.created_at)).all()
     
     # Verifica se o usuário atual segue este perfil
     is_following = False

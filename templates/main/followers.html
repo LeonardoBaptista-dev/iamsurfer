@@ -68,14 +68,22 @@
                         <p class="text-muted"><i class="bi bi-geo-alt"></i> {{ user.location }}</p>
                     {% endif %}
                     
-                    <div class="d-flex justify-content-center mt-3">
-                        <div class="px-3 border-end">
-                            <h5 class="mb-0">{{ user.followers.count() }}</h5>
-                            <small>Seguidores</small>
+                    <div class="row mt-4">
+                        <div class="col-md-6">
+                            <div class="card text-center">
+                                <div class="card-body">
+                                    <h5 class="mb-0">0</h5>
+                                    <small class="text-muted">Seguidores</small>
+                                </div>
+                            </div>
                         </div>
-                        <div class="px-3">
-                            <h5 class="mb-0">{{ user.followed.count() }}</h5>
-                            <a href="{{ url_for('main.following', username=user.username) }}" class="text-decoration-none">Seguindo</a>
+                        <div class="col-md-6">
+                            <div class="card text-center">
+                                <div class="card-body">
+                                    <h5 class="mb-0">0</h5>
+                                    <small class="text-muted">Seguindo</small>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     

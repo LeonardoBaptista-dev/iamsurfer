@@ -81,8 +81,8 @@
             {% if posts %}
                 {% for post in posts %}
                     <div class="card mb-4">
-                        <div class="card-header d-flex justify-content-between align-items-center">
-                            <div>
+                        <div class="card-header d-flex justify-content-between">
+                            <div class="d-flex align-items-center">
                                 <img src="{{ url_for('static', filename=user.profile_image) }}" class="rounded-circle me-2" width="32" height="32">
                                 <a href="{{ url_for('main.user_profile', username=user.username) }}" class="fw-bold text-decoration-none">{{ user.username }}</a>
                             </div>
@@ -90,9 +90,7 @@
                         </div>
                         
                         <div class="card-body">
-                            {% if post.content %}
-                                <p class="card-text">{{ post.content|nl2br }}</p>
-                            {% endif %}
+                            <p class="card-text">{{ post.content }}</p>
                             
                             {% if post.image_url %}
                                 <img src="{{ url_for('static', filename=post.image_url) }}" class="img-fluid rounded mb-3">
@@ -102,20 +100,24 @@
                                 <video src="{{ url_for('static', filename=post.video_url) }}" class="img-fluid rounded mb-3" controls></video>
                             {% endif %}
                             
-                            <div class="d-flex justify-content-between">
+                            <div class="d-flex justify-content-between mt-3">
                                 <div>
-                                    <span class="me-3">
-                                        <i class="bi bi-heart{% if current_user.is_authenticated and current_user.likes.filter_by(post_id=post.id).first() %}-fill text-danger{% endif %}"></i> 
-                                        {{ post.likes.count() }} curtidas
-                                    </span>
-                                    <span>
-                                        <i class="bi bi-chat"></i> 
-                                        {{ post.comments.count() }} comentários
-                                    </span>
+                                    <a href="{{ url_for('posts.view_post', post_id=post.id) }}" class="btn btn-sm btn-outline-primary me-2">
+                                        <i class="bi bi-chat"></i> 0 comentários
+                                    </a>
+                                    
+                                    <button class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-heart"></i> 0 curtidas
+                                    </button>
                                 </div>
-                                <a href="{{ url_for('posts.view_post', post_id=post.id) }}" class="btn btn-sm btn-outline-primary">
-                                    Ver post completo
-                                </a>
+                                
+                                {% if current_user.is_authenticated and (post.user_id == current_user.id or current_user.is_admin) %}
+                                    <form action="{{ url_for('posts.delete_post', post_id=post.id) }}" method="post" onsubmit="return confirm('Tem certeza que deseja excluir este post?');">
+                                        <button type="submit" class="btn btn-sm btn-danger">
+                                            <i class="bi bi-trash"></i> Excluir
+                                        </button>
+                                    </form>
+                                {% endif %}
                             </div>
                         </div>
                     </div>

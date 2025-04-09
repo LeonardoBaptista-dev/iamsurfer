@@ -7,6 +7,7 @@ services:
       - "5001:5000"
     volumes:
       - .:/app
+      - uploads_data:/app/static/uploads
     environment:
       - FLASK_APP=app.py
       - FLASK_ENV=development
@@ -29,4 +30,5 @@ services:
       - "5432:5432"
 
 volumes:
-  postgres_data: 
+  postgres_data:
+  uploads_data: 
