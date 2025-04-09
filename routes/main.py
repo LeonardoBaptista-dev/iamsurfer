@@ -3,6 +3,7 @@ from flask_login import login_required, current_user
 from models import User, Post, Follow
 from app import db
 from sqlalchemy import desc
+import random
 
 main = Blueprint('main', __name__)
 
@@ -15,11 +16,20 @@ def index():
         
         # Busca posts dos usuários seguidos e do próprio usuário
         posts = Post.query.filter(Post.user_id.in_(following_ids)).order_by(desc(Post.created_at)).all()
+        
+        # Busca usuários que o usuário atual não segue
+        users_not_following = User.query.filter(~User.id.in_(following_ids)).all()
+        # Seleciona aleatoriamente até 3 usuários para sugerir
+        suggested_users = random.sample(users_not_following, min(3, len(users_not_following)))
     else:
         # Para usuários não logados, mostra os posts mais recentes
         posts = Post.query.order_by(desc(Post.created_at)).limit(10).all()
+        
+        # Para usuários não logados, seleciona usuários aleatórios
+        all_users = User.query.all()
+        suggested_users = random.sample(all_users, min(3, len(all_users)))
     
-    return render_template('main/index.html', posts=posts)
+    return render_template('main/index.html', posts=posts, suggested_users=suggested_users)
 
 @main.route('/explore')
 def explore():

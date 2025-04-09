@@ -233,37 +233,34 @@
             </div>
             <div class="card-body p-0">
                 <div class="list-group list-group-flush">
-                    <!-- Exibir surfistas sugeridos (exemplo estático) -->
-                    <div class="list-group-item d-flex justify-content-between align-items-center">
-                        <div class="d-flex align-items-center">
-                            <img src="{{ 'uploads/default_profile.jpg'|img_url }}" class="rounded-circle me-2" width="40" height="40">
-                            <div>
-                                <strong>GabrielMedina</strong>
-                                <p class="mb-0 small text-muted">Maresias, SP</p>
+                    {% if suggested_users %}
+                        {% for user in suggested_users %}
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center">
+                                    <img src="{{ user.profile_image|img_url }}" class="rounded-circle me-2" width="40" height="40">
+                                    <div>
+                                        <a href="{{ url_for('main.user_profile', username=user.username) }}" class="text-decoration-none text-dark">
+                                            <strong>{{ user.username }}</strong>
+                                        </a>
+                                        <p class="mb-0 small text-muted">{{ user.location or "Localização não informada" }}</p>
+                                    </div>
+                                </div>
+                                {% if current_user.is_authenticated and current_user.id != user.id %}
+                                    {% if current_user.is_following(user) %}
+                                        <a href="{{ url_for('main.unfollow', username=user.username) }}" class="btn btn-sm btn-outline-primary">Deixar de Seguir</a>
+                                    {% else %}
+                                        <a href="{{ url_for('main.follow', username=user.username) }}" class="btn btn-sm btn-primary">Seguir</a>
+                                    {% endif %}
+                                {% elif not current_user.is_authenticated %}
+                                    <a href="{{ url_for('auth.login') }}" class="btn btn-sm btn-primary">Seguir</a>
+                                {% endif %}
                             </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="list-group-item text-center">
+                            <p class="mb-0 text-muted">Nenhuma sugestão disponível no momento.</p>
                         </div>
-                        <a href="#" class="btn btn-sm btn-primary">Seguir</a>
-                    </div>
-                    <div class="list-group-item d-flex justify-content-between align-items-center">
-                        <div class="d-flex align-items-center">
-                            <img src="{{ 'uploads/default_profile.jpg'|img_url }}" class="rounded-circle me-2" width="40" height="40">
-                            <div>
-                                <strong>FilipoToledo</strong>
-                                <p class="mb-0 small text-muted">Ubatuba, SP</p>
-                            </div>
-                        </div>
-                        <a href="#" class="btn btn-sm btn-primary">Seguir</a>
-                    </div>
-                    <div class="list-group-item d-flex justify-content-between align-items-center">
-                        <div class="d-flex align-items-center">
-                            <img src="{{ 'uploads/default_profile.jpg'|img_url }}" class="rounded-circle me-2" width="40" height="40">
-                            <div>
-                                <strong>ItaloFerreira</strong>
-                                <p class="mb-0 small text-muted">Baía Formosa, RN</p>
-                            </div>
-                        </div>
-                        <a href="#" class="btn btn-sm btn-primary">Seguir</a>
-                    </div>
+                    {% endif %}
                 </div>
             </div>
             <div class="card-footer text-center">
