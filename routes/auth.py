@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, send_file
 from flask_login import login_user, logout_user, current_user, login_required
 from werkzeug.security import generate_password_hash, check_password_hash
-from models import User
+from models import User, Post
 from app import db, app
 from werkzeug.urls import url_parse
 import os
@@ -92,15 +92,32 @@ def logout():
 @auth.route('/profile')
 @login_required
 def profile():
-    return render_template('auth/profile.html', user=current_user)
+    # Verifica se há um parâmetro de consulta 'username'
+    username = request.args.get('username')
+    
+    # Se um nome de usuário foi fornecido e não é o usuário atual
+    if username and username != current_user.username:
+        # Redireciona para a página de perfil do usuário específico
+        return redirect(url_for('main.user_profile', username=username))
+    
+    # Obtenha os posts do usuário atual ordenados por data de criação decrescente
+    user_posts = current_user.posts.order_by(Post.created_at.desc()).all()
+    
+    # Caso contrário, exibe o perfil do usuário atual
+    return render_template('auth/profile.html', user=current_user, user_posts=user_posts)
 
 @auth.route('/profile/edit', methods=['GET', 'POST'])
 @login_required
 def edit_profile():
     if request.method == 'POST':
+        # Atualiza as informações básicas primeiro
         current_user.bio = request.form.get('bio')
         current_user.location = request.form.get('location')
         
+        # Flag para indicar se a foto de perfil foi alterada
+        profile_image_updated = False
+        
+        # Processa o upload da imagem, se fornecida
         if 'profile_image' in request.files and request.files['profile_image'].filename:
             file = request.files['profile_image']
             
@@ -110,25 +127,42 @@ def edit_profile():
                 file_ext = file.filename.rsplit('.', 1)[1].lower() if '.' in file.filename else ''
                 
                 if file_ext in allowed_extensions:
-                    # Gera um nome de arquivo seguro e único
-                    filename = secure_filename(f"profile_{current_user.id}_{str(uuid.uuid4())}.{file_ext}")
-                    
-                    # Diretório para imagens de perfil
-                    profile_upload_folder = os.path.join(app.root_path, 'static', 'uploads', 'profile_pics')
-                    os.makedirs(profile_upload_folder, exist_ok=True)
-                    
-                    # Salva o arquivo
-                    file_path = os.path.join(profile_upload_folder, filename)
-                    file.save(file_path)
-                    
-                    # Atualiza o caminho da imagem no perfil do usuário
-                    # O caminho é relativo ao diretório static
-                    current_user.profile_image = os.path.join('uploads', 'profile_pics', filename)
+                    try:
+                        # Gera um nome de arquivo seguro e único
+                        filename = secure_filename(f"profile_{current_user.id}_{str(uuid.uuid4())}.{file_ext}")
+                        
+                        # Diretório para imagens de perfil
+                        profile_upload_folder = os.path.join(app.root_path, 'static', 'uploads', 'profile_pics')
+                        os.makedirs(profile_upload_folder, exist_ok=True)
+                        
+                        # Salva o arquivo
+                        file_path = os.path.join(profile_upload_folder, filename)
+                        file.save(file_path)
+                        
+                        # Atualiza o caminho da imagem no perfil do usuário
+                        # O caminho é relativo ao diretório static
+                        current_user.profile_image = os.path.join('uploads', 'profile_pics', filename)
+                        profile_image_updated = True
+                    except Exception as e:
+                        app.logger.error(f"Erro ao salvar imagem de perfil: {str(e)}")
+                        flash(f'Erro ao salvar imagem: {str(e)}', 'danger')
                 else:
                     flash('Formato de arquivo não permitido. Use PNG, JPG, JPEG ou GIF.', 'danger')
         
-        db.session.commit()
-        flash('Perfil atualizado com sucesso!', 'success')
-        return redirect(url_for('auth.profile', username=current_user.username))
+        # Salva todas as alterações no banco de dados
+        try:
+            db.session.commit()
+            if profile_image_updated:
+                flash('Perfil e foto atualizados com sucesso!', 'success')
+            else:
+                flash('Perfil atualizado com sucesso!', 'success')
+        except Exception as e:
+            db.session.rollback()
+            app.logger.error(f"Erro ao atualizar perfil no banco de dados: {str(e)}")
+            flash(f'Erro ao atualizar perfil: {str(e)}', 'danger')
+        
+        # Redireciona após processar tudo
+        return redirect(url_for('auth.profile'))
     
+    # Método GET - Exibe o formulário
     return render_template('auth/edit_profile.html') 
