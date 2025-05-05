@@ -150,3 +150,13 @@ class Message(db.Model):
     
     def __repr__(self):
         return f'<Message {self.id} from {self.sender.username} to {self.recipient.username}>' 
+    
+class SurfSpot(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    location = db.Column(db.String(100), nullable=False)
+    slug = db.Column(db.String(100), nullable=False, unique=True)
+    description = db.Column(db.Text, nullable=True)
+    
+    def __repr__(self):
+        return f'<SurfSpot {self.name}>'

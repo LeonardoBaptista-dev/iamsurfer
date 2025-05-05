@@ -1,11 +1,71 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_required, current_user
-from models import User, Post, Follow
+from models import User, Post, Follow, SurfSpot
 from app import db
 from sqlalchemy import desc
 import random
+from datetime import datetime
 
 main = Blueprint('main', __name__)
+
+# Dados de exemplo para as previsões de surf
+SURF_SPOTS = [
+    {"name": "Campeche", "location": "Florianópolis, SC", "slug": "campeche"},
+    {"name": "Joaquina", "location": "Florianópolis, SC", "slug": "joaquina"},
+    {"name": "Praia da Vila", "location": "Imbituba, SC", "slug": "praia-da-vila"},
+    {"name": "Silveira", "location": "Garopaba, SC", "slug": "silveira"},
+    {"name": "Rosa Norte", "location": "Imbituba, SC", "slug": "rosa"},
+    {"name": "Matinhos", "location": "Matinhos, PR", "slug": "matinhos"},
+    {"name": "Itamambuca", "location": "Ubatuba, SP", "slug": "itamambuca"}
+]
+
+# Função para gerar previsão aleatória
+def get_random_forecast():
+    # Escolhe um spot aleatório
+    spot = random.choice(SURF_SPOTS)
+    
+    # Gera dados aleatórios para a previsão
+    wave_height = round(random.uniform(0.5, 2.5), 1)  # Altura de onda entre 0.5m e 2.5m
+    period = random.randint(6, 12)  # Período entre 6s e 12s
+    
+    # Direções possíveis
+    directions = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
+    wave_direction = random.choice(directions)
+    
+    # Velocidade do vento
+    wind_speed = random.randint(5, 25)  # km/h
+    wind_direction = random.choice(directions)
+    
+    # Temperatura
+    temperature = random.randint(18, 30)  # °C
+    
+    # Mensagem sobre condições
+    messages = [
+        "Ondas boas para iniciantes",
+        "Ondas perfeitas para surfistas experientes",
+        "Condições ideais para surf",
+        "Mar agitado, cuidado redobrado",
+        "Ondas pequenas, dia tranquilo"
+    ]
+    condition_message = random.choice(messages)
+    
+    # Horário da maré baixa (formato HH:MM)
+    hour = random.randint(5, 21)
+    minute = random.choice([0, 15, 30, 45])
+    tide_time = f"{hour:02d}:{minute:02d}h"
+    
+    return {
+        "spot": spot,
+        "wave_height": wave_height,
+        "period": period,
+        "wave_direction": wave_direction,
+        "wind_speed": wind_speed,
+        "wind_direction": wind_direction,
+        "temperature": temperature,
+        "condition_message": condition_message,
+        "tide_time": tide_time,
+        "forecast_url": f"https://www.surf-forecast.com/breaks/{spot['slug']}/forecasts/latest/six_day"
+    }
 
 @main.route('/')
 def index():
@@ -20,16 +80,22 @@ def index():
         # Busca usuários que o usuário atual não segue
         users_not_following = User.query.filter(~User.id.in_(following_ids)).all()
         # Seleciona aleatoriamente até 3 usuários para sugerir
-        suggested_users = random.sample(users_not_following, min(3, len(users_not_following)))
+        suggested_users = random.sample(users_not_following, min(3, len(users_not_following))) if users_not_following else []
     else:
         # Para usuários não logados, mostra os posts mais recentes
         posts = Post.query.order_by(desc(Post.created_at)).limit(10).all()
         
         # Para usuários não logados, seleciona usuários aleatórios
         all_users = User.query.all()
-        suggested_users = random.sample(all_users, min(3, len(all_users)))
+        suggested_users = random.sample(all_users, min(3, len(all_users))) if all_users else []
     
-    return render_template('main/index.html', posts=posts, suggested_users=suggested_users)
+    # Gera previsão de surf aleatória
+    surf_forecast = get_random_forecast()
+    
+    return render_template('main/index.html', 
+                          posts=posts, 
+                          suggested_users=suggested_users,
+                          surf_forecast=surf_forecast)
 
 @main.route('/explore')
 def explore():

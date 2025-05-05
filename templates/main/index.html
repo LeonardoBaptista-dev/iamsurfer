@@ -274,29 +274,29 @@
             </div>
             <div class="card-body">
                 <div class="text-center mb-3">
-                    <p class="mb-0">Florianópolis, SC</p>
+                    <p class="mb-0">{{ surf_forecast.spot.name }}, {{ surf_forecast.spot.location }}</p>
                     <div class="d-flex justify-content-center align-items-center">
                         <i class="bi bi-water fs-1 text-primary me-2"></i>
-                        <h3 class="mb-0">1.5m</h3>
+                        <h3 class="mb-0">{{ surf_forecast.wave_height }}m</h3>
                     </div>
-                    <p class="text-primary">Ondas boas para iniciantes</p>
+                    <p class="text-primary">{{ surf_forecast.condition_message }}</p>
                 </div>
                 <ul class="list-group list-group-flush">
                     <li class="list-group-item d-flex justify-content-between align-items-center">
                         <span>Vento</span>
-                        <span>NE 12 km/h</span>
+                        <span>{{ surf_forecast.wind_direction }} {{ surf_forecast.wind_speed }} km/h</span>
                     </li>
                     <li class="list-group-item d-flex justify-content-between align-items-center">
                         <span>Período</span>
-                        <span>8s</span>
+                        <span>{{ surf_forecast.period }}s</span>
                     </li>
                     <li class="list-group-item d-flex justify-content-between align-items-center">
                         <span>Maré</span>
-                        <span>Baixa 14:30h</span>
+                        <span>Baixa {{ surf_forecast.tide_time }}</span>
                     </li>
                 </ul>
                 <div class="text-center mt-3">
-                    <a href="#" class="btn btn-sm btn-outline-primary">Ver previsão completa</a>
+                    <a href="{{ surf_forecast.forecast_url }}" target="_blank" class="btn btn-sm btn-outline-primary">Ver previsão completa</a>
                 </div>
             </div>
         </div>
