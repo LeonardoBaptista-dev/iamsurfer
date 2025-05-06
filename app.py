@@ -78,8 +78,8 @@ os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 os.makedirs(os.path.join(app.config['UPLOAD_FOLDER'], 'posts'), exist_ok=True)
 os.makedirs(os.path.join(app.config['UPLOAD_FOLDER'], 'profile_pics'), exist_ok=True)
 
-# Importa os modelos apenas depois de configurar o db
-from models import User, SurfSpot
+# Importa os modelos após inicializar o db
+from models import User
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -106,7 +106,7 @@ def wait_for_db():
                     return False
     return True
 
-# Inicializa o banco de dados e cria usuário admin
+# Inicializa o banco de dados e cria dados necessários
 def init_db():
     """Inicializa o banco de dados e cria usuário admin se necessário."""
     with app.app_context():
@@ -115,12 +115,29 @@ def init_db():
             inspector = db.inspect(db.engine)
             tables_exist = inspector.get_table_names()
             
-            if not tables_exist:
-                print("Nenhuma tabela encontrada. Criando tabelas do banco de dados...")
+            # Importa aqui para evitar importação circular
+            from models import User, SurfSpot, SurfTrip, TripParticipant
+            
+            # Cria todas as tabelas se não existirem
+            if not tables_exist or 'surf_trip' not in tables_exist:
+                print("Criando ou atualizando tabelas no banco de dados...")
                 db.create_all()
-                print("Tabelas criadas com sucesso!")
+                print("Tabelas criadas ou atualizadas com sucesso!")
             else:
                 print(f"Tabelas já existem no banco de dados: {', '.join(tables_exist)}")
+            
+            # Verifica se tabelas específicas existem e cria individualmente se necessário
+            if 'surf_spot' not in tables_exist:
+                print("Criando tabela surf_spot...")
+                db.metadata.tables['surf_spot'].create(db.engine, checkfirst=True)
+            
+            if 'surf_trip' not in tables_exist:
+                print("Criando tabela surf_trip...")
+                db.metadata.tables['surf_trip'].create(db.engine, checkfirst=True)
+                
+            if 'trip_participant' not in tables_exist:
+                print("Criando tabela trip_participant...")
+                db.metadata.tables['trip_participant'].create(db.engine, checkfirst=True)
             
             # Cria um usuário admin se não existir nenhum usuário
             try:
@@ -174,19 +191,22 @@ if os.environ.get('CLOUDINARY_CLOUD_NAME') or os.environ.get('CLOUDINARY_URL'):
 else:
     print("Aviso: Credenciais do Cloudinary não encontradas. O armazenamento de arquivos utilizará o sistema de arquivos local.")
 
-# Importa e registra os blueprints depois de definir todos os modelos
+# Importa e registra os blueprints depois de definir os modelos
 from routes.auth import auth
 from routes.main import main
 from routes.posts import posts
 from routes.admin import admin
 from routes.messages import messages
-from routes.trips import trips
 
+# Registra os blueprints
 app.register_blueprint(auth)
 app.register_blueprint(main)
 app.register_blueprint(posts)
 app.register_blueprint(admin)
 app.register_blueprint(messages)
+
+# Deve ser importado depois de inicializar os outros modelos
+from routes.trips import trips
 app.register_blueprint(trips)
 
 if __name__ == '__main__':
