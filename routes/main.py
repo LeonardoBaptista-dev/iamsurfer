@@ -39,15 +39,6 @@ def get_random_forecast():
     # Temperatura
     temperature = random.randint(18, 30)  # °C
     
-    # Mensagem sobre condições
-    messages = [
-        "Ondas boas para iniciantes",
-        "Ondas perfeitas para surfistas experientes",
-        "Condições ideais para surf",
-        "Mar agitado, cuidado redobrado",
-        "Ondas pequenas, dia tranquilo"
-    ]
-    condition_message = random.choice(messages)
     
     # Horário da maré baixa (formato HH:MM)
     hour = random.randint(5, 21)
@@ -62,7 +53,6 @@ def get_random_forecast():
         "wind_speed": wind_speed,
         "wind_direction": wind_direction,
         "temperature": temperature,
-        "condition_message": condition_message,
         "tide_time": tide_time,
         "forecast_url": f"https://www.surf-forecast.com/breaks/{spot['slug']}/forecasts/latest/six_day"
     }

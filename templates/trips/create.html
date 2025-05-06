@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+
+{% block title %}Criar Carona - IAmSurfer{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1>Criar Carona para Surf</h1>
+            <p class="lead">Ofereça uma carona para outros surfistas.</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <form method="POST">
+                        {{ form.csrf_token }}
+                        
+                        <div class="mb-3">
+                            <label for="title" class="form-label">Título da Carona</label>
+                            {{ form.title(class="form-control") }}
+                            {% if form.title.errors %}
+                                <div class="text-danger small">
+                                    {% for error in form.title.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="departure_location" class="form-label">Local de Saída</label>
+                                {{ form.departure_location(class="form-control", placeholder="Ex: Shopping Center, Centro da Cidade") }}
+                                {% if form.departure_location.errors %}
+                                    <div class="text-danger small">
+                                        {% for error in form.departure_location.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="destination_id" class="form-label">Destino (Praia/Spot)</label>
+                                {{ form.destination_id(class="form-select") }}
+                                {% if form.destination_id.errors %}
+                                    <div class="text-danger small">
+                                        {% for error in form.destination_id.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="departure_time" class="form-label">Data e Hora de Saída</label>
+                                {{ form.departure_time(class="form-control", type="datetime-local") }}
+                                {% if form.departure_time.errors %}
+                                    <div class="text-danger small">
+                                        {% for error in form.departure_time.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="return_time" class="form-label">Data e Hora de Retorno (opcional)</label>
+                                {{ form.return_time(class="form-control", type="datetime-local") }}
+                                {% if form.return_time.errors %}
+                                    <div class="text-danger small">
+                                        {% for error in form.return_time.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label for="available_seats" class="form-label">Lugares Disponíveis</label>
+                                {{ form.available_seats(class="form-control", min="1", max="10") }}
+                                {% if form.available_seats.errors %}
+                                    <div class="text-danger small">
+                                        {% for error in form.available_seats.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-4">
+                                <label for="contribution" class="form-label">Contribuição (R$)</label>
+                                {{ form.contribution(class="form-control", placeholder="Ex: 25.00") }}
+                                {% if form.contribution.errors %}
+                                    <div class="text-danger small">
+                                        {% for error in form.contribution.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-4">
+                                <label for="vehicle_info" class="form-label">Informações do Veículo</label>
+                                {{ form.vehicle_info(class="form-control", placeholder="Ex: Gol Prata") }}
+                                {% if form.vehicle_info.errors %}
+                                    <div class="text-danger small">
+                                        {% for error in form.vehicle_info.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="intermediate_stops" class="form-label">Paradas Intermediárias (opcional)</label>
+                            {{ form.intermediate_stops(class="form-control", rows="2", placeholder="Ex: Posso pegar na Avenida Principal, Shopping, etc") }}
+                            {% if form.intermediate_stops.errors %}
+                                <div class="text-danger small">
+                                    {% for error in form.intermediate_stops.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Descrição Adicional (opcional)</label>
+                            {{ form.description(class="form-control", rows="3", placeholder="Informações adicionais sobre a carona...") }}
+                            {% if form.description.errors %}
+                                <div class="text-danger small">
+                                    {% for error in form.description.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{{ url_for('trips.list_trips') }}" class="btn btn-outline-secondary">Cancelar</a>
+                            <button type="submit" class="btn btn-primary">Criar Carona</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Dicas para Caronas</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled">
+                        <li class="mb-2">
+                            <i class="fa fa-check-circle text-success me-2"></i>
+                            Seja claro sobre o ponto de encontro
+                        </li>
+                        <li class="mb-2">
+                            <i class="fa fa-check-circle text-success me-2"></i>
+                            Defina um valor justo para contribuição
+                        </li>
+                        <li class="mb-2">
+                            <i class="fa fa-check-circle text-success me-2"></i>
+                            Especifique se há espaço para equipamentos
+                        </li>
+                        <li class="mb-2">
+                            <i class="fa fa-check-circle text-success me-2"></i>
+                            Informe se a carona inclui retorno
+                        </li>
+                        <li class="mb-2">
+                            <i class="fa fa-check-circle text-success me-2"></i>
+                            Descreva o veículo para facilitar a identificação
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

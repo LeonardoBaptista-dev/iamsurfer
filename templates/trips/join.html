@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block title %}Participar de Carona - IAmSurfer{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h1>Participar da Carona</h1>
+            <p class="lead">Solicitar participação na carona para {{ trip.destination.name }}</p>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Detalhes da Carona</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <h4>{{ trip.title }}</h4>
+                        <div class="text-muted">
+                            <i class="fa fa-map-marker-alt"></i> {{ trip.departure_location }} → {{ trip.destination.name }}
+                        </div>
+                        <div class="mb-3">
+                            <i class="fa fa-clock"></i> {{ trip.departure_time.strftime('%d/%m/%Y às %H:%M') }}
+                            <span class="ms-3"><i class="fa fa-user"></i> {{ trip.get_available_seats() }} vagas disponíveis</span>
+                            {% if trip.contribution %}
+                                <span class="ms-3"><i class="fa fa-money-bill"></i> R$ {{ trip.contribution|round(2) }}</span>
+                            {% endif %}
+                        </div>
+                        
+                        {% if trip.description %}
+                            <div class="mt-3">
+                                <strong>Descrição:</strong>
+                                <p>{{ trip.description|nl2br }}</p>
+                            </div>
+                        {% endif %}
+                        
+                        {% if trip.intermediate_stops %}
+                            <div class="mt-3">
+                                <strong>Paradas intermediárias:</strong>
+                                <p>{{ trip.intermediate_stops|nl2br }}</p>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mt-4">
+                        <div class="d-flex align-items-center">
+                            <img src="{{ trip.creator.profile_image|img_url }}" class="rounded-circle me-3" style="width: 50px; height: 50px; object-fit: cover;">
+                            <div>
+                                <h6 class="mb-0">Organizado por <a href="{{ url_for('main.user_profile', username=trip.creator.username) }}">{{ trip.creator.username }}</a></h6>
+                                <div class="text-muted small">{{ trip.creator.location or 'Localização não informada' }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Solicitar Participação</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <div class="mb-3">
+                            <label for="message" class="form-label">Mensagem para o organizador (opcional)</label>
+                            <textarea name="message" id="message" class="form-control" rows="3" placeholder="Informe detalhes adicionais, como se precisa levar equipamentos, etc..."></textarea>
+                        </div>
+                        
+                        <div class="alert alert-info">
+                            <i class="fa fa-info-circle me-2"></i>
+                            Sua solicitação será enviada ao organizador para aprovação. Você receberá uma notificação quando for aprovada.
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('trips.view_trip', trip_id=trip.id) }}" class="btn btn-outline-secondary">Voltar</a>
+                            <button type="submit" class="btn btn-primary">Solicitar Participação</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Dicas para Participantes</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled">
+                        <li class="mb-2">
+                            <i class="fa fa-check-circle text-success me-2"></i>
+                            Seja pontual no local de encontro
+                        </li>
+                        <li class="mb-2">
+                            <i class="fa fa-check-circle text-success me-2"></i>
+                            Informe sobre equipamentos que vai levar
+                        </li>
+                        <li class="mb-2">
+                            <i class="fa fa-check-circle text-success me-2"></i>
+                            Tenha o valor da contribuição em dinheiro
+                        </li>
+                        <li class="mb-2">
+                            <i class="fa fa-check-circle text-success me-2"></i>
+                            Seja respeitoso com o veículo do organizador
+                        </li>
+                        <li class="mb-2">
+                            <i class="fa fa-check-circle text-success me-2"></i>
+                            Confirme sua presença com antecedência
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

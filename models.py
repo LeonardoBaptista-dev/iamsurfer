@@ -160,3 +160,73 @@ class SurfSpot(db.Model):
     
     def __repr__(self):
         return f'<SurfSpot {self.name}>'
+
+# Modelo para SurfTrip em models.py
+
+class SurfTrip(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(100), nullable=False)
+    
+    # Informações do criador da viagem
+    creator_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    creator = db.relationship('User', foreign_keys=[creator_id], backref='created_trips')
+    
+    # Informações de origem e destino
+    departure_location = db.Column(db.String(100), nullable=False)
+    destination_id = db.Column(db.Integer, db.ForeignKey('surf_spot.id'), nullable=False)
+    destination = db.relationship('SurfSpot', backref='trips')
+    
+    # Informações de horários
+    departure_time = db.Column(db.DateTime, nullable=False)
+    return_time = db.Column(db.DateTime, nullable=True)  # Opcional, para viagens de ida e volta
+    
+    # Informações adicionais
+    description = db.Column(db.Text, nullable=True)
+    available_seats = db.Column(db.Integer, nullable=False, default=3)
+    contribution = db.Column(db.Float, nullable=True)  # Valor sugerido para contribuição
+    vehicle_info = db.Column(db.String(100), nullable=True)
+    intermediate_stops = db.Column(db.Text, nullable=True)  # Paradas intermediárias (opcional)
+    
+    # Status da viagem
+    TRIP_STATUS = ['Scheduled', 'Ongoing', 'Completed', 'Cancelled']
+    status = db.Column(db.String(20), nullable=False, default='Scheduled')
+    
+    # Data de criação e atualização
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, onupdate=datetime.utcnow)
+    
+    # Relacionamentos
+    participants = db.relationship('TripParticipant', backref='trip', lazy=True, cascade="all, delete-orphan")
+    
+    def __repr__(self):
+        return f'<SurfTrip {self.title} to {self.destination.name}>'
+    
+    def get_available_seats(self):
+        """Retorna o número de assentos ainda disponíveis"""
+        booked_seats = TripParticipant.query.filter_by(
+            trip_id=self.id, 
+            status='Confirmed'
+        ).count()
+        return self.available_seats - booked_seats
+
+class TripParticipant(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    trip_id = db.Column(db.Integer, db.ForeignKey('surf_trip.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user = db.relationship('User', backref='trip_participations')
+    
+    # Status da participação
+    PARTICIPANT_STATUS = ['Pending', 'Confirmed', 'Cancelled', 'Rejected']
+    status = db.Column(db.String(20), nullable=False, default='Pending')
+    
+    # Data de solicitação e confirmação
+    request_time = db.Column(db.DateTime, default=datetime.utcnow)
+    confirmation_time = db.Column(db.DateTime)
+    
+    # Mensagem opcional do participante
+    message = db.Column(db.Text)
+    
+    __table_args__ = (db.UniqueConstraint('trip_id', 'user_id', name='_trip_user_uc'),)
+    
+    def __repr__(self):
+        return f'<TripParticipant {self.user.username} on trip {self.trip_id}>'

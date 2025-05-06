@@ -78,8 +78,8 @@ os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 os.makedirs(os.path.join(app.config['UPLOAD_FOLDER'], 'posts'), exist_ok=True)
 os.makedirs(os.path.join(app.config['UPLOAD_FOLDER'], 'profile_pics'), exist_ok=True)
 
-# Importa os modelos e rotas depois de inicializar o db
-from models import User
+# Importa os modelos apenas depois de configurar o db
+from models import User, SurfSpot
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -139,9 +139,29 @@ def init_db():
                     print("Usuário admin criado com sucesso!")
                 else:
                     print(f"Já existem {user_count} usuários no banco de dados. Pulando criação do admin.")
+                
+                # Adicionar spots de surf iniciais
+                surf_spots_count = SurfSpot.query.count()
+                if surf_spots_count == 0:
+                    print("Criando spots de surf iniciais...")
+                    surf_spots = [
+                        SurfSpot(name="Campeche", location="Florianópolis, SC", slug="campeche"),
+                        SurfSpot(name="Joaquina", location="Florianópolis, SC", slug="joaquina"),
+                        SurfSpot(name="Praia do Rosa", location="Imbituba, SC", slug="rosa-norte"),
+                        SurfSpot(name="Silveira", location="Garopaba, SC", slug="silveira"),
+                        SurfSpot(name="Itamambuca", location="Ubatuba, SP", slug="itamambuca"),
+                        SurfSpot(name="Praia da Vila", location="Imbituba, SC", slug="praia-da-vila"),
+                        SurfSpot(name="Pico de Matinhos", location="Matinhos, PR", slug="pico-de-matinhos")
+                    ]
+                    db.session.add_all(surf_spots)
+                    db.session.commit()
+                    print(f"Criados {len(surf_spots)} spots de surf com sucesso!")
+                else:
+                    print(f"Já existem {surf_spots_count} spots de surf no banco de dados. Pulando criação.")
+                
             except Exception as e:
                 db.session.rollback()
-                print(f"Erro ao verificar/criar usuário admin: {e}")
+                print(f"Erro ao verificar/criar dados iniciais: {e}")
                 print("Continuando mesmo assim...")
         except Exception as e:
             print(f"Erro ao inicializar banco de dados: {e}")
@@ -154,21 +174,20 @@ if os.environ.get('CLOUDINARY_CLOUD_NAME') or os.environ.get('CLOUDINARY_URL'):
 else:
     print("Aviso: Credenciais do Cloudinary não encontradas. O armazenamento de arquivos utilizará o sistema de arquivos local.")
 
-# Importa e registra os blueprints
-try:
-    from routes.auth import auth
-    from routes.main import main
-    from routes.posts import posts
-    from routes.admin import admin
-    from routes.messages import messages
+# Importa e registra os blueprints depois de definir todos os modelos
+from routes.auth import auth
+from routes.main import main
+from routes.posts import posts
+from routes.admin import admin
+from routes.messages import messages
+from routes.trips import trips
 
-    app.register_blueprint(auth)
-    app.register_blueprint(main)
-    app.register_blueprint(posts)
-    app.register_blueprint(admin)
-    app.register_blueprint(messages)
-except ImportError as e:
-    print(f"Erro ao importar blueprints: {e}")
+app.register_blueprint(auth)
+app.register_blueprint(main)
+app.register_blueprint(posts)
+app.register_blueprint(admin)
+app.register_blueprint(messages)
+app.register_blueprint(trips)
 
 if __name__ == '__main__':
     if wait_for_db():

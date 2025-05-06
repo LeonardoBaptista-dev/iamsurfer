@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}Caronas para Surf - IAmSurfer{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1>Caronas para Surf</h1>
+            <p class="lead">Encontre ou ofereça caronas para ir surfar.</p>
+        </div>
+        <div class="col-md-4 text-end">
+            <a href="{{ url_for('trips.create_trip') }}" class="btn btn-primary"><i class="fa fa-plus"></i> Criar Carona</a>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            {% if trips %}
+                <div class="card">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">Próximas caronas disponíveis</h5>
+                    </div>
+                    <div class="list-group list-group-flush">
+                        {% for trip in trips %}
+                            <div class="list-group-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h5><a href="{{ url_for('trips.view_trip', trip_id=trip.id) }}">{{ trip.title }}</a></h5>
+                                        <div class="text-muted">
+                                            <i class="fa fa-map-marker-alt"></i> {{ trip.departure_location }} → {{ trip.destination.name }}
+                                        </div>
+                                        <div>
+                                            <i class="fa fa-clock"></i> {{ trip.departure_time.strftime('%d/%m/%Y às %H:%M') }}
+                                            <span class="ms-3"><i class="fa fa-user"></i> {{ trip.get_available_seats() }} vagas disponíveis</span>
+                                            {% if trip.contribution %}
+                                                <span class="ms-3"><i class="fa fa-money-bill"></i> R$ {{ trip.contribution|round(2) }}</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <a href="{{ url_for('trips.view_trip', trip_id=trip.id) }}" class="btn btn-sm btn-outline-primary">Ver detalhes</a>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% else %}
+                <div class="alert alert-info">
+                    Não há caronas disponíveis no momento. Seja o primeiro a <a href="{{ url_for('trips.create_trip') }}">criar uma carona</a>!
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
