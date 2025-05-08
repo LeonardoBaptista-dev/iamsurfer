@@ -29,7 +29,7 @@
                                         <div>
                                             <h5><a href="{{ url_for('trips.view_trip', trip_id=trip.id) }}">{{ trip.title }}</a></h5>
                                             <div class="text-muted">
-                                                <i class="fa fa-map-marker-alt"></i> {{ trip.departure_location }} → {{ trip.destination.name }}
+                                                <i class="fa fa-map-marker-alt"></i> {{ trip.departure_location }} → {{ trip.destination }}
                                             </div>
                                             <div>
                                                 <i class="fa fa-clock"></i> {{ trip.departure_time.strftime('%d/%m/%Y às %H:%M') }}

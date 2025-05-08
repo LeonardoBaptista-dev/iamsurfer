@@ -99,4 +99,7 @@ else
     fi
 fi
 
+echo "Aplicando migrações do banco de dados..."
+flask db upgrade
+
 echo "Processo de migração concluído!" 

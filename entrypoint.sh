@@ -1,10 +1,14 @@
 #!/bin/bash
 set -e
 
-# Executar migrações do banco de dados
-echo "Executando migrações do banco de dados..."
-./migrate.sh
+# Aguardar o banco de dados
+echo "Aguardando o banco de dados..."
+# (código para aguardar o banco)
 
-# Iniciar a aplicação usando gunicorn
+# Aplicar migrações
+echo "Aplicando migrações do banco de dados..."
+flask db upgrade
+
+# Iniciar a aplicação
 echo "Iniciando a aplicação..."
-exec gunicorn --bind 0.0.0.0:5000 app:app 
+exec gunicorn -b 0.0.0.0:$PORT app:app 

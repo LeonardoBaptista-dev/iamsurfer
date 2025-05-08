@@ -23,24 +23,15 @@
                     </div>
                     <div class="list-group list-group-flush">
                         {% for trip in trips %}
-                            <div class="list-group-item">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <h5><a href="{{ url_for('trips.view_trip', trip_id=trip.id) }}">{{ trip.title }}</a></h5>
-                                        <div class="text-muted">
-                                            <i class="fa fa-map-marker-alt"></i> {{ trip.departure_location }} → {{ trip.destination.name }}
-                                        </div>
-                                        <div>
-                                            <i class="fa fa-clock"></i> {{ trip.departure_time.strftime('%d/%m/%Y às %H:%M') }}
-                                            <span class="ms-3"><i class="fa fa-user"></i> {{ trip.get_available_seats() }} vagas disponíveis</span>
-                                            {% if trip.contribution %}
-                                                <span class="ms-3"><i class="fa fa-money-bill"></i> R$ {{ trip.contribution|round(2) }}</span>
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <a href="{{ url_for('trips.view_trip', trip_id=trip.id) }}" class="btn btn-sm btn-outline-primary">Ver detalhes</a>
-                                    </div>
+                            <div class="card mb-3">
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ trip.title }}</h5>
+                                    <p class="card-text">
+                                        <strong>De:</strong> {{ trip.departure_location }} <br>
+                                        <strong>Para:</strong> {{ trip.destination }} <br>
+                                        <strong>Data:</strong> {{ trip.departure_time.strftime('%d/%m/%Y %H:%M') }}
+                                    </p>
+                                    <a href="{{ url_for('trips.view_trip', trip_id=trip.id) }}" class="btn btn-primary">Ver Detalhes</a>
                                 </div>
                             </div>
                         {% endfor %}

@@ -43,11 +43,11 @@
                                 {% endif %}
                             </div>
                             <div class="col-md-6">
-                                <label for="destination_id" class="form-label">Destino (Praia/Spot)</label>
-                                {{ form.destination_id(class="form-select") }}
-                                {% if form.destination_id.errors %}
+                                <label for="destination" class="form-label">Destino (Praia/Spot)</label>
+                                {{ form.destination(class="form-control", placeholder="Ex: Praia do Campeche, Pico de Matinhos") }}
+                                {% if form.destination.errors %}
                                     <div class="text-danger small">
-                                        {% for error in form.destination_id.errors %}
+                                        {% for error in form.destination.errors %}
                                             {{ error }}
                                         {% endfor %}
                                     </div>

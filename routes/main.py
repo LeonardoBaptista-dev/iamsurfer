@@ -5,6 +5,7 @@ from app import db
 from sqlalchemy import desc
 import random
 from datetime import datetime
+from surf_forecast import get_surf_forecast
 
 main = Blueprint('main', __name__)
 
@@ -21,40 +22,32 @@ SURF_SPOTS = [
 
 # Função para gerar previsão aleatória
 def get_random_forecast():
+    # Lista de spots de surf
+    spots = [
+        {"name": "Campeche", "location": "Florianópolis, SC"},
+        {"name": "Joaquina", "location": "Florianópolis, SC"},
+        {"name": "Praia da Vila", "location": "Imbituba, SC"},
+        {"name": "Silveira", "location": "Garopaba, SC"},
+        {"name": "Rosa Norte", "location": "Imbituba, SC"},
+        {"name": "Matinhos", "location": "Matinhos, PR"},
+        {"name": "Itamambuca", "location": "Ubatuba, SP"}
+    ]
+    
     # Escolhe um spot aleatório
-    spot = random.choice(SURF_SPOTS)
+    spot = random.choice(spots)
     
     # Gera dados aleatórios para a previsão
-    wave_height = round(random.uniform(0.5, 2.5), 1)  # Altura de onda entre 0.5m e 2.5m
-    period = random.randint(6, 12)  # Período entre 6s e 12s
-    
-    # Direções possíveis
-    directions = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
-    wave_direction = random.choice(directions)
-    
-    # Velocidade do vento
-    wind_speed = random.randint(5, 25)  # km/h
-    wind_direction = random.choice(directions)
-    
-    # Temperatura
-    temperature = random.randint(18, 30)  # °C
-    
-    
-    # Horário da maré baixa (formato HH:MM)
-    hour = random.randint(5, 21)
-    minute = random.choice([0, 15, 30, 45])
-    tide_time = f"{hour:02d}:{minute:02d}h"
+    wave_height = round(random.uniform(0.5, 2.5), 1)
     
     return {
         "spot": spot,
         "wave_height": wave_height,
-        "period": period,
-        "wave_direction": wave_direction,
-        "wind_speed": wind_speed,
-        "wind_direction": wind_direction,
-        "temperature": temperature,
-        "tide_time": tide_time,
-        "forecast_url": f"https://www.surf-forecast.com/breaks/{spot['slug']}/forecasts/latest/six_day"
+        "period": random.randint(6, 12),
+        "wind_direction": random.choice(["N", "NE", "E", "SE", "S", "SW", "W", "NW"]),
+        "wind_speed": random.randint(5, 25),
+        "tide_time": f"{random.randint(5, 21):02d}:{random.choice([0, 15, 30, 45]):02d}h",
+        "condition_message": "Condições boas para surf" if wave_height > 1.0 else "Ondas pequenas, ideal para iniciantes",
+        "forecast_url": f"https://www.surf-forecast.com/breaks/{spot['name'].lower()}/forecasts/latest"
     }
 
 @main.route('/')
@@ -79,7 +72,12 @@ def index():
         all_users = User.query.all()
         suggested_users = random.sample(all_users, min(3, len(all_users))) if all_users else []
     
-    # Gera previsão de surf aleatória
+    # Obtém previsão de surf real usando o scraper
+    try:
+        surf_forecast = get_surf_forecast()
+    except Exception as e:
+        print(f"Erro ao obter previsão de surf: {e}")
+        # Fallback para dados aleatórios se o scraping falhar
     surf_forecast = get_random_forecast()
     
     return render_template('main/index.html', 

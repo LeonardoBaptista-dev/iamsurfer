@@ -173,12 +173,14 @@ class SurfTrip(db.Model):
     
     # Informações de origem e destino
     departure_location = db.Column(db.String(100), nullable=False)
+    
+    # Manter apenas o relacionamento existente
     destination_id = db.Column(db.Integer, db.ForeignKey('surf_spot.id'), nullable=False)
     destination = db.relationship('SurfSpot', backref='trips')
     
     # Informações de horários
     departure_time = db.Column(db.DateTime, nullable=False)
-    return_time = db.Column(db.DateTime, nullable=True)  # Opcional, para viagens de ida e volta
+    return_time = db.Column(db.DateTime, nullable=True)
     
     # Informações adicionais
     description = db.Column(db.Text, nullable=True)
@@ -199,7 +201,7 @@ class SurfTrip(db.Model):
     participants = db.relationship('TripParticipant', backref='trip', lazy=True, cascade="all, delete-orphan")
     
     def __repr__(self):
-        return f'<SurfTrip {self.title} to {self.destination.name}>'
+        return f'<SurfTrip {self.title} to {self.destination}>'
     
     def get_available_seats(self):
         """Retorna o número de assentos ainda disponíveis"""
@@ -208,6 +210,15 @@ class SurfTrip(db.Model):
             status='Confirmed'
         ).count()
         return self.available_seats - booked_seats
+
+    def get_destination_name(self):
+        """Retorna o nome do destino, seja do novo campo ou do relacionamento antigo"""
+        if self.destination:
+            return self.destination
+        elif self.destination_spot:
+            return f"{self.destination_spot.name}, {self.destination_spot.location}"
+        else:
+            return "Destino não especificado"
 
 class TripParticipant(db.Model):
     id = db.Column(db.Integer, primary_key=True)

@@ -13,7 +13,7 @@ trips = Blueprint('trips', __name__)
 class SurfTripForm(FlaskForm):
     title = StringField('Título', validators=[DataRequired()])
     departure_location = StringField('Local de Partida', validators=[DataRequired()])
-    destination_id = SelectField('Destino (Praia)', coerce=int, validators=[DataRequired()])
+    destination = StringField('Destino (Praia/Spot)', validators=[DataRequired()])
     departure_time = DateTimeField('Hora de Saída', format='%Y-%m-%dT%H:%M', validators=[DataRequired()])
     return_time = DateTimeField('Hora de Retorno (opcional)', format='%Y-%m-%dT%H:%M', validators=[Optional()])
     description = TextAreaField('Descrição', validators=[Optional()])
@@ -38,16 +38,13 @@ def list_trips():
 def create_trip():
     form = SurfTripForm()
     
-    # Carrega os destinos para o select field
-    form.destination_id.choices = [(spot.id, f"{spot.name} - {spot.location}") 
-                                   for spot in SurfSpot.query.order_by(SurfSpot.name).all()]
-    
     if form.validate_on_submit():
         trip = SurfTrip(
             title=form.title.data,
             creator_id=current_user.id,
             departure_location=form.departure_location.data,
-            destination_id=form.destination_id.data,
+            destination=form.destination.data,  # Usar o novo campo
+            destination_id=None,  # Não usar mais o relacionamento
             departure_time=form.departure_time.data,
             return_time=form.return_time.data,
             description=form.description.data,
