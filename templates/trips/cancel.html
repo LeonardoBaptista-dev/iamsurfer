@@ -31,7 +31,7 @@
                     <div class="mb-4">
                         <h5>Detalhes da Carona</h5>
                         <div class="mb-2">
-                            <strong>Destino:</strong> {{ trip.destination.name }}
+                            <strong>Destino:</strong> {{ trip.get_destination_display() }}
                         </div>
                         <div class="mb-2">
                             <strong>Data e Hora:</strong> {{ trip.departure_time.strftime('%d/%m/%Y às %H:%M') }}

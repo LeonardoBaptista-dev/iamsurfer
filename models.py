@@ -174,9 +174,12 @@ class SurfTrip(db.Model):
     # Informações de origem e destino
     departure_location = db.Column(db.String(100), nullable=False)
     
-    # Manter apenas o relacionamento existente
+    # Manter o relacionamento existente
     destination_id = db.Column(db.Integer, db.ForeignKey('surf_spot.id'), nullable=False)
     destination = db.relationship('SurfSpot', backref='trips')
+    
+    # Adicionar o campo de texto para destino livre
+    destination_text = db.Column(db.String(100), nullable=True)
     
     # Informações de horários
     departure_time = db.Column(db.DateTime, nullable=False)
@@ -211,12 +214,12 @@ class SurfTrip(db.Model):
         ).count()
         return self.available_seats - booked_seats
 
-    def get_destination_name(self):
-        """Retorna o nome do destino, seja do novo campo ou do relacionamento antigo"""
-        if self.destination:
-            return self.destination
-        elif self.destination_spot:
-            return f"{self.destination_spot.name}, {self.destination_spot.location}"
+    def get_destination_display(self):
+        """Retorna o texto do destino para exibição"""
+        if hasattr(self, 'destination_text') and self.destination_text:
+            return self.destination_text
+        elif self.destination:
+            return f"{self.destination.name}, {self.destination.location}"
         else:
             return "Destino não especificado"
 

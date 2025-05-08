@@ -7,7 +7,7 @@
     <div class="row mb-4">
         <div class="col-md-12">
             <h1>Participar da Carona</h1>
-            <p class="lead">Solicitar participação na carona para {{ trip.destination.name }}</p>
+            <p class="lead">Solicitar participação na carona para {{ trip.get_destination_display() }}</p>
         </div>
     </div>
     
@@ -21,7 +21,7 @@
                     <div class="mb-3">
                         <h4>{{ trip.title }}</h4>
                         <div class="text-muted">
-                            <i class="fa fa-map-marker-alt"></i> {{ trip.departure_location }} → {{ trip.destination.name }}
+                            <i class="fa fa-map-marker-alt"></i> {{ trip.departure_location }} → {{ trip.get_destination_display() }}
                         </div>
                         <div class="mb-3">
                             <i class="fa fa-clock"></i> {{ trip.departure_time.strftime('%d/%m/%Y às %H:%M') }}

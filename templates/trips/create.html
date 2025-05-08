@@ -43,16 +43,29 @@
                                 {% endif %}
                             </div>
                             <div class="col-md-6">
-                                <label for="destination" class="form-label">Destino (Praia/Spot)</label>
-                                {{ form.destination(class="form-control", placeholder="Ex: Praia do Campeche, Pico de Matinhos") }}
-                                {% if form.destination.errors %}
+                                <label for="destination_id" class="form-label">Destino (Spot registrado)</label>
+                                {{ form.destination_id(class="form-select") }}
+                                {% if form.destination_id.errors %}
                                     <div class="text-danger small">
-                                        {% for error in form.destination.errors %}
+                                        {% for error in form.destination_id.errors %}
                                             {{ error }}
                                         {% endfor %}
                                     </div>
                                 {% endif %}
                             </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="destination_text" class="form-label">Ou digite um destino personalizado</label>
+                            {{ form.destination_text(class="form-control", placeholder="Ex: Praia do Campeche, Pico de Matinhos") }}
+                            {% if form.destination_text.errors %}
+                                <div class="text-danger small">
+                                    {% for error in form.destination_text.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">Se preenchido, este destino será exibido em vez do spot registrado.</div>
                         </div>
                         
                         <div class="row mb-3">

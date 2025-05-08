@@ -28,7 +28,7 @@
                                     <h5 class="card-title">{{ trip.title }}</h5>
                                     <p class="card-text">
                                         <strong>De:</strong> {{ trip.departure_location }} <br>
-                                        <strong>Para:</strong> {{ trip.destination }} <br>
+                                        <strong>Para:</strong> {{ trip.get_destination_display() }} <br>
                                         <strong>Data:</strong> {{ trip.departure_time.strftime('%d/%m/%Y %H:%M') }}
                                     </p>
                                     <a href="{{ url_for('trips.view_trip', trip_id=trip.id) }}" class="btn btn-primary">Ver Detalhes</a>
