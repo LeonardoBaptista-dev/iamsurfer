@@ -1,19 +1,20 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, send_file
 from flask_login import login_user, logout_user, current_user, login_required
 from werkzeug.security import generate_password_hash, check_password_hash
-from models import User, Post
 from app import db, app
 from werkzeug.urls import url_parse
 import os
 import uuid
 from werkzeug.utils import secure_filename
 # Importa o módulo de armazenamento em nuvem
-from cloud_storage import upload_file as cloud_upload, delete_file as cloud_delete
+
 
 auth = Blueprint('auth', __name__)
 
 @auth.route('/login', methods=['GET', 'POST'])
 def login():
+    from models import User  # Import aqui para evitar import circular
+    
     if current_user.is_authenticated:
         # Se já estiver autenticado e for admin, redireciona para o painel admin
         if current_user.is_admin:
@@ -48,6 +49,8 @@ def login():
 
 @auth.route('/signup', methods=['GET', 'POST'])
 def signup():
+    from models import User  # Import aqui para evitar import circular
+    
     if current_user.is_authenticated:
         return redirect(url_for('main.index'))
     
@@ -94,6 +97,8 @@ def logout():
 @auth.route('/profile')
 @login_required
 def profile():
+    from models import Post  # Import aqui para evitar import circular
+    
     # Verifica se há um parâmetro de consulta 'username'
     username = request.args.get('username')
     
@@ -124,33 +129,41 @@ def edit_profile():
             file = request.files['profile_image']
             
             if file and file.filename:
-                # Verifica extensões permitidas
-                allowed_extensions = {'png', 'jpg', 'jpeg', 'gif'}
-                file_ext = file.filename.rsplit('.', 1)[1].lower() if '.' in file.filename else ''
-                
-                if file_ext in allowed_extensions:
-                    try:
-                        # Define a pasta no Cloudinary
-                        folder = 'profile_pics'
+                try:
+                    # Usa o novo sistema de processamento local para perfis
+                    from local_image_processor import ResponsiveImageHelper
+                    
+                    # Remove imagens antigas se existirem
+                    if current_user.profile_image_urls:
+                        from local_image_processor import LocalImageProcessor
+                        LocalImageProcessor.delete_image_files(current_user.profile_image_urls)
+                    
+                    # Processa e salva a nova imagem de perfil
+                    success, message, urls = ResponsiveImageHelper.process_and_save_profile(file)
+                    
+                    if success and urls:
+                        # Gera hash da nova imagem para deduplicação
+                        file.seek(0)
+                        import hashlib
+                        file_content = file.read()
+                        file_hash = hashlib.md5(file_content).hexdigest()
+                        file.seek(0)
                         
-                        # Exclui a imagem anterior se não for a padrão
-                        if current_user.profile_image and 'default_profile' not in current_user.profile_image and 'cloudinary' in current_user.profile_image:
-                            cloud_delete(current_user.profile_image)
+                        # Atualiza o perfil com as novas URLs e hash
+                        current_user.profile_image_urls = urls
+                        current_user.profile_image_hash = file_hash
                         
-                        # Upload para Cloudinary
-                        file_url = cloud_upload(file, folder=folder)
+                        # Mantém compatibilidade com sistema antigo
+                        current_user.profile_image = urls.get('small', 'uploads/default_profile.jpg')
                         
-                        if file_url:
-                            # Atualiza o caminho da imagem no perfil do usuário
-                            current_user.profile_image = file_url
-                            profile_image_updated = True
-                        else:
-                            flash('Erro ao fazer upload da imagem. Tente novamente.', 'danger')
-                    except Exception as e:
-                        app.logger.error(f"Erro ao salvar imagem de perfil: {str(e)}")
-                        flash(f'Erro ao salvar imagem: {str(e)}', 'danger')
-                else:
-                    flash('Formato de arquivo não permitido. Use PNG, JPG, JPEG ou GIF.', 'danger')
+                        profile_image_updated = True
+                        flash('Imagem de perfil atualizada com sucesso!', 'success')
+                    else:
+                        flash(f'Erro ao processar imagem: {message}', 'danger')
+                        
+                except Exception as e:
+                    app.logger.error(f"Erro ao processar imagem de perfil: {str(e)}")
+                    flash(f'Erro ao processar imagem: {str(e)}', 'danger')
         
         # Salva todas as alterações no banco de dados
         try:

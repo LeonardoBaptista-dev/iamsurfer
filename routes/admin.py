@@ -1,9 +1,10 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request, abort
+from flask import Blueprint, render_template, redirect, url_for, flash, request, abort, jsonify
 from flask_login import login_required, current_user
-from models import User, Post, Comment, Message
+from models import User, Post, Comment, Message, Spot
 from app import db
 from functools import wraps
 from sqlalchemy import func
+from datetime import datetime
 
 admin = Blueprint('admin', __name__, url_prefix='/admin')
 
@@ -24,6 +25,7 @@ def index():
     users_count = User.query.count()
     posts_count = Post.query.count()
     comments_count = Comment.query.count()
+    messages_count = Message.query.count()
     
     # Usuários mais recentes
     recent_users = User.query.order_by(User.joined_at.desc()).limit(5).all()
@@ -35,8 +37,16 @@ def index():
                           users_count=users_count,
                           posts_count=posts_count,
                           comments_count=comments_count,
+                          messages_count=messages_count,
                           recent_users=recent_users,
                           recent_posts=recent_posts)
+
+@admin.route('/panel')
+@login_required
+@admin_required
+def admin_panel():
+    """Painel principal de administração"""
+    return redirect(url_for('admin.index'))
 
 @admin.route('/users')
 @login_required
@@ -124,6 +134,121 @@ def delete_comment(comment_id):
     flash('Comentário excluído com sucesso.', 'success')
     return redirect(url_for('admin.comments'))
 
+@admin.route('/spots')
+@login_required
+@admin_required
+def spots():
+    """Página principal de gerenciamento de spots"""
+    # Filtros por status
+    status_filter = request.args.get('status', 'all')
+    page = request.args.get('page', 1, type=int)
+    
+    # Base query
+    query = Spot.query
+    
+    # Aplica filtros
+    if status_filter == 'pending':
+        query = query.filter_by(status='pending')
+    elif status_filter == 'approved':
+        query = query.filter_by(status='approved')
+    elif status_filter == 'rejected':
+        query = query.filter_by(status='rejected')
+    
+    # Ordena por data de criação
+    spots = query.order_by(Spot.created_at.desc()).paginate(
+        page=page, per_page=20, error_out=False
+    )
+    
+    # Estatísticas
+    stats = {
+        'total': Spot.query.count(),
+        'pending': Spot.query.filter_by(status='pending').count(),
+        'approved': Spot.query.filter_by(status='approved').count(),
+        'rejected': Spot.query.filter_by(status='rejected').count()
+    }
+    
+    return render_template('admin/spots.html', spots=spots, stats=stats, status_filter=status_filter)
+
+@admin.route('/spots/<int:spot_id>/approve', methods=['POST'])
+@login_required
+@admin_required
+def approve_spot(spot_id):
+    """Aprova um spot pendente"""
+    spot = Spot.query.get_or_404(spot_id)
+    
+    if spot.status != 'pending':
+        flash('Este spot não está pendente de aprovação.', 'warning')
+        return redirect(url_for('admin.spots'))
+    
+    spot.status = 'approved'
+    spot.approved_by = current_user.id
+    spot.approved_at = datetime.utcnow()
+    
+    db.session.commit()
+    
+    flash(f'Spot "{spot.name}" foi aprovado com sucesso!', 'success')
+    return redirect(url_for('admin.spots'))
+
+@admin.route('/spots/<int:spot_id>/reject', methods=['POST'])
+@login_required
+@admin_required
+def reject_spot(spot_id):
+    """Rejeita um spot pendente"""
+    spot = Spot.query.get_or_404(spot_id)
+    
+    if spot.status != 'pending':
+        flash('Este spot não está pendente de aprovação.', 'warning')
+        return redirect(url_for('admin.spots'))
+    
+    spot.status = 'rejected'
+    spot.rejected_by = current_user.id
+    spot.rejected_at = datetime.utcnow()
+    
+    db.session.commit()
+    
+    flash(f'Spot "{spot.name}" foi rejeitado.', 'info')
+    return redirect(url_for('admin.spots'))
+
+@admin.route('/spots/<int:spot_id>/delete', methods=['POST'])
+@login_required
+@admin_required
+def delete_spot(spot_id):
+    """Exclui um spot permanentemente"""
+    spot = Spot.query.get_or_404(spot_id)
+    
+    # Confirma se o admin realmente quer excluir
+    confirm = request.form.get('confirm')
+    if confirm != 'DELETE':
+        flash('Para excluir permanentemente, digite "DELETE" no campo de confirmação.', 'danger')
+        return redirect(url_for('admin.spots'))
+    
+    spot_name = spot.name
+    db.session.delete(spot)
+    db.session.commit()
+    
+    flash(f'Spot "{spot_name}" foi excluído permanentemente.', 'success')
+    return redirect(url_for('admin.spots'))
+
+@admin.route('/spots/<int:spot_id>/reactivate', methods=['POST'])
+@login_required
+@admin_required
+def reactivate_spot(spot_id):
+    """Reativa um spot rejeitado"""
+    spot = Spot.query.get_or_404(spot_id)
+    
+    if spot.status != 'rejected':
+        flash('Este spot não está rejeitado.', 'warning')
+        return redirect(url_for('admin.spots'))
+    
+    spot.status = 'pending'
+    spot.rejected_by = None
+    spot.rejected_at = None
+    
+    db.session.commit()
+    
+    flash(f'Spot "{spot.name}" foi reativado e está pendente novamente.', 'success')
+    return redirect(url_for('admin.spots'))
+
 @admin.route('/reports')
 @login_required
 @admin_required
@@ -150,4 +275,79 @@ def reports():
     return render_template('admin/reports.html', 
                           user_stats=user_stats,
                           post_stats=post_stats,
-                          top_posters=top_posters) 
+                          top_posters=top_posters)
+
+@admin.route('/messages')
+@login_required
+@admin_required
+def messages():
+    """Gerenciar todas as mensagens do sistema"""
+    page = request.args.get('page', 1, type=int)
+    search = request.args.get('search', '', type=str)
+    
+    # Query base para mensagens
+    query = Message.query
+    
+    # Filtro de busca
+    if search:
+        query = query.join(User, Message.sender_id == User.id).filter(
+            User.username.contains(search)
+        )
+    
+    # Paginação
+    messages_pagination = query.order_by(Message.timestamp.desc()).paginate(
+        page=page, per_page=20, error_out=False
+    )
+    
+    # Estatísticas
+    total_messages = Message.query.count()
+    unread_messages = Message.query.filter_by(read=False).count()
+    messages_today = Message.query.filter(
+        func.date(Message.timestamp) == datetime.utcnow().date()
+    ).count()
+    
+    return render_template('admin/messages.html',
+                          messages=messages_pagination.items,
+                          pagination=messages_pagination,
+                          search=search,
+                          total_messages=total_messages,
+                          unread_messages=unread_messages,
+                          messages_today=messages_today)
+
+@admin.route('/messages/<int:message_id>/delete', methods=['POST'])
+@login_required
+@admin_required
+def delete_message(message_id):
+    """Deletar uma mensagem específica"""
+    message = Message.query.get_or_404(message_id)
+    
+    try:
+        db.session.delete(message)
+        db.session.commit()
+        flash('Mensagem deletada com sucesso!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Erro ao deletar mensagem: {str(e)}', 'error')
+    
+    return redirect(url_for('admin.messages'))
+
+@admin.route('/messages/bulk-delete', methods=['POST'])
+@login_required
+@admin_required
+def bulk_delete_messages():
+    """Deletar múltiplas mensagens selecionadas"""
+    message_ids = request.form.getlist('message_ids')
+    
+    if not message_ids:
+        flash('Nenhuma mensagem selecionada.', 'warning')
+        return redirect(url_for('admin.messages'))
+    
+    try:
+        Message.query.filter(Message.id.in_(message_ids)).delete(synchronize_session=False)
+        db.session.commit()
+        flash(f'{len(message_ids)} mensagens deletadas com sucesso!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Erro ao deletar mensagens: {str(e)}', 'error')
+    
+    return redirect(url_for('admin.messages'))

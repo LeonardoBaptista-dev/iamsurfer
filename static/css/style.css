@@ -185,4 +185,294 @@ footer {
 
 .explore-item:hover .explore-overlay {
     opacity: 1;
-} 
+}
+
+/* === SISTEMA DE IMAGENS RESPONSIVAS === */
+
+/* Container para posts com imagens */
+.post-image-container {
+    position: relative;
+    overflow: hidden;
+    border-radius: 8px;
+    background-color: #f8f9fa;
+    margin-bottom: 1rem;
+}
+
+/* Imagens responsivas nos posts */
+.post-image {
+    width: 100%;
+    height: auto;
+    display: block;
+    transition: transform 0.3s ease, filter 0.3s ease;
+    cursor: pointer;
+    border-radius: 8px;
+}
+
+.post-image:hover {
+    transform: scale(1.02);
+    filter: brightness(1.05);
+}
+
+/* Thumbnails */
+.thumbnail-img {
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.thumbnail-img:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Imagens de perfil responsivas */
+.profile-image {
+    border: 3px solid white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Feed de imagens (grid) */
+.image-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.image-grid .card {
+    transition: transform 0.3s ease;
+}
+
+.image-grid .card:hover {
+    transform: translateY(-5px);
+}
+
+/* Modal de visualização de imagem */
+.image-modal {
+    z-index: 1060;
+}
+
+.image-modal .modal-dialog {
+    max-width: 90vw;
+    max-height: 90vh;
+    margin: 5vh auto;
+}
+
+.image-modal .modal-content {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+}
+
+.image-modal .modal-body {
+    padding: 0;
+    text-align: center;
+}
+
+.image-modal img {
+    max-width: 100%;
+    max-height: 85vh;
+    object-fit: contain;
+    border-radius: 8px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.image-modal .btn-close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 1061;
+    background-color: rgba(255, 255, 255, 0.9);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    border: none;
+    opacity: 1;
+}
+
+/* Indicadores de qualidade de imagem */
+.image-quality-indicator {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    z-index: 10;
+}
+
+.quality-low { background: #dc3545; }
+.quality-medium { background: #ffc107; }
+.quality-high { background: #28a745; }
+
+/* Loading placeholder para imagens */
+.image-loading {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+    min-height: 200px;
+    border-radius: 8px;
+}
+
+@keyframes loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* Progressive image loading */
+.progressive-image {
+    position: relative;
+    overflow: hidden;
+}
+
+.progressive-image .image-small {
+    filter: blur(5px);
+    transform: scale(1.05);
+    transition: all 0.3s ease;
+}
+
+.progressive-image .image-full {
+    position: absolute;
+    top: 0;
+    left: 0;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.progressive-image.loaded .image-small {
+    opacity: 0;
+}
+
+.progressive-image.loaded .image-full {
+    opacity: 1;
+}
+
+/* Galeria de múltiplas imagens */
+.image-gallery {
+    display: grid;
+    gap: 2px;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 1rem;
+}
+
+.image-gallery.single { grid-template-columns: 1fr; }
+.image-gallery.double { grid-template-columns: 1fr 1fr; }
+.image-gallery.triple { grid-template-columns: 1fr 1fr 1fr; }
+.image-gallery.quad { 
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+}
+
+.image-gallery img {
+    width: 100%;
+    height: 250px;
+    object-fit: cover;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.image-gallery img:hover {
+    filter: brightness(1.1);
+    transform: scale(1.02);
+}
+
+/* Overlay para múltiplas imagens */
+.image-overlay {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 0 0 0 8px;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .image-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .image-gallery.triple,
+    .image-gallery.quad {
+        grid-template-columns: 1fr 1fr;
+    }
+    
+    .image-modal .modal-dialog {
+        max-width: 95vw;
+        margin: 2vh auto;
+    }
+    
+    .image-modal img {
+        max-height: 90vh;
+    }
+    
+    .post-image {
+        border-radius: 4px;
+    }
+}
+
+@media (max-width: 576px) {
+    .thumbnail-img {
+        height: 120px;
+    }
+    
+    .image-gallery img {
+        height: 200px;
+    }
+    
+    .image-gallery.double,
+    .image-gallery.triple,
+    .image-gallery.quad {
+        grid-template-columns: 1fr;
+    }
+    
+    .image-quality-indicator {
+        font-size: 0.7rem;
+        padding: 2px 6px;
+    }
+}
+
+/* Animações suaves */
+.fade-in {
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Estilo para upload de imagens */
+.image-upload-preview {
+    max-width: 100%;
+    max-height: 300px;
+    object-fit: contain;
+    border: 2px dashed #dee2e6;
+    border-radius: 8px;
+    padding: 20px;
+    margin: 10px 0;
+}
+
+.upload-progress {
+    width: 100%;
+    height: 4px;
+    background-color: #e9ecef;
+    border-radius: 2px;
+    overflow: hidden;
+    margin-top: 10px;
+}
+
+.upload-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #007bff, #0056b3);
+    width: 0%;
+    transition: width 0.3s ease;
+}

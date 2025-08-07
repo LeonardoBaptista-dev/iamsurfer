@@ -1,45 +1,62 @@
 {% extends "base.html" %}
 
-{% block title %}Caixa de Entrada - IAmSurfer{% endblock %}
+{% block title %}Mensagens - IAmSurfer{% endblock %}
 
 {% block content %}
-<div class="container">
-    <div class="row mb-4">
-        <div class="col">
-            <h2>Mensagens Recebidas</h2>
-        </div>
-        <div class="col-auto">
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2><i class="bi bi-chat-dots me-2"></i>Minhas Conversas</h2>
             <a href="{{ url_for('messages.new_message') }}" class="btn btn-primary">
-                <i class="bi bi-envelope-plus"></i> Nova Mensagem
-            </a>
-            <a href="{{ url_for('messages.sent') }}" class="btn btn-outline-primary">
-                <i class="bi bi-send"></i> Mensagens Enviadas
+                <i class="bi bi-plus-circle me-1"></i>Nova Mensagem
             </a>
         </div>
-    </div>
 
-    <div class="card">
-        <div class="list-group list-group-flush">
-            {% if messages %}
-                {% for message in messages %}
-                <a href="{{ url_for('messages.view_message', message_id=message.id) }}" class="list-group-item list-group-item-action {% if not message.read %}list-group-item-primary{% endif %}">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <strong>{{ message.sender.username }}</strong>
-                            {% if not message.read %}<span class="badge bg-primary ms-2">Nova</span>{% endif %}
-                            <p class="mb-1 text-truncate" style="max-width: 50vw;">{{ message.content }}</p>
+        {% if conversations %}
+            <div class="row">
+                {% for message in conversations %}
+                    {% set other_user = message.sender if message.recipient_id == current_user.id else message.recipient %}
+                    <div class="col-md-6 col-lg-4 mb-3">
+                        <div class="card h-100 shadow-sm">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center mb-2">
+                                    <img src="{{ other_user.profile_image_urls|profile_thumbnail_url if other_user.profile_image_urls else other_user.profile_image|img_url }}" 
+                                         class="rounded-circle me-2" width="40" height="40" style="object-fit: cover;">
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-0">{{ other_user.username }}</h6>
+                                        <small class="text-muted">{{ message.timestamp.strftime('%d/%m/%Y %H:%M') }}</small>
+                                    </div>
+                                    {% if message.recipient_id == current_user.id and not message.read %}
+                                        <span class="badge bg-primary">Nova</span>
+                                    {% endif %}
+                                </div>
+                                <p class="text-muted mb-0 small">
+                                    {% if message.sender_id == current_user.id %}
+                                        <i class="bi bi-arrow-right me-1"></i>Você: 
+                                    {% endif %}
+                                    {{ message.content[:60] }}{% if message.content|length > 60 %}...{% endif %}
+                                </p>
+                            </div>
+                            <div class="card-footer bg-transparent">
+                                <a href="{{ url_for('messages.conversation', username=other_user.username) }}" 
+                                   class="btn btn-outline-primary btn-sm w-100">
+                                    <i class="bi bi-chat me-1"></i>Ver Conversa
+                                </a>
+                            </div>
                         </div>
-                        <small class="text-muted">{{ message.timestamp.strftime('%d/%m/%Y %H:%M') }}</small>
                     </div>
-                </a>
                 {% endfor %}
-            {% else %}
-                <div class="list-group-item text-center p-4">
-                    <i class="bi bi-inbox-fill display-4 text-muted mb-3"></i>
-                    <p>Você não tem mensagens recebidas.</p>
-                </div>
-            {% endif %}
-        </div>
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-chat-dots text-muted" style="font-size: 4rem;"></i>
+                <h4 class="text-muted mt-3">Nenhuma conversa ainda</h4>
+                <p class="text-muted">Que tal enviar uma mensagem para alguém?</p>
+                <a href="{{ url_for('messages.new_message') }}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle me-1"></i>Nova Mensagem
+                </a>
+            </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %} 

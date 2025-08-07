@@ -1,0 +1,342 @@
+{% extends "base.html" %}
+
+{% block title %}Adicionar Spot - IAmSurfer{% endblock %}
+
+{% block extra_head %}
+<style>
+    .form-section {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    .section-title {
+        color: #0066cc;
+        font-weight: bold;
+        margin-bottom: 15px;
+    }
+    #map-preview {
+        height: 300px;
+        width: 100%;
+        border-radius: 8px;
+        background-color: #e9ecef;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">🏄‍♂️ Adicionar Novo Spot de Surf</h4>
+                    <small class="text-muted">Compartilhe um novo pico com a comunidade!</small>
+                </div>
+                <div class="card-body">
+                    <form method="POST" id="addSpotForm">
+                        <!-- Informações Básicas -->
+                        <div class="form-section">
+                            <h5 class="section-title">📍 Informações Básicas</h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="name" class="form-label">Nome do Spot *</label>
+                                        <input type="text" class="form-control" id="name" name="name" required>
+                                        <div class="form-text">Ex: Praia do Rosa, Joaquina, etc.</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="city" class="form-label">Cidade</label>
+                                        <input type="text" class="form-control" id="city" name="city">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label for="state" class="form-label">Estado</label>
+                                        <input type="text" class="form-control" id="state" name="state" placeholder="Ex: SC, RJ, SP">
+                                    </div>
+                                </div>
+                                <div class="col-md-8">
+                                    <div class="mb-3">
+                                        <label for="address" class="form-label">Endereço/Referência</label>
+                                        <input type="text" class="form-control" id="address" name="address" placeholder="Referências para chegar ao spot">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="description" class="form-label">Descrição</label>
+                                <textarea class="form-control" id="description" name="description" rows="3" placeholder="Descreva o spot, suas características, como chegar, etc."></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Localização -->
+                        <div class="form-section">
+                            <h5 class="section-title">🗺️ Localização</h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="latitude" class="form-label">Latitude *</label>
+                                        <input type="number" step="0.000001" class="form-control" id="latitude" name="latitude" required>
+                                        <div class="form-text">Ex: -27.123456</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="longitude" class="form-label">Longitude *</label>
+                                        <input type="number" step="0.000001" class="form-control" id="longitude" name="longitude" required>
+                                        <div class="form-text">Ex: -48.123456</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-12">
+                                    <button type="button" class="btn btn-outline-primary btn-sm" onclick="getMyLocation()">
+                                        <i class="fas fa-location-arrow"></i> Usar Minha Localização
+                                    </button>
+                                    <small class="text-muted ms-2">Clique no mapa para definir a localização exata</small>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-3">
+                                <div id="map-preview">
+                                    <div class="text-center">
+                                        <i class="fas fa-map-marked-alt fa-3x text-muted"></i>
+                                        <p class="text-muted mt-2">Mapa será exibido aqui</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Características do Spot -->
+                        <div class="form-section">
+                            <h5 class="section-title">🌊 Características do Spot</h5>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label for="wave_type" class="form-label">Tipo de Onda</label>
+                                        <select class="form-control" id="wave_type" name="wave_type">
+                                            <option value="">Selecione</option>
+                                            <option value="beach_break">Beach Break</option>
+                                            <option value="point_break">Point Break</option>
+                                            <option value="reef_break">Reef Break</option>
+                                            <option value="rivermouth">Rivermouth</option>
+                                            <option value="shore_break">Shore Break</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label for="bottom_type" class="form-label">Tipo de Fundo</label>
+                                        <select class="form-control" id="bottom_type" name="bottom_type">
+                                            <option value="">Selecione</option>
+                                            <option value="areia">Areia</option>
+                                            <option value="pedra">Pedra</option>
+                                            <option value="coral">Coral</option>
+                                            <option value="lama">Lama</option>
+                                            <option value="misto">Misto</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label for="difficulty" class="form-label">Dificuldade</label>
+                                        <select class="form-control" id="difficulty" name="difficulty">
+                                            <option value="">Selecione</option>
+                                            <option value="iniciante">Iniciante</option>
+                                            <option value="intermediário">Intermediário</option>
+                                            <option value="avançado">Avançado</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label for="crowd_level" class="form-label">Nível de Multidão</label>
+                                        <select class="form-control" id="crowd_level" name="crowd_level">
+                                            <option value="">Selecione</option>
+                                            <option value="baixo">Baixo</option>
+                                            <option value="médio">Médio</option>
+                                            <option value="alto">Alto</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label for="best_wind_direction" class="form-label">Melhor Vento</label>
+                                        <select class="form-control" id="best_wind_direction" name="best_wind_direction">
+                                            <option value="">Selecione</option>
+                                            <option value="N">Norte</option>
+                                            <option value="NE">Nordeste</option>
+                                            <option value="E">Leste</option>
+                                            <option value="SE">Sudeste</option>
+                                            <option value="S">Sul</option>
+                                            <option value="SW">Sudoeste</option>
+                                            <option value="W">Oeste</option>
+                                            <option value="NW">Noroeste</option>
+                                            <option value="offshore">Offshore</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label for="best_swell_direction" class="form-label">Melhor Swell</label>
+                                        <select class="form-control" id="best_swell_direction" name="best_swell_direction">
+                                            <option value="">Selecione</option>
+                                            <option value="N">Norte</option>
+                                            <option value="NE">Nordeste</option>
+                                            <option value="E">Leste</option>
+                                            <option value="SE">Sudeste</option>
+                                            <option value="S">Sul</option>
+                                            <option value="SW">Sudoeste</option>
+                                            <option value="W">Oeste</option>
+                                            <option value="NW">Noroeste</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label for="best_tide" class="form-label">Melhor Maré</label>
+                                        <select class="form-control" id="best_tide" name="best_tide">
+                                            <option value="">Selecione</option>
+                                            <option value="baixa">Baixa</option>
+                                            <option value="média">Média</option>
+                                            <option value="alta">Alta</option>
+                                            <option value="todas">Todas</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label for="min_swell_size" class="form-label">Tamanho Mín. Swell (m)</label>
+                                        <input type="number" step="0.1" class="form-control" id="min_swell_size" name="min_swell_size" placeholder="0.5">
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label for="max_swell_size" class="form-label">Tamanho Máx. Swell (m)</label>
+                                        <input type="number" step="0.1" class="form-control" id="max_swell_size" name="max_swell_size" placeholder="3.0">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Alerta dinâmico baseado na origem -->
+                        <div id="alertFromMap" class="alert alert-success" style="display: none;">
+                            <strong>📍 Localização do Mapa:</strong> As coordenadas foram preenchidas automaticamente baseadas no local que você clicou no mapa.
+                        </div>
+                        
+                        <div class="alert alert-info">
+                            <strong>📝 Nota:</strong> Seu spot será enviado para moderação e ficará visível após aprovação pelos administradores.
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-paper-plane"></i> Enviar para Análise
+                            </button>
+                            <a href="{{ url_for('spots.spots_map') }}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Voltar
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function getMyLocation() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                position => {
+                    document.getElementById('latitude').value = position.coords.latitude.toFixed(6);
+                    document.getElementById('longitude').value = position.coords.longitude.toFixed(6);
+                    
+                    // Atualizar preview do mapa
+                    updateMapPreview();
+                },
+                error => {
+                    alert('Erro ao obter localização: ' + error.message);
+                }
+            );
+        } else {
+            alert('Geolocalização não suportada pelo navegador.');
+        }
+    }
+    
+    function updateMapPreview() {
+        const lat = document.getElementById('latitude').value;
+        const lng = document.getElementById('longitude').value;
+        
+        if (lat && lng) {
+            document.getElementById('map-preview').innerHTML = `
+                <div class="text-center p-3">
+                    <i class="fas fa-map-marker-alt fa-2x text-primary"></i>
+                    <p class="mt-2 mb-0"><strong>Localização Definida</strong></p>
+                    <small class="text-muted">Lat: ${lat}, Lng: ${lng}</small>
+                </div>
+            `;
+        }
+    }
+    
+    // Atualizar preview quando coordenadas mudarem
+    document.getElementById('latitude').addEventListener('input', updateMapPreview);
+    document.getElementById('longitude').addEventListener('input', updateMapPreview);
+    
+    // Validação do formulário
+    document.getElementById('addSpotForm').addEventListener('submit', function(e) {
+        const name = document.getElementById('name').value;
+        const lat = document.getElementById('latitude').value;
+        const lng = document.getElementById('longitude').value;
+        
+        if (!name || !lat || !lng) {
+            e.preventDefault();
+            alert('Por favor, preencha pelo menos o nome e as coordenadas do spot.');
+        }
+    });
+    
+    // Preencher coordenadas se passadas via URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const lat = urlParams.get('lat');
+    const lng = urlParams.get('lng');
+    
+    if (lat && lng) {
+        document.getElementById('latitude').value = lat;
+        document.getElementById('longitude').value = lng;
+        updateMapPreview();
+        
+        // Mostrar alerta informativo
+        document.getElementById('alertFromMap').style.display = 'block';
+        
+        // Scroll para as coordenadas para mostrar que foram preenchidas
+        document.getElementById('latitude').scrollIntoView({ 
+            behavior: 'smooth',
+            block: 'center'
+        });
+        
+        // Destacar os campos preenchidos
+        document.getElementById('latitude').style.backgroundColor = '#e3f2fd';
+        document.getElementById('longitude').style.backgroundColor = '#e3f2fd';
+        
+        setTimeout(() => {
+            document.getElementById('latitude').style.backgroundColor = '';
+            document.getElementById('longitude').style.backgroundColor = '';
+        }, 3000);
+    }
+</script>
+{% endblock %}

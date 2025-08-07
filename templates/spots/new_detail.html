@@ -1,0 +1,352 @@
+{% extends "base.html" %}
+
+{% block title %}{{ spot.name }} - IAmSurfer{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Header do Spot -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="{{ url_for('spots.spots_map') }}">Spots</a></li>
+                            <li class="breadcrumb-item active">{{ spot.name }}</li>
+                        </ol>
+                    </nav>
+                    
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h2>🏄‍♂️ {{ spot.name }}</h2>
+                            <p class="text-muted mb-2">
+                                <i class="fas fa-map-marker-alt"></i>
+                                {{ spot.city }}{% if spot.city and spot.state %}, {% endif %}{{ spot.state }}{% if spot.city or spot.state %}, {% endif %}{{ spot.country }}
+                            </p>
+                            {% if spot.address %}
+                                <p class="text-muted mb-2">
+                                    <i class="fas fa-directions"></i> {{ spot.address }}
+                                </p>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="text-end">
+                            {% if spot.difficulty %}
+                                <span class="badge bg-primary fs-6">{{ spot.difficulty.title() }}</span>
+                            {% endif %}
+                            {% if spot.wave_type %}
+                                <span class="badge bg-info fs-6">{{ spot.wave_type.replace('_', ' ').title() }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    {% if spot.description %}
+                        <div class="mt-3">
+                            <p>{{ spot.description }}</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Coluna Principal -->
+        <div class="col-lg-8">
+            <!-- Tabs de Navegação -->
+            <ul class="nav nav-tabs" id="spotTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="info-tab" data-bs-toggle="tab" data-bs-target="#info" type="button" role="tab">
+                        📊 Informações
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="photos-tab" data-bs-toggle="tab" data-bs-target="#photos" type="button" role="tab">
+                        📸 Fotos ({{ photos|length }})
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="sessions-tab" data-bs-toggle="tab" data-bs-target="#sessions" type="button" role="tab">
+                        📅 Sessões ({{ sessions|length }})
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="reports-tab" data-bs-toggle="tab" data-bs-target="#reports" type="button" role="tab">
+                        📋 Relatórios ({{ reports|length }})
+                    </button>
+                </li>
+            </ul>
+
+            <!-- Conteúdo das Tabs -->
+            <div class="tab-content" id="spotTabsContent">
+                <!-- Tab Informações -->
+                <div class="tab-pane fade show active" id="info" role="tabpanel">
+                    <div class="card mt-3">
+                        <div class="card-body">
+                            <h5>🌊 Características do Spot</h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <ul class="list-unstyled">
+                                        <li><strong>Tipo de Onda:</strong> {{ spot.wave_type.replace('_', ' ').title() if spot.wave_type else 'N/A' }}</li>
+                                        <li><strong>Tipo de Fundo:</strong> {{ spot.bottom_type.title() if spot.bottom_type else 'N/A' }}</li>
+                                        <li><strong>Dificuldade:</strong> {{ spot.difficulty.title() if spot.difficulty else 'N/A' }}</li>
+                                        <li><strong>Nível de Multidão:</strong> {{ spot.crowd_level.title() if spot.crowd_level else 'N/A' }}</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <ul class="list-unstyled">
+                                        <li><strong>Melhor Vento:</strong> {{ spot.best_wind_direction if spot.best_wind_direction else 'N/A' }}</li>
+                                        <li><strong>Melhor Swell:</strong> {{ spot.best_swell_direction if spot.best_swell_direction else 'N/A' }}</li>
+                                        <li><strong>Melhor Maré:</strong> {{ spot.best_tide.title() if spot.best_tide else 'N/A' }}</li>
+                                        <li><strong>Tamanho Ideal:</strong> 
+                                            {% if spot.min_swell_size and spot.max_swell_size %}
+                                                {{ spot.min_swell_size }}m - {{ spot.max_swell_size }}m
+                                            {% elif spot.min_swell_size %}
+                                                Acima de {{ spot.min_swell_size }}m
+                                            {% elif spot.max_swell_size %}
+                                                Até {{ spot.max_swell_size }}m
+                                            {% else %}
+                                                N/A
+                                            {% endif %}
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                            
+                            <hr>
+                            
+                            <h6>📍 Localização</h6>
+                            <p><strong>Coordenadas:</strong> {{ spot.latitude }}, {{ spot.longitude }}</p>
+                            
+                            <div id="spot-map" style="height: 300px; background-color: #f8f9fa; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                                <div class="text-center">
+                                    <i class="fas fa-map-marked-alt fa-3x text-muted"></i>
+                                    <p class="text-muted mt-2">Mapa seria exibido aqui</p>
+                                    <small class="text-muted">Lat: {{ spot.latitude }}, Lng: {{ spot.longitude }}</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab Fotos -->
+                <div class="tab-pane fade" id="photos" role="tabpanel">
+                    <div class="card mt-3">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5>📸 Fotos do Spot</h5>
+                                {% if current_user.is_authenticated %}
+                                    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#uploadPhotoModal">
+                                        <i class="fas fa-plus"></i> Adicionar Foto
+                                    </button>
+                                {% endif %}
+                            </div>
+                            
+                            {% if photos %}
+                                <div class="row">
+                                    {% for photo in photos %}
+                                        <div class="col-md-4 mb-3">
+                                            <div class="card">
+                                                <img src="{{ url_for('static', filename='uploads/spots/' + photo.filename) }}" class="card-img-top" alt="{{ photo.title or spot.name }}" style="height: 200px; object-fit: cover;">
+                                                <div class="card-body p-2">
+                                                    {% if photo.title %}
+                                                        <h6 class="card-title">{{ photo.title }}</h6>
+                                                    {% endif %}
+                                                    {% if photo.description %}
+                                                        <p class="card-text small">{{ photo.description }}</p>
+                                                    {% endif %}
+                                                    <small class="text-muted">Por {{ photo.uploader.username }}</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <div class="text-center py-4">
+                                    <i class="fas fa-camera fa-3x text-muted"></i>
+                                    <p class="text-muted mt-2">Nenhuma foto ainda</p>
+                                    {% if current_user.is_authenticated %}
+                                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#uploadPhotoModal">
+                                            Seja o primeiro a adicionar uma foto!
+                                        </button>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab Sessões -->
+                <div class="tab-pane fade" id="sessions" role="tabpanel">
+                    <div class="card mt-3">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5>📅 Sessões de Fotos</h5>
+                                {% if current_user.is_authenticated %}
+                                    <button class="btn btn-primary btn-sm">
+                                        <i class="fas fa-plus"></i> Criar Sessão
+                                    </button>
+                                {% endif %}
+                            </div>
+                            
+                            {% if sessions %}
+                                {% for session in sessions %}
+                                    <div class="card mb-3">
+                                        <div class="card-body">
+                                            <h6>{{ session.title }}</h6>
+                                            <p>{{ session.description }}</p>
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <small class="text-muted">
+                                                    <i class="fas fa-calendar"></i> {{ session.session_date.strftime('%d/%m/%Y') }} |
+                                                    <i class="fas fa-camera"></i> {{ session.photographer.username }}
+                                                </small>
+                                                {% if session.price_per_photo > 0 %}
+                                                    <span class="badge bg-success">R$ {{ "%.2f"|format(session.price_per_photo) }}/foto</span>
+                                                {% else %}
+                                                    <span class="badge bg-info">Gratuito</span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            {% else %}
+                                <div class="text-center py-4">
+                                    <i class="fas fa-calendar-alt fa-3x text-muted"></i>
+                                    <p class="text-muted mt-2">Nenhuma sessão agendada</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab Relatórios -->
+                <div class="tab-pane fade" id="reports" role="tabpanel">
+                    <div class="card mt-3">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5>📋 Relatórios de Condições</h5>
+                                {% if current_user.is_authenticated %}
+                                    <a href="{{ url_for('spots.add_report', spot_id=spot.id) }}" class="btn btn-primary btn-sm">
+                                        <i class="fas fa-plus"></i> Adicionar Relatório
+                                    </a>
+                                {% endif %}
+                            </div>
+                            
+                            {% if reports %}
+                                {% for report in reports %}
+                                    <div class="card mb-3">
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-between align-items-start">
+                                                <div>
+                                                    <h6>{{ report.conditions.title() if report.conditions else 'Condições' }}</h6>
+                                                    {% if report.wave_height %}
+                                                        <p><strong>Altura das Ondas:</strong> {{ report.wave_height }}m</p>
+                                                    {% endif %}
+                                                    {% if report.wind_direction and report.wind_speed %}
+                                                        <p><strong>Vento:</strong> {{ report.wind_direction }} {{ report.wind_speed }}km/h</p>
+                                                    {% endif %}
+                                                    {% if report.crowd_level %}
+                                                        <p><strong>Multidão:</strong> {{ report.crowd_level.title() }}</p>
+                                                    {% endif %}
+                                                    {% if report.notes %}
+                                                        <p>{{ report.notes }}</p>
+                                                    {% endif %}
+                                                </div>
+                                                <div class="text-end">
+                                                    <small class="text-muted">
+                                                        Por {{ report.user.username }}<br>
+                                                        {{ report.report_date.strftime('%d/%m/%Y %H:%M') }}
+                                                    </small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            {% else %}
+                                <div class="text-center py-4">
+                                    <i class="fas fa-clipboard-list fa-3x text-muted"></i>
+                                    <p class="text-muted mt-2">Nenhum relatório ainda</p>
+                                    {% if current_user.is_authenticated %}
+                                        <a href="{{ url_for('spots.add_report', spot_id=spot.id) }}" class="btn btn-primary">
+                                            Seja o primeiro a reportar as condições!
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Info Card -->
+            <div class="card">
+                <div class="card-body">
+                    <h6>ℹ️ Informações do Spot</h6>
+                    <hr>
+                    <small class="text-muted">
+                        <strong>Criado por:</strong> {{ spot.creator.username }}<br>
+                        <strong>Criado em:</strong> {{ spot.created_at.strftime('%d/%m/%Y') }}<br>
+                        {% if spot.approved_at %}
+                            <strong>Aprovado em:</strong> {{ spot.approved_at.strftime('%d/%m/%Y') }}
+                        {% endif %}
+                    </small>
+                </div>
+            </div>
+            
+            <!-- Ações -->
+            {% if current_user.is_authenticated %}
+                <div class="card mt-3">
+                    <div class="card-body">
+                        <h6>⚡ Ações Rápidas</h6>
+                        <div class="d-grid gap-2">
+                            <a href="{{ url_for('spots.add_report', spot_id=spot.id) }}" class="btn btn-outline-primary btn-sm">
+                                📋 Reportar Condições
+                            </a>
+                            <button class="btn btn-outline-info btn-sm" data-bs-toggle="modal" data-bs-target="#uploadPhotoModal">
+                                📸 Adicionar Foto
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Upload de Foto -->
+{% if current_user.is_authenticated %}
+<div class="modal fade" id="uploadPhotoModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">📸 Adicionar Foto</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('spots.spot_photos', spot_id=spot.id) }}" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="photo" class="form-label">Foto *</label>
+                        <input type="file" class="form-control" id="photo" name="photo" accept="image/*" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="title" class="form-label">Título</label>
+                        <input type="text" class="form-control" id="title" name="title">
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Descrição</label>
+                        <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Enviar Foto</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

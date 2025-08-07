@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Serviços em {{ spot.name }}</h1>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('spots.spots_map') }}">Mapa do Surf</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('spots.state_detail', uf=spot.city.state.uf) }}">{{ spot.city.state.name }}</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('spots.city_detail', city_id=spot.city_id) }}">{{ spot.city.name }}</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('spots.spot_detail', spot_id=spot.id) }}">{{ spot.name }}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Serviços</li>
+        </ol>
+    </nav>
+    
+    <!-- Navegação por abas -->
+    <ul class="nav nav-tabs mb-4">
+        <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('spots.spot_detail', spot_id=spot.id) }}">Informações</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('spots.spot_photographers', spot_id=spot.id) }}">Fotógrafos</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link active" href="{{ url_for('spots.spot_services', spot_id=spot.id) }}">Serviços Locais</a>
+        </li>
+    </ul>
+    
+    <!-- Categorias de serviços -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">Categorias</h5>
+        </div>
+        <div class="card-body">
+            <div class="d-flex flex-wrap">
+                <a href="#" class="btn btn-outline-primary m-1">Hospedagem</a>
+                <a href="#" class="btn btn-outline-primary m-1">Alimentação</a>
+                <a href="#" class="btn btn-outline-primary m-1">Lojas de Surf</a>
+                <a href="#" class="btn btn-outline-primary m-1">Escolas</a>
+                <a href="#" class="btn btn-outline-primary m-1">Saúde</a>
+                <a href="#" class="btn btn-outline-primary m-1">Outros</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="alert alert-info">
+        <p>Em breve você poderá encontrar aqui todos os serviços disponíveis próximos a este pico!</p>
+        <p>Possui um negócio ou serviço na região? <a href="#">Cadastre-se</a> e ganhe visibilidade.</p>
+    </div>
+    
+    <!-- Espaço reservado para futuros serviços -->
+    <div class="row">
+        <!-- Aqui serão exibidos os serviços de cada categoria -->
+    </div>
+</div>
+{% endblock %}

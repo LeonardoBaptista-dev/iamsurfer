@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Fotógrafos em {{ spot.name }}</h1>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('spots.spots_map') }}">Mapa do Surf</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('spots.state_detail', uf=spot.city.state.uf) }}">{{ spot.city.state.name }}</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('spots.city_detail', city_id=spot.city_id) }}">{{ spot.city.name }}</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('spots.spot_detail', spot_id=spot.id) }}">{{ spot.name }}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Fotógrafos</li>
+        </ol>
+    </nav>
+    
+    <!-- Navegação por abas -->
+    <ul class="nav nav-tabs mb-4">
+        <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('spots.spot_detail', spot_id=spot.id) }}">Informações</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link active" href="{{ url_for('spots.spot_photographers', spot_id=spot.id) }}">Fotógrafos</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('spots.spot_services', spot_id=spot.id) }}">Serviços Locais</a>
+        </li>
+    </ul>
+    
+    <div class="row">
+        {% for photographer in photographers %}
+        <div class="col-md-4 mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <img src="{{ photographer.user.profile_image|img_url }}" class="rounded-circle me-3" width="50" height="50">
+                        <div>
+                            <h5 class="card-title mb-0">{{ photographer.user.username }}</h5>
+                            {% if photographer.is_verified %}
+                            <span class="badge bg-primary">Fotógrafo Verificado</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <p class="card-text">
+                        {% if photographer.user.bio %}
+                        {{ photographer.user.bio[:100] }}{% if photographer.user.bio|length > 100 %}...{% endif %}
+                        {% else %}
+                        Nenhuma biografia disponível.
+                        {% endif %}
+                    </p>
+                    
+                    <a href="#" class="btn btn-primary">Ver galeria</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    {% if current_user.is_authenticated and not current_user.is_photographer %}
+    <div class="mt-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">É fotógrafo?</h5>
+                <p class="card-text">Registre-se como fotógrafo neste pico e comece a vender suas fotos.</p>
+                <a href="#" class="btn btn-success">Tornar-se fotógrafo</a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

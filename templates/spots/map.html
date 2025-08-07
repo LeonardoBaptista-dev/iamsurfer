@@ -1,0 +1,270 @@
+{% extends "base.html" %}
+
+{% block title %}Mapa de Spots - IAmSurfer{% endblock %}
+
+{% block extra_head %}
+<style>
+    #map {
+        height: 70vh;
+        width: 100%;
+        border-radius: 8px;
+    }
+    .spot-card {
+        max-width: 300px;
+    }
+    .spot-card img {
+        height: 150px;
+        object-fit: cover;
+    }
+    .difficulty-badge {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+    }
+    .search-results {
+        max-height: 300px;
+        overflow-y: auto;
+    }
+    .nearby-spots {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-3">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">🗺️ Mapa de Spots de Surf</h5>
+                    {% if current_user.is_authenticated %}
+                        <a href="{{ url_for('spots.add_spot') }}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-plus"></i> Adicionar Spot
+                        </a>
+                    {% endif %}
+                </div>
+                <div class="card-body p-0">
+                    <div id="map"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <!-- Busca de Spots -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">🔍 Buscar Spots</h5>
+                </div>
+                <div class="card-body">
+                    <input type="text" class="form-control" id="searchInput" placeholder="Buscar por nome ou localização...">
+                    <div id="searchResults" class="mt-3 search-results"></div>
+                </div>
+            </div>
+            
+            <!-- Spots Próximos -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5 class="mb-0">📍 Spots Próximos</h5>
+                </div>
+                <div class="card-body nearby-spots" id="nearbySpots">
+                    <p class="text-muted">Permita acesso à localização para ver spots próximos</p>
+                    <button class="btn btn-outline-primary btn-sm" onclick="getLocation()">
+                        <i class="fas fa-location-arrow"></i> Obter Localização
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Estatísticas -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5 class="mb-0">📊 Estatísticas</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-12">
+                            <strong id="totalSpots">{{ spots|length if spots else 0 }}</strong>
+                            <br>
+                            <small class="text-muted">Spots Cadastrados</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>    </div>
+</div>
+
+<!-- Dados dos spots em JSON -->
+<script type="application/json" id="spots-data">
+{{ spots|safe }}
+</script>
+
+<!-- Script básico sem Google Maps por enquanto -->
+<script>
+    let map, userLocation;
+    let spotsData = [];
+    
+    // Carrega dados dos spots do elemento JSON
+    function loadSpotsData() {
+        const spotsElement = document.getElementById('spots-data');
+        if (spotsElement) {
+            try {
+                spotsData = JSON.parse(spotsElement.textContent);
+                console.log('Spots carregados:', spotsData);
+            } catch (e) {
+                console.error('Erro ao carregar spots:', e);
+                spotsData = [];
+            }
+        }
+    }
+    
+    // Inicializa os dados
+    loadSpotsData();    // Função para simular inicialização do mapa
+    function initMap() {
+        console.log('Mapa seria inicializado aqui com', spotsData.length, 'spots');
+        
+        // Por enquanto, apenas exibe os spots em uma lista
+        displaySpotsList();
+    }
+    
+    function displaySpotsList() {
+        const mapDiv = document.getElementById('map');
+        if (spotsData.length === 0) {
+            mapDiv.innerHTML = `
+                <div class="d-flex justify-content-center align-items-center h-100">
+                    <div class="text-center">
+                        <h5>Nenhum spot cadastrado ainda</h5>
+                        <p class="text-muted">Seja o primeiro a adicionar um spot!</p>
+                        {% if current_user.is_authenticated %}
+                            <a href="{{ url_for('spots.add_spot') }}" class="btn btn-primary">
+                                Adicionar Primeiro Spot
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            `;        } else {
+            mapDiv.innerHTML = `
+                <div class="p-3">
+                    <h6>Spots Disponíveis (${spotsData.length})</h6>
+                    <div class="row">
+                        ${spotsData.map(spot => `
+                            <div class="col-md-6 mb-3">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h6 class="card-title">${spot.name}</h6>
+                                        <p class="card-text">${spot.description || 'Sem descrição'}</p>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <small class="text-muted">${spot.wave_type || 'N/A'}</small>
+                                            <span class="badge bg-primary">${spot.difficulty || 'N/A'}</span>
+                                        </div>
+                                        <div class="mt-2">
+                                            <small class="text-muted">Lat: ${spot.lat}, Lng: ${spot.lng}</small>
+                                        </div>
+                                        <a href="/spots/${spot.id}/detail" class="btn btn-primary btn-sm mt-2">Ver Detalhes</a>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+    }
+
+    function getLocation() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                position => {
+                    userLocation = {
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude
+                    };
+                    
+                    console.log('Localização obtida:', userLocation);
+                    showNearbySpots();
+                },
+                error => {
+                    console.log('Erro ao obter localização:', error);
+                    document.getElementById('nearbySpots').innerHTML = `
+                        <p class="text-danger">Erro ao obter localização. Verifique as permissões do navegador.</p>
+                    `;
+                }
+            );
+        } else {
+            document.getElementById('nearbySpots').innerHTML = `
+                <p class="text-warning">Geolocalização não suportada pelo navegador.</p>
+            `;
+        }
+    }    function showNearbySpots() {
+        if (!userLocation || spotsData.length === 0) return;
+
+        const nearbySpots = spotsData
+            .map(spot => ({
+                ...spot,
+                distance: calculateDistance(userLocation.lat, userLocation.lng, spot.lat, spot.lng)
+            }))
+            .sort((a, b) => a.distance - b.distance)
+            .slice(0, 5);
+
+        const container = document.getElementById('nearbySpots');
+        container.innerHTML = nearbySpots.map(spot => `
+            <div class="mb-2 p-2 border rounded">
+                <a href="/spots/${spot.id}/detail" class="text-decoration-none">
+                    <strong>${spot.name}</strong>
+                </a>
+                <br>
+                <small class="text-muted">${spot.distance.toFixed(1)} km de distância</small>
+                <br>
+                <small class="text-primary">${spot.difficulty || 'N/A'} - ${spot.wave_type || 'N/A'}</small>
+            </div>
+        `).join('');
+    }
+
+    function calculateDistance(lat1, lon1, lat2, lon2) {
+        const R = 6371; // Raio da Terra em km
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon/2) * Math.sin(dLon/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        return R * c;
+    }
+
+    // Busca de spots
+    document.getElementById('searchInput').addEventListener('input', function() {
+        const query = this.value.toLowerCase();
+        if (query.length < 2) {
+            document.getElementById('searchResults').innerHTML = '';
+            return;
+        }
+
+        // Busca local nos spots carregados
+        const results = spots.filter(spot => 
+            spot.name.toLowerCase().includes(query) ||
+            (spot.city && spot.city.toLowerCase().includes(query)) ||
+            (spot.state && spot.state.toLowerCase().includes(query))
+        );
+
+        const container = document.getElementById('searchResults');
+        if (results.length === 0) {
+            container.innerHTML = '<p class="text-muted">Nenhum spot encontrado</p>';
+        } else {
+            container.innerHTML = results.map(spot => `
+                <div class="mb-2 p-2 border rounded">
+                    <a href="/spots/${spot.id}/detail" class="text-decoration-none">
+                        <strong>${spot.name}</strong>
+                    </a>
+                    <br>
+                    <small class="text-muted">${spot.city || 'N/A'}, ${spot.state || 'N/A'}</small>
+                </div>
+            `).join('');
+        }
+    });
+
+    // Inicializa quando a página carrega
+    document.addEventListener('DOMContentLoaded', function() {
+        initMap();
+    });
+</script>
+{% endblock %}

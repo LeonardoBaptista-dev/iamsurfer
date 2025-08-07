@@ -1,89 +1,47 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_required, current_user
-from models import User, Post, Follow, SurfSpot
+from models import User, Post, Follow, SurfSpot, Notification
 from app import db
 from sqlalchemy import desc
 import random
 from datetime import datetime
-from surf_forecast import get_surf_forecast
 
 main = Blueprint('main', __name__)
 
-# Dados de exemplo para as previsões de surf
-SURF_SPOTS = [
-    {"name": "Campeche", "location": "Florianópolis, SC", "slug": "campeche"},
-    {"name": "Joaquina", "location": "Florianópolis, SC", "slug": "joaquina"},
-    {"name": "Praia da Vila", "location": "Imbituba, SC", "slug": "praia-da-vila"},
-    {"name": "Silveira", "location": "Garopaba, SC", "slug": "silveira"},
-    {"name": "Rosa Norte", "location": "Imbituba, SC", "slug": "rosa"},
-    {"name": "Matinhos", "location": "Matinhos, PR", "slug": "matinhos"},
-    {"name": "Itamambuca", "location": "Ubatuba, SP", "slug": "itamambuca"}
-]
-
-# Função para gerar previsão aleatória
-def get_random_forecast():
-    # Lista de spots de surf
-    spots = [
-        {"name": "Campeche", "location": "Florianópolis, SC"},
-        {"name": "Joaquina", "location": "Florianópolis, SC"},
-        {"name": "Praia da Vila", "location": "Imbituba, SC"},
-        {"name": "Silveira", "location": "Garopaba, SC"},
-        {"name": "Rosa Norte", "location": "Imbituba, SC"},
-        {"name": "Matinhos", "location": "Matinhos, PR"},
-        {"name": "Itamambuca", "location": "Ubatuba, SP"}
-    ]
-    
-    # Escolhe um spot aleatório
-    spot = random.choice(spots)
-    
-    # Gera dados aleatórios para a previsão
-    wave_height = round(random.uniform(0.5, 2.5), 1)
-    
-    return {
-        "spot": spot,
-        "wave_height": wave_height,
-        "period": random.randint(6, 12),
-        "wind_direction": random.choice(["N", "NE", "E", "SE", "S", "SW", "W", "NW"]),
-        "wind_speed": random.randint(5, 25),
-        "tide_time": f"{random.randint(5, 21):02d}:{random.choice([0, 15, 30, 45]):02d}h",
-        "condition_message": "Condições boas para surf" if wave_height > 1.0 else "Ondas pequenas, ideal para iniciantes",
-        "forecast_url": f"https://www.surf-forecast.com/breaks/{spot['name'].lower()}/forecasts/latest"
-    }
-
 @main.route('/')
 def index():
-    if current_user.is_authenticated:
-        # Obtém os IDs dos usuários seguidos pelo usuário atual
-        following_ids = [f.followed_id for f in current_user.followed.all()]
-        following_ids.append(current_user.id)  # Inclui os próprios posts do usuário
-        
-        # Busca posts dos usuários seguidos e do próprio usuário
-        posts = Post.query.filter(Post.user_id.in_(following_ids)).order_by(desc(Post.created_at)).all()
-        
-        # Busca usuários que o usuário atual não segue
-        users_not_following = User.query.filter(~User.id.in_(following_ids)).all()
-        # Seleciona aleatoriamente até 3 usuários para sugerir
-        suggested_users = random.sample(users_not_following, min(3, len(users_not_following))) if users_not_following else []
-    else:
-        # Para usuários não logados, mostra os posts mais recentes
-        posts = Post.query.order_by(desc(Post.created_at)).limit(10).all()
-        
-        # Para usuários não logados, seleciona usuários aleatórios
-        all_users = User.query.all()
-        suggested_users = random.sample(all_users, min(3, len(all_users))) if all_users else []
+    # Se o usuário não está logado, redireciona para login
+    if not current_user.is_authenticated:
+        return redirect(url_for('auth.login'))
     
-    # Obtém previsão de surf real usando o scraper
-    try:
-        surf_forecast = get_surf_forecast()
-    except Exception as e:
-        print(f"Erro ao obter previsão de surf: {e}")
-        # Fallback para dados aleatórios se o scraping falhar
-    surf_forecast = get_random_forecast()
+    # Se o usuário é admin, redireciona para o dashboard admin
+    if current_user.is_admin:
+        return redirect(url_for('admin.index'))
+    
+    # Usuário comum logado - mostrar página inicial de usuário
+    following_ids = [f.followed_id for f in current_user.followed.all()]
+    following_ids.append(current_user.id)
+    posts = Post.query.filter(Post.user_id.in_(following_ids)).order_by(desc(Post.created_at)).all()
+    users_not_following = User.query.filter(~User.id.in_(following_ids)).all()
+    suggested_users = random.sample(users_not_following, min(3, len(users_not_following))) if users_not_following else []
     
     return render_template('main/index.html', 
                           posts=posts, 
-                          suggested_users=suggested_users,
-                          surf_forecast=surf_forecast)
+                          suggested_users=suggested_users)
+
+@main.route('/home')
+@login_required
+def home():
+    """Página inicial de usuário comum (sem redirecionamentos automáticos)"""
+    following_ids = [f.followed_id for f in current_user.followed.all()]
+    following_ids.append(current_user.id)
+    posts = Post.query.filter(Post.user_id.in_(following_ids)).order_by(desc(Post.created_at)).all()
+    users_not_following = User.query.filter(~User.id.in_(following_ids)).all()
+    suggested_users = random.sample(users_not_following, min(3, len(users_not_following))) if users_not_following else []
+    
+    return render_template('main/index.html', 
+                          posts=posts, 
+                          suggested_users=suggested_users)
 
 @main.route('/explore')
 def explore():
@@ -123,6 +81,10 @@ def follow(username):
     
     current_user.follow(user)
     db.session.commit()
+    
+    # Cria notificação de novo seguidor
+    Notification.create_follow_notification(current_user, user)
+    
     flash(f'Você começou a seguir {username}!', 'success')
     return redirect(url_for('main.user_profile', username=username))
 
@@ -166,4 +128,4 @@ def search():
     # Busca por usuários
     users = User.query.filter(User.username.ilike(f'%{query}%')).all()
     
-    return render_template('main/search.html', results=users, query=query) 
+    return render_template('main/search.html', results=users, query=query)

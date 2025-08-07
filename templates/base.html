@@ -15,23 +15,36 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     
     {% block styles %}{% endblock %}
+    {% block extra_head %}{% endblock %}
 </head>
 <body>
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary sticky-top">
         <div class="container">
-            <a class="navbar-brand" href="{{ url_for('main.index') }}">
-                <i class="bi bi-water me-2"></i>IAmSurfer
-            </a>
+            {% if current_user.is_authenticated and current_user.is_admin %}
+                <a class="navbar-brand" href="{{ url_for('admin.index') }}">
+                    <i class="bi bi-water me-2"></i>IAmSurfer
+                </a>
+            {% else %}
+                <a class="navbar-brand" href="{{ url_for('main.index') }}">
+                    <i class="bi bi-water me-2"></i>IAmSurfer
+                </a>
+            {% endif %}
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('main.index') }}">
-                            <i class="bi bi-house-door"></i> Início
-                        </a>
+                        {% if current_user.is_authenticated and current_user.is_admin %}
+                            <a class="nav-link" href="{{ url_for('admin.index') }}">
+                                <i class="bi bi-house-door"></i> Dashboard
+                            </a>
+                        {% else %}
+                            <a class="nav-link" href="{{ url_for('main.index') }}">
+                                <i class="bi bi-house-door"></i> Início
+                            </a>
+                        {% endif %}
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('main.explore') }}">
@@ -41,6 +54,12 @@
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('trips.list_trips') }}">
                             <i class="bi bi-car-front"></i> Caronas
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('spots.spots_map') }}">
+                            <i class="bi bi-globe"></i> SurfMap
                         </a>
                     </li>
                     {% if current_user.is_authenticated %}
@@ -60,21 +79,69 @@
                 <ul class="navbar-nav">
                     {% if current_user.is_authenticated %}
                         {% if current_user.is_admin %}
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('admin.index') }}">
-                                <i class="bi bi-gear"></i> Admin
-                            </a>
-                        </li>
-                        {% endif %}
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                                <img src="{{ current_user.profile_image|img_url }}" class="rounded-circle me-1" width="24" height="24">
+                                <i class="bi bi-gear"></i> Admin
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li>
+                                    <a class="dropdown-item" href="{{ url_for('admin.index') }}">
+                                        <i class="bi bi-speedometer2"></i> Dashboard
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="{{ url_for('main.home') }}">
+                                        <i class="bi bi-house-door"></i> Página Inicial
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item" href="{{ url_for('admin.users') }}">
+                                        <i class="bi bi-people"></i> Gerenciar Usuários
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                        {% endif %}
+                        
+                        <!-- Sino de Notificações -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link position-relative" href="#" role="button" data-bs-toggle="dropdown" id="notificationsDropdown">
+                                <i class="bi bi-bell fs-5"></i>
+                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="notificationBadge" style="display: none;">
+                                    0
+                                </span>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end" style="width: 300px; max-height: 400px; overflow-y: auto;">
+                                <li><h6 class="dropdown-header">Notificações</h6></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <div id="notificationsList">
+                                    <li><span class="dropdown-item text-muted">Carregando...</span></li>
+                                </div>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item text-center" href="{{ url_for('messages.notifications') }}">
+                                        <small>Ver todas as notificações</small>
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                        
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                <img src="{{ current_user.profile_image|img_url }}" class="rounded-circle me-1" width="24" height="24" style="object-fit: cover;">
                                 {{ current_user.username }}
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end">
                                 <li>
                                     <a class="dropdown-item" href="{{ url_for('main.user_profile', username=current_user.username) }}">
                                         <i class="bi bi-person"></i> Meu Perfil
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="{{ url_for('messages.inbox') }}">
+                                        <i class="bi bi-chat-dots"></i> Mensagens
+                                        <span class="badge bg-primary ms-2" id="messagesBadge" style="display: none;">0</span>
                                     </a>
                                 </li>
                                 <li>
@@ -139,6 +206,85 @@
     
     <!-- Custom JavaScript -->
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <!-- Sistema de Imagens Responsivas -->
+    <script src="{{ url_for('static', filename='js/image-system.js') }}"></script>
+    
+    {% if current_user.is_authenticated %}
+    <!-- Sistema de Notificações -->
+    <script>
+        // Função para carregar contadores de notificações
+        function loadNotificationCounts() {
+            fetch('/api/notifications/count')
+                .then(response => response.json())
+                .then(data => {
+                    const notificationBadge = document.getElementById('notificationBadge');
+                    const messagesBadge = document.getElementById('messagesBadge');
+                    
+                    // Atualiza badge de notificações
+                    if (data.notifications > 0) {
+                        notificationBadge.textContent = data.notifications;
+                        notificationBadge.style.display = 'inline';
+                    } else {
+                        notificationBadge.style.display = 'none';
+                    }
+                    
+                    // Atualiza badge de mensagens
+                    if (data.messages > 0) {
+                        messagesBadge.textContent = data.messages;
+                        messagesBadge.style.display = 'inline';
+                    } else {
+                        messagesBadge.style.display = 'none';
+                    }
+                })
+                .catch(error => console.log('Erro ao carregar notificações:', error));
+        }
+        
+        // Função para carregar lista de notificações
+        function loadNotificationsList() {
+            fetch('/notifications')
+                .then(response => response.text())
+                .then(html => {
+                    // Extrai apenas a lista de notificações do HTML retornado
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    const notifications = doc.querySelectorAll('.notification-item');
+                    
+                    const notificationsList = document.getElementById('notificationsList');
+                    notificationsList.innerHTML = '';
+                    
+                    if (notifications.length === 0) {
+                        notificationsList.innerHTML = '<li><span class="dropdown-item text-muted">Nenhuma notificação</span></li>';
+                    } else {
+                        notifications.forEach((notification, index) => {
+                            if (index < 5) { // Mostra apenas as 5 mais recentes no dropdown
+                                const li = document.createElement('li');
+                                li.innerHTML = `<span class="dropdown-item">${notification.innerHTML}</span>`;
+                                notificationsList.appendChild(li);
+                            }
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.log('Erro ao carregar lista de notificações:', error);
+                    document.getElementById('notificationsList').innerHTML = 
+                        '<li><span class="dropdown-item text-muted">Erro ao carregar</span></li>';
+                });
+        }
+        
+        // Carrega notificações quando a página carrega
+        document.addEventListener('DOMContentLoaded', function() {
+            loadNotificationCounts();
+            
+            // Atualiza a cada 30 segundos
+            setInterval(loadNotificationCounts, 30000);
+            
+            // Carrega lista quando clica no sino
+            document.getElementById('notificationsDropdown').addEventListener('click', function() {
+                loadNotificationsList();
+            });
+        });
+    </script>
+    {% endif %}
     
     {% block scripts %}{% endblock %}
 </body>

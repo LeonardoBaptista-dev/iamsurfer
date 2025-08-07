@@ -1,0 +1,230 @@
+{% extends 'base.html' %}
+
+{% block title %}Relatórios - Admin{% endblock %}
+
+{% block extra_head %}
+<style>
+    .stats-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: 8px;
+        padding: 1.5rem;
+        text-align: center;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        border-left: 4px solid;
+    }
+    
+    .stat-card.users { border-left-color: #007bff; }
+    .stat-card.posts { border-left-color: #28a745; }
+    .stat-card.spots { border-left-color: #ffc107; }
+    .stat-card.comments { border-left-color: #17a2b8; }
+    
+    .stat-number {
+        font-size: 2rem;
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-label {
+        color: #666;
+        font-size: 0.875rem;
+    }
+    
+    .chart-container {
+        background: white;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .chart-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        color: #333;
+    }
+    
+    .report-section {
+        margin-bottom: 2rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-3 col-lg-2 d-md-block bg-light sidebar">
+            <div class="position-sticky">
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin.index') }}">
+                            <i class="bi bi-speedometer2 me-2"></i>
+                            Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin.users') }}">
+                            <i class="bi bi-people me-2"></i>
+                            Usuários
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin.posts') }}">
+                            <i class="bi bi-images me-2"></i>
+                            Posts
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin.spots') }}">
+                            <i class="bi bi-geo-alt me-2"></i>
+                            Spots de Surf
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin.comments') }}">
+                            <i class="bi bi-chat-dots me-2"></i>
+                            Comentários
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{{ url_for('admin.reports') }}">
+                            <i class="bi bi-bar-chart me-2"></i>
+                            Relatórios
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Conteúdo principal -->
+        <div class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">📊 Relatórios e Estatísticas</h1>
+                <div class="btn-toolbar mb-2 mb-md-0">
+                    <div class="btn-group me-2">
+                        <a href="{{ url_for('main.index') }}" class="btn btn-sm btn-outline-secondary">Voltar ao Site</a>
+                    </div>
+                </div>
+            </div>
+    
+            <!-- Estatísticas Gerais -->
+            <div class="stats-cards">
+                <div class="stat-card users">
+                    <div class="stat-number text-primary">{{ total_users }}</div>
+                    <div class="stat-label">Total de Usuários</div>
+                </div>
+                <div class="stat-card posts">
+                    <div class="stat-number text-success">{{ total_posts }}</div>
+                    <div class="stat-label">Total de Posts</div>
+                </div>
+                <div class="stat-card spots">
+                    <div class="stat-number text-warning">{{ total_spots }}</div>
+                    <div class="stat-label">Total de Spots</div>
+                </div>
+                <div class="stat-card comments">
+                    <div class="stat-number text-info">{{ total_comments }}</div>
+                    <div class="stat-label">Total de Comentários</div>
+                </div>
+            </div>
+
+            <!-- Relatórios e Gráficos -->
+            <div class="report-section">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="chart-container">
+                            <div class="chart-title">📈 Crescimento da Plataforma</div>
+                            <div class="row text-center">
+                                <div class="col-6">
+                                    <h4 class="text-primary">{{ new_users_this_week or 0 }}</h4>
+                                    <small class="text-muted">Novos usuários esta semana</small>
+                                </div>
+                                <div class="col-6">
+                                    <h4 class="text-success">{{ new_posts_this_week or 0 }}</h4>
+                                    <small class="text-muted">Novos posts esta semana</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="chart-container">
+                            <div class="chart-title">🏆 Top Usuários</div>
+                            <div class="list-group list-group-flush">
+                                {% for username, profile_image, post_count in top_posters[:5] %}
+                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div class="d-flex align-items-center">
+                                        <img src="{{ profile_image|img_url }}" class="rounded-circle me-2" width="32" height="32">
+                                        <a href="{{ url_for('main.user_profile', username=username) }}" 
+                                           class="text-decoration-none">{{ username }}</a>
+                                    </div>
+                                    <span class="badge bg-primary rounded-pill">{{ post_count }} posts</span>
+                                </div>
+                                {% else %}
+                                <div class="list-group-item text-center text-muted">
+                                    Nenhum dado disponível
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="report-section">
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="chart-container">
+                            <div class="chart-title">📊 Resumo Detalhado</div>
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Métrica</th>
+                                            <th>Total</th>
+                                            <th>Esta Semana</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td><i class="bi bi-people me-2"></i>Usuários</td>
+                                            <td>{{ total_users }}</td>
+                                            <td>{{ new_users_this_week or 0 }}</td>
+                                            <td><span class="badge bg-success">Ativo</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td><i class="bi bi-images me-2"></i>Posts</td>
+                                            <td>{{ total_posts }}</td>
+                                            <td>{{ new_posts_this_week or 0 }}</td>
+                                            <td><span class="badge bg-success">Ativo</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td><i class="bi bi-geo-alt me-2"></i>Spots de Surf</td>
+                                            <td>{{ total_spots }}</td>
+                                            <td>{{ new_spots_this_week or 0 }}</td>
+                                            <td><span class="badge bg-info">Ativo</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td><i class="bi bi-chat-dots me-2"></i>Comentários</td>
+                                            <td>{{ total_comments }}</td>
+                                            <td>{{ new_comments_this_week or 0 }}</td>
+                                            <td><span class="badge bg-warning">Ativo</span></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

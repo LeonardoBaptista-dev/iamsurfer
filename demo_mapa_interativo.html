@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demo - Mapa Interativo de Spots | IAmSurfer</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
+    
+    <style>
+        #map {
+            height: 70vh;
+            width: 100%;
+            border-radius: 8px;
+            background: linear-gradient(45deg, #e3f2fd, #f3e5f5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px dashed #2196f3;
+        }
+        .map-placeholder {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        .map-instructions {
+            background: #e3f2fd;
+            border: 1px solid #2196f3;
+            border-radius: 5px;
+            padding: 8px;
+            margin-bottom: 10px;
+        }
+        .demo-feature {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        .feature-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+        }
+        .spot-demo-card {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .add-mode-active {
+            background-color: #28a745 !important;
+            border-color: #28a745 !important;
+        }
+        .demo-marker {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            background: #1976d2;
+            border: 2px solid white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        .demo-marker:hover {
+            transform: scale(1.1);
+        }
+        .demo-marker.user-location {
+            background: #ff5722;
+        }
+        .demo-marker.new-spot {
+            background: #28a745;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary sticky-top">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="bi bi-water me-2"></i>IAmSurfer - Demo
+            </a>
+            <div class="navbar-nav ms-auto">
+                <span class="nav-link text-light">
+                    <i class="fas fa-user"></i> Demo User
+                </span>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-3">
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">🗺️ Mapa Interativo de Spots (DEMO)</h5>
+                        <div>
+                            <button class="btn btn-success btn-sm me-2" onclick="toggleAddMode()" id="addModeBtn">
+                                <i class="fas fa-map-marker-alt"></i> Modo Adicionar
+                            </button>
+                            <button class="btn btn-primary btn-sm">
+                                <i class="fas fa-plus"></i> Formulário Completo
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body p-2">
+                        <div class="map-instructions" id="mapInstructions">
+                            <i class="fas fa-info-circle text-primary"></i>
+                            <strong>DEMO:</strong> Este é um mockup do mapa interativo. Clique nos marcadores azuis para ver detalhes dos spots.
+                            <span id="addModeInstructions" style="display: none;">
+                                <strong class="text-success">Modo Adicionar Ativo:</strong> Clique em qualquer local do mapa para adicionar um novo spot!
+                            </span>
+                        </div>
+                        
+                        <div id="map" onclick="handleMapClick(event)">
+                            <div class="map-placeholder">
+                                <i class="fas fa-map fa-4x text-primary mb-3"></i>
+                                <h4>Google Maps Interativo</h4>
+                                <p class="text-muted">Configure a API do Google Maps para ver o mapa real aqui</p>
+                                
+                                <!-- Marcadores demo -->
+                                <div class="demo-marker" style="top: 30%; left: 25%;" onclick="showSpotInfo(event, 'Maresias')" title="Maresias - São Sebastião, SP">
+                                    🏄
+                                </div>
+                                <div class="demo-marker" style="top: 45%; left: 35%;" onclick="showSpotInfo(event, 'Praia do Rosa')" title="Praia do Rosa - Imbituba, SC">
+                                    🏄
+                                </div>
+                                <div class="demo-marker" style="top: 60%; left: 45%;" onclick="showSpotInfo(event, 'Joaquina')" title="Joaquina - Florianópolis, SC">
+                                    🏄
+                                </div>
+                                <div class="demo-marker user-location" style="top: 50%; left: 40%;" title="Sua localização">
+                                    📍
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Demonstração das Funcionalidades -->
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h5 class="mb-0">🚀 Funcionalidades Implementadas</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="demo-feature">
+                            <div class="d-flex align-items-center">
+                                <div class="feature-icon bg-primary text-white">
+                                    <i class="fas fa-map"></i>
+                                </div>
+                                <div>
+                                    <strong>Mapa Interativo Real</strong>
+                                    <p class="mb-0 text-muted">Google Maps com marcadores personalizados para cada spot</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="demo-feature">
+                            <div class="d-flex align-items-center">
+                                <div class="feature-icon bg-success text-white">
+                                    <i class="fas fa-plus"></i>
+                                </div>
+                                <div>
+                                    <strong>Adicionar Spots com Clique</strong>
+                                    <p class="mb-0 text-muted">Modo adicionar: clique no mapa para escolher localização</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="demo-feature">
+                            <div class="d-flex align-items-center">
+                                <div class="feature-icon bg-info text-white">
+                                    <i class="fas fa-search"></i>
+                                </div>
+                                <div>
+                                    <strong>Busca com Google Places</strong>
+                                    <p class="mb-0 text-muted">Autocomplete para buscar cidades, praias e endereços</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="demo-feature">
+                            <div class="d-flex align-items-center">
+                                <div class="feature-icon bg-warning text-white">
+                                    <i class="fas fa-location-arrow"></i>
+                                </div>
+                                <div>
+                                    <strong>Localização do Usuário</strong>
+                                    <p class="mb-0 text-muted">GPS para encontrar spots próximos automaticamente</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <!-- Busca -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">🔍 Buscar Localização</h5>
+                    </div>
+                    <div class="card-body">
+                        <input type="text" class="form-control" placeholder="Buscar cidade, praia ou endereço..." value="">
+                        <small class="text-muted">Powered by Google Places</small>
+                    </div>
+                </div>
+                
+                <!-- Spots Próximos -->
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h5 class="mb-0">📍 Spots Próximos</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="spot-demo-card">
+                            <strong>Maresias</strong><br>
+                            <small class="text-muted">2.3 km de distância</small><br>
+                            <span class="badge bg-primary">Intermediário</span>
+                            <span class="badge bg-secondary">Beach Break</span>
+                        </div>
+                        <div class="spot-demo-card">
+                            <strong>Praia do Rosa</strong><br>
+                            <small class="text-muted">15.7 km de distância</small><br>
+                            <span class="badge bg-primary">Avançado</span>
+                            <span class="badge bg-secondary">Point Break</span>
+                        </div>
+                        <div class="spot-demo-card">
+                            <strong>Joaquina</strong><br>
+                            <small class="text-muted">28.1 km de distância</small><br>
+                            <span class="badge bg-primary">Intermediário</span>
+                            <span class="badge bg-secondary">Beach Break</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Estatísticas -->
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h5 class="mb-0">📊 Estatísticas</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <div class="col-6">
+                                <strong>3</strong><br>
+                                <small class="text-muted">Spots Aprovados</small>
+                            </div>
+                            <div class="col-6">
+                                <strong>3</strong><br>
+                                <small class="text-muted">Visíveis no Mapa</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filtros -->
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h5 class="mb-0">🎛️ Filtros</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-2">
+                            <label class="form-label">Dificuldade:</label>
+                            <select class="form-select form-select-sm">
+                                <option value="">Todas</option>
+                                <option value="Iniciante">Iniciante</option>
+                                <option value="Intermediário">Intermediário</option>
+                                <option value="Avançado">Avançado</option>
+                            </select>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label">Tipo de Onda:</label>
+                            <select class="form-select form-select-sm">
+                                <option value="">Todos</option>
+                                <option value="Beach Break">Beach Break</option>
+                                <option value="Point Break">Point Break</option>
+                                <option value="Reef Break">Reef Break</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Demo para Adicionar Spot -->
+    <div class="modal fade" id="quickAddModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">🏄‍♂️ Adicionar Spot Rápido (DEMO)</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        Esta é uma demonstração. No sistema real, o spot seria salvo no banco de dados.
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Nome do Spot *</label>
+                        <input type="text" class="form-control" placeholder="Ex: Praia dos Surfistas">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Descrição Breve</label>
+                        <textarea class="form-control" rows="3" placeholder="Descreva o spot..."></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-6">
+                            <label class="form-label">Dificuldade</label>
+                            <select class="form-select">
+                                <option value="Intermediário" selected>Intermediário</option>
+                                <option value="Iniciante">Iniciante</option>
+                                <option value="Avançado">Avançado</option>
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Tipo de Onda</label>
+                            <select class="form-select">
+                                <option value="Beach Break" selected>Beach Break</option>
+                                <option value="Point Break">Point Break</option>
+                                <option value="Reef Break">Reef Break</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="demoSubmit()">
+                        <i class="fas fa-save"></i> Salvar Spot (Demo)
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        let isAddMode = false;
+        
+        function toggleAddMode() {
+            isAddMode = !isAddMode;
+            const btn = document.getElementById('addModeBtn');
+            const instructions = document.getElementById('addModeInstructions');
+            
+            if (isAddMode) {
+                btn.classList.add('add-mode-active');
+                btn.innerHTML = '<i class="fas fa-times"></i> Cancelar Modo';
+                instructions.style.display = 'inline';
+            } else {
+                btn.classList.remove('add-mode-active');
+                btn.innerHTML = '<i class="fas fa-map-marker-alt"></i> Modo Adicionar';
+                instructions.style.display = 'none';
+            }
+        }
+        
+        function handleMapClick(event) {
+            if (!isAddMode) return;
+            
+            // Previne propagação para não interferir com outros cliques
+            event.stopPropagation();
+            
+            // Simula adição de marcador
+            const rect = document.getElementById('map').getBoundingClientRect();
+            const x = ((event.clientX - rect.left) / rect.width) * 100;
+            const y = ((event.clientY - rect.top) / rect.height) * 100;
+            
+            // Remove marcadores anteriores de "novo spot"
+            document.querySelectorAll('.demo-marker.new-spot').forEach(marker => marker.remove());
+            
+            // Adiciona novo marcador
+            const marker = document.createElement('div');
+            marker.className = 'demo-marker new-spot';
+            marker.style.left = x + '%';
+            marker.style.top = y + '%';
+            marker.innerHTML = '+';
+            marker.title = 'Novo spot será adicionado aqui';
+            
+            document.getElementById('map').appendChild(marker);
+            
+            // Abre modal
+            new bootstrap.Modal(document.getElementById('quickAddModal')).show();
+        }
+        
+        function showSpotInfo(event, spotName) {
+            event.stopPropagation();
+            
+            const spots = {
+                'Maresias': {
+                    description: 'Uma das praias mais famosas do litoral norte paulista',
+                    difficulty: 'Intermediário',
+                    waveType: 'Beach Break'
+                },
+                'Praia do Rosa': {
+                    description: 'Point break clássico em Santa Catarina',
+                    difficulty: 'Avançado', 
+                    waveType: 'Point Break'
+                },
+                'Joaquina': {
+                    description: 'Praia icônica de Florianópolis',
+                    difficulty: 'Intermediário',
+                    waveType: 'Beach Break'
+                }
+            };
+            
+            const spot = spots[spotName];
+            alert(`🏄‍♂️ ${spotName}\n\n${spot.description}\n\nDificuldade: ${spot.difficulty}\nTipo: ${spot.waveType}\n\n(No sistema real, isso seria uma InfoWindow do Google Maps)`);
+        }
+        
+        function demoSubmit() {
+            alert('🎉 Demo: Spot adicionado com sucesso!\n\nNo sistema real:\n• Spot seria salvo no banco\n• Ficaria pendente para aprovação\n• Apareceria no painel admin');
+            
+            bootstrap.Modal.getInstance(document.getElementById('quickAddModal')).hide();
+            toggleAddMode();
+            
+            // Remove marcador temporário
+            document.querySelectorAll('.demo-marker.new-spot').forEach(marker => marker.remove());
+        }
+    </script>
+</body>
+</html>

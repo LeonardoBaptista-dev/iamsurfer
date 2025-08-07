@@ -9,7 +9,7 @@
         {% if current_user.is_authenticated %}
         <div class="card shadow mb-4">
             <div class="card-body text-center">
-                <img src="{{ current_user.profile_image|img_url }}" class="rounded-circle img-fluid mb-3" style="max-width: 100px;">
+                <img src="{{ current_user.profile_image_urls|profile_avatar_url if current_user.profile_image_urls else current_user.profile_image|img_url }}" class="rounded-circle img-fluid mb-3" style="max-width: 100px; width: 100px; height: 100px; object-fit: cover;">
                 <h5>{{ current_user.username }}</h5>
                 <p class="text-muted small">
                     {% if current_user.location %}
@@ -107,7 +107,7 @@
         <div class="card shadow mb-4">
             <div class="card-body">
                 <div class="d-flex align-items-center mb-3">
-                    <img src="{{ current_user.profile_image|img_url }}" class="rounded-circle me-2" width="40" height="40">
+                    <img src="{{ current_user.profile_image_urls|profile_thumbnail_url if current_user.profile_image_urls else current_user.profile_image|img_url }}" class="rounded-circle me-2" width="40" height="40" style="object-fit: cover;">
                     <a href="{{ url_for('posts.new_post') }}" class="form-control text-start text-muted border-0 bg-light rounded-pill" style="cursor: pointer">
                         No que você está pensando, {{ current_user.username }}?
                     </a>
@@ -132,7 +132,7 @@
             <div class="card shadow mb-4">
                 <div class="card-header bg-white d-flex justify-content-between align-items-center p-3">
                     <div class="d-flex align-items-center">
-                        <img src="{{ post.author.profile_image|img_url }}" class="rounded-circle me-2" width="40" height="40">
+                        <img src="{{ post.author.profile_image_urls|profile_thumbnail_url if post.author.profile_image_urls else post.author.profile_image|img_url }}" class="rounded-circle me-2" width="40" height="40" style="object-fit: cover;">
                         <div>
                             <a href="{{ url_for('main.user_profile', username=post.author.username) }}" class="text-decoration-none text-dark">
                                 <strong>{{ post.author.username }}</strong>
@@ -152,8 +152,27 @@
                         {{ post.content }}
                     </div>
                     
-                    {% if post.image_url %}
-                        <img src="{{ post.image_url|img_url }}" class="img-fluid rounded mb-3">
+                    {% if post.has_multiple_images %}
+                        <!-- Novo sistema de imagens responsivas -->
+                        <div class="post-image-container">
+                            {{ post.image_urls|responsive_img(post.content[:50], "img-fluid post-image") }}
+                            <div class="image-loading-overlay d-none">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Carregando...</span>
+                                </div>
+                            </div>
+                        </div>
+                    {% elif post.image_url %}
+                        <!-- Sistema antigo (compatibilidade) -->
+                        <div class="post-image-container">
+                            <img src="{{ post.image_url|img_url }}" 
+                                 class="img-fluid post-image" 
+                                 loading="lazy" 
+                                 alt="Post image"
+                                 data-src-large="{{ post.image_url|img_url }}"
+                                 data-src-medium="{{ post.image_url|img_url }}"
+                                 data-src-small="{{ post.image_url|img_url }}">
+                        </div>
                     {% endif %}
                     
                     {% if post.video_url %}
@@ -237,7 +256,7 @@
                         {% for user in suggested_users %}
                             <div class="list-group-item d-flex justify-content-between align-items-center">
                                 <div class="d-flex align-items-center">
-                                    <img src="{{ user.profile_image|img_url }}" class="rounded-circle me-2" width="40" height="40">
+                                    <img src="{{ user.profile_image_urls|profile_thumbnail_url if user.profile_image_urls else user.profile_image|img_url }}" class="rounded-circle me-2" width="40" height="40" style="object-fit: cover;">
                                     <div>
                                         <a href="{{ url_for('main.user_profile', username=user.username) }}" class="text-decoration-none text-dark">
                                             <strong>{{ user.username }}</strong>
@@ -270,33 +289,18 @@
         
         <div class="card shadow mb-4">
             <div class="card-header">
-                <h5 class="mb-0">Previsão do Surf</h5>
+                <h5 class="mb-0">Picos de Surf</h5>
             </div>
             <div class="card-body">
                 <div class="text-center mb-3">
-                    <p class="mb-0">{{ surf_forecast.spot.name }}, {{ surf_forecast.spot.location }}</p>
-                    <div class="d-flex justify-content-center align-items-center">
-                        <i class="bi bi-water fs-1 text-primary me-2"></i>
-                        <h3 class="mb-0">{{ surf_forecast.wave_height }}m</h3>
-                    </div>
-                    <p class="text-primary">{{ surf_forecast.condition_message }}</p>
+                    <i class="bi bi-map fs-1 text-primary"></i>
+                    <h5 class="mt-2">Navegue pelos Picos de Surf</h5>
+                    <p class="text-muted">Explore picos por estado e cidade</p>
                 </div>
-                <ul class="list-group list-group-flush">
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        <span>Vento</span>
-                        <span>{{ surf_forecast.wind_direction }} {{ surf_forecast.wind_speed }} km/h</span>
-                    </li>
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        <span>Período</span>
-                        <span>{{ surf_forecast.period }}s</span>
-                    </li>
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        <span>Maré</span>
-                        <span> {{ surf_forecast.tide_time }}</span>
-                    </li>
-                </ul>
-                <div class="text-center mt-3">
-                    <a href="{{ surf_forecast.forecast_url }}" target="_blank" class="btn btn-sm btn-outline-primary">Ver previsão completa</a>
+                <div class="d-grid">
+                    <a href="{{ url_for('spots.spots_map') }}" class="btn btn-outline-primary">
+                        <i class="bi bi-geo-alt"></i> Mapa de Picos
+                    </a>
                 </div>
             </div>
         </div>

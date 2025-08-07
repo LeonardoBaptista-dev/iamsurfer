@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, abort, send_file, send_from_directory
 from flask_login import login_required, current_user
-from models import Post, Comment, Like
+from models import Post, Comment, Like, Notification
 from app import db, app
 import os
 from werkzeug.utils import secure_filename
@@ -9,7 +9,21 @@ import uuid
 import io
 from io import BytesIO
 # Importa o módulo de armazenamento em nuvem
-from cloud_storage import upload_file as cloud_upload, delete_file as cloud_delete
+
+# Importa os processadores de imagem (local e produção)
+from app import app
+
+# Função para determinar qual processador usar
+def get_image_processor():
+    """Retorna o processador de imagem apropriado"""
+    use_local = not (os.environ.get('RENDER', False) or os.environ.get('FLASK_ENV') == 'production')
+    
+    if use_local:
+        from local_image_processor import LocalImageProcessor
+        return LocalImageProcessor
+    else:
+        from image_processor import ImageProcessor
+        return ImageProcessor
 
 posts = Blueprint('posts', __name__)
 
@@ -26,6 +40,10 @@ def new_post():
         # Cria post inicialmente sem mídia
         post = Post(content=content, user_id=current_user.id)
         
+        # Salva o post para ter um ID
+        db.session.add(post)
+        db.session.flush()  # Flush para ter o ID sem commit completo
+        
         # Processamento de imagem ou vídeo
         if 'media' in request.files and request.files['media'].filename:
             file = request.files['media']
@@ -36,18 +54,58 @@ def new_post():
                 is_image = file_ext in ['jpg', 'jpeg', 'png', 'gif']
                 is_video = file_ext in ['mp4', 'mov']
                 
-                # Define a pasta no Cloudinary
-                folder = 'posts'
+                if is_image:
+                    # Usa o sistema apropriado de processamento de imagens
+                    processor = get_image_processor()
+                    
+                    if hasattr(processor, 'process_and_save'):
+                        # Processador local
+                        success, message, urls = processor.process_and_save(file)
+                        
+                        if success:
+                            # Gera hash para deduplicação
+                            file.seek(0)
+                            import hashlib
+                            file_hash = hashlib.md5(file.read()).hexdigest()
+                            file.seek(0)
+                            
+                            # Armazena as URLs múltiplas e hash
+                            post.image_urls = urls
+                            post.image_hash = file_hash
+                            # Mantém compatibilidade com campo antigo
+                            post.image_url = urls.get('medium', urls.get('small', ''))
+                            print(f"✅ Imagem processada com sucesso: {len(urls)} tamanhos")
+                        else:
+                            flash(f"Erro no processamento da imagem: {message}", 'error')
+                            db.session.rollback()
+                            return redirect(url_for('posts.new_post'))
+                    
+                    else:
+                        # Processador do Cloudinary (produção)
+                        result = processor.process_and_upload_image(file, post.id)
+                        
+                        if result.get('success'):
+                            # Armazena as URLs múltiplas e hash
+                            post.image_urls = result['urls']
+                            post.image_hash = result['hash']
+                            # Mantém compatibilidade com campo antigo
+                            post.image_url = result['urls'].get('medium', result['urls'].get('small', ''))
+                            print(f"✅ Imagem processada com sucesso: {len(result['urls'])} tamanhos")
+                        else:
+                            flash(f"Erro no processamento da imagem: {result.get('error')}", 'error')
+                            db.session.rollback()
+                            return redirect(url_for('posts.new_post'))
                 
-                # Upload para Cloudinary
-                file_url = cloud_upload(file, folder=folder)
-                
-                if file_url:
-                    # Atribui a URL ao campo apropriado
-                    if is_image:
-                        post.image_url = file_url
-                    elif is_video:
-                        post.video_url = file_url
+                elif is_video:
+                    # Salva vídeo localmente
+                    filename = secure_filename(file.filename)
+                    video_folder = os.path.join(app.root_path, 'static', 'uploads', 'videos')
+                    os.makedirs(video_folder, exist_ok=True)
+                    unique_name = f"{uuid.uuid4().hex}_{filename}"
+                    video_path = os.path.join(video_folder, unique_name)
+                    file.save(video_path)
+                    # Salva o caminho relativo para uso na aplicação
+                    post.video_url = url_for('static', filename=f'uploads/videos/{unique_name}')
                 else:
                     flash('Erro ao fazer upload do arquivo. Tente novamente.', 'danger')
                     return redirect(url_for('posts.new_post'))
@@ -96,22 +154,22 @@ def delete_post(post_id):
     if post.user_id != current_user.id and not current_user.is_admin:
         abort(403)
     
-    # Remove arquivo de imagem ou vídeo caso exista
-    if post.image_url:
+    # Remove arquivo de imagem ou vídeo localmente, se existir
+    if post.image_url and post.image_url.startswith('/static/uploads/'):
         try:
-            # Excluir do Cloudinary
-            cloud_delete(post.image_url)
+            image_path = os.path.join(app.root_path, post.image_url.lstrip('/'))
+            if os.path.exists(image_path):
+                os.remove(image_path)
         except Exception as e:
-            # Log do erro, mas continua com a exclusão do post
-            print(f"Erro ao excluir arquivo de imagem: {str(e)}")
-    
-    if post.video_url:
+            print(f"Erro ao excluir arquivo de imagem local: {str(e)}")
+
+    if post.video_url and post.video_url.startswith('/static/uploads/videos/'):
         try:
-            # Excluir do Cloudinary
-            cloud_delete(post.video_url)
+            video_path = os.path.join(app.root_path, post.video_url.lstrip('/'))
+            if os.path.exists(video_path):
+                os.remove(video_path)
         except Exception as e:
-            # Log do erro, mas continua com a exclusão do post
-            print(f"Erro ao excluir arquivo de vídeo: {str(e)}")
+            print(f"Erro ao excluir arquivo de vídeo local: {str(e)}")
     
     db.session.delete(post)
     db.session.commit()
@@ -132,6 +190,10 @@ def add_comment(post_id):
     comment = Comment(content=content, user_id=current_user.id, post_id=post_id)
     db.session.add(comment)
     db.session.commit()
+    
+    # Cria notificação de comentário (se não for próprio post)
+    if current_user.id != post.author_id:
+        Notification.create_comment_notification(current_user, post, content)
     
     flash('Comentário adicionado com sucesso!', 'success')
     return redirect(url_for('posts.view_post', post_id=post_id))
@@ -176,6 +238,11 @@ def like_post(post_id):
         like = Like(user_id=current_user.id, post_id=post_id)
         db.session.add(like)
         db.session.commit()
+        
+        # Cria notificação de like (se não for próprio post)
+        if current_user.id != post.author_id:
+            Notification.create_like_notification(current_user, post)
+            
         flash('Post curtido!', 'success')
     
     # Redireciona de volta para a página anterior

@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>{{ spot.name }}</h1>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('spots.spots_map') }}">Mapa do Surf</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('spots.state_detail', uf=spot.city.state.uf) }}">{{ spot.city.state.name }}</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('spots.city_detail', city_id=spot.city_id) }}">{{ spot.city.name }}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ spot.name }}</li>
+        </ol>
+    </nav>
+    
+    <!-- Navegação por abas -->
+    <ul class="nav nav-tabs mb-4">
+        <li class="nav-item">
+            <a class="nav-link active" href="{{ url_for('spots.spot_detail', spot_id=spot.id) }}">Informações</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('spots.spot_photographers', spot_id=spot.id) }}">Fotógrafos</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('spots.spot_services', spot_id=spot.id) }}">Serviços Locais</a>
+        </li>
+    </ul>
+    
+    <div class="row">
+        <!-- Informações do pico -->
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Sobre este pico</h5>
+                    <p class="card-text">{{ spot.description|nl2br }}</p>
+                    <p class="card-text">
+                        <strong>Tipo de onda:</strong> {{ spot.wave_type or 'Não informado' }}<br>
+                        <strong>Nível recomendado:</strong> {{ spot.difficulty_level or 'Não informado' }}
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Galeria de fotos -->
+            <h4>Fotos do pico</h4>
+            <div class="row">
+                {% for photo in photos %}
+                <div class="col-md-4 mb-3">
+                    <div class="card">
+                        <img src="{{ photo.image_url|img_url }}" class="card-img-top" alt="{{ spot.name }}">
+                        <div class="card-body">
+                            <p class="card-text">
+                                Por: {{ photo.photographer.user.username }}
+                                {% if photo.is_for_sale %}
+                                <span class="badge bg-success">À venda</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- Sidebar -->
+        <div class="col-md-4">
+            <!-- Fotógrafos do pico -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Fotógrafos ativos</h5>
+                </div>
+                <div class="card-body">
+                    {% if photographers %}
+                        <ul class="list-group list-group-flush">
+                            {% for photographer in photographers %}
+                            <li class="list-group-item">
+                                <img src="{{ photographer.user.profile_image|img_url }}" class="rounded-circle me-2" width="30" height="30">
+                                {{ photographer.user.username }}
+                                {% if photographer.is_verified %}
+                                <span class="badge bg-primary">Verificado</span>
+                                {% endif %}
+                            </li>
+                            {% endfor %}
+                        </ul>
+                        <a href="{{ url_for('spots.spot_photographers', spot_id=spot.id) }}" class="btn btn-outline-primary mt-3">Ver todos</a>
+                    {% else %}
+                        <p>Nenhum fotógrafo registrado neste pico ainda.</p>
+                        {% if current_user.is_authenticated %}
+                        <a href="#" class="btn btn-primary">Registrar-se como fotógrafo</a>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Link para previsões -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Previsão do Surf</h5>
+                </div>
+                <div class="card-body">
+                    <p>Consulte a previsão atual para este pico nos sites parceiros:</p>
+                    <a href="https://www.surfline.com" target="_blank" class="btn btn-outline-primary">Surfline</a>
+                    <a href="https://www.windguru.cz" target="_blank" class="btn btn-outline-primary">Windguru</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

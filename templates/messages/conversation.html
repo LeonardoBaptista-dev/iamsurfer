@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}Conversa com {{ other_user.username }} - IAmSurfer{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <!-- Cabeçalho da conversa -->
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center">
+                        <a href="{{ url_for('messages.inbox') }}" class="btn btn-outline-secondary btn-sm me-3">
+                            <i class="bi bi-arrow-left"></i> Voltar
+                        </a>
+                        <img src="{{ other_user.profile_image_urls|profile_thumbnail_url if other_user.profile_image_urls else other_user.profile_image|img_url }}" 
+                             class="rounded-circle me-2" width="40" height="40" style="object-fit: cover;">
+                        <div>
+                            <h5 class="mb-0">{{ other_user.username }}</h5>
+                            <small class="text-muted">
+                                <a href="{{ url_for('main.user_profile', username=other_user.username) }}" class="text-decoration-none">
+                                    Ver perfil
+                                </a>
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Container da conversa -->
+        <div class="card">
+            <div class="card-body" style="height: 400px; overflow-y: auto;" id="messagesContainer">
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="d-flex mb-3 {% if message.sender_id == current_user.id %}justify-content-end{% endif %}">
+                            {% if message.sender_id != current_user.id %}
+                                <img src="{{ other_user.profile_image_urls|profile_thumbnail_url if other_user.profile_image_urls else other_user.profile_image|img_url }}" 
+                                     class="rounded-circle me-2" width="30" height="30" style="object-fit: cover;">
+                            {% endif %}
+                            <div class="message-bubble {% if message.sender_id == current_user.id %}bg-primary text-white{% else %}bg-light{% endif %} p-3 rounded" 
+                                 style="max-width: 70%;">
+                                <p class="mb-1">{{ message.content }}</p>
+                                <small class="{% if message.sender_id == current_user.id %}text-white-50{% else %}text-muted{% endif %}">
+                                    {{ message.timestamp.strftime('%d/%m %H:%M') }}
+                                    {% if message.sender_id == current_user.id and message.read %}
+                                        <i class="bi bi-check2-all ms-1"></i>
+                                    {% elif message.sender_id == current_user.id %}
+                                        <i class="bi bi-check2 ms-1"></i>
+                                    {% endif %}
+                                </small>
+                            </div>
+                            {% if message.sender_id == current_user.id %}
+                                <img src="{{ current_user.profile_image_urls|profile_thumbnail_url if current_user.profile_image_urls else current_user.profile_image|img_url }}" 
+                                     class="rounded-circle ms-2" width="30" height="30" style="object-fit: cover;">
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center text-muted py-5">
+                        <i class="bi bi-chat-text display-4 mb-3"></i>
+                        <p>Nenhuma mensagem ainda. Comece a conversa!</p>
+                    </div>
+                {% endif %}
+            </div>
+            
+            <!-- Formulário para nova mensagem -->
+            <div class="card-footer">
+                <form method="POST" id="messageForm">
+                    <div class="input-group">
+                        <input type="text" class="form-control" name="content" id="messageInput" 
+                               placeholder="Digite sua mensagem..." required maxlength="1000">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-send"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Scroll para baixo quando carrega a página
+    const container = document.getElementById('messagesContainer');
+    container.scrollTop = container.scrollHeight;
+    
+    // Foco no input de mensagem
+    document.getElementById('messageInput').focus();
+    
+    // Auto-scroll quando nova mensagem é enviada
+    document.getElementById('messageForm').addEventListener('submit', function() {
+        setTimeout(function() {
+            container.scrollTop = container.scrollHeight;
+        }, 100);
+    });
+});
+</script>
+{% endblock %}

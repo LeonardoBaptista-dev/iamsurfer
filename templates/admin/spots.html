@@ -1,0 +1,605 @@
+{% extends "base.html" %}
+
+{% block title %}Gerenciar Spots - Admin{% endblock %}
+
+{% block extra_head %}
+<style>
+    .stats-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: 8px;
+        padding: 1.5rem;
+        text-align: center;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        border-left: 4px solid;
+    }
+    
+    .stat-card.total { border-left-color: #007bff; }
+    .stat-card.pending { border-left-color: #ffc107; }
+    .stat-card.approved { border-left-color: #28a745; }
+    .stat-card.rejected { border-left-color: #dc3545; }
+    
+    .stat-number {
+        font-size: 2rem;
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-label {
+        color: #666;
+        font-size: 0.875rem;
+    }
+    
+    .filter-tabs {
+        background: white;
+        border-radius: 8px;
+        padding: 0.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .filter-tabs .nav-pills .nav-link {
+        border-radius: 6px;
+        margin: 0 0.25rem;
+    }
+    
+    .spot-card {
+        background: white;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        overflow: hidden;
+    }
+    
+    .spot-header {
+        padding: 1rem;
+        border-bottom: 1px solid #eee;
+        display: flex;
+        justify-content: between;
+        align-items: center;
+    }
+    
+    .spot-info {
+        flex: 1;
+    }
+    
+    .spot-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+    
+    .spot-details {
+        padding: 1rem;
+        background: #f8f9fa;
+    }
+    
+    .status-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        text-transform: uppercase;
+    }
+    
+    .status-pending {
+        background: #fff3cd;
+        color: #856404;
+        border: 1px solid #ffeaa7;
+    }
+    
+    .status-approved {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+    
+    .status-rejected {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+    
+    .coordinates {
+        font-family: 'Courier New', monospace;
+        font-size: 0.875rem;
+        color: #666;
+    }
+    
+    .btn-group-sm .btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+    }
+    
+    .spot-meta {
+        font-size: 0.875rem;
+        color: #666;
+    }
+    
+    .collapse-toggle {
+        cursor: pointer;
+        user-select: none;
+    }
+    
+    .collapse-toggle:hover {
+        color: #007bff;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-3 col-lg-2 d-md-block bg-light sidebar">
+            <div class="position-sticky">
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin.index') }}">
+                            <i class="bi bi-speedometer2 me-2"></i>
+                            Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin.users') }}">
+                            <i class="bi bi-people me-2"></i>
+                            Usuários
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin.posts') }}">
+                            <i class="bi bi-images me-2"></i>
+                            Posts
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{{ url_for('admin.spots') }}">
+                            <i class="bi bi-geo-alt me-2"></i>
+                            Spots de Surf
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin.messages') }}">
+                            <i class="bi bi-envelope me-2"></i>
+                            Mensagens
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin.comments') }}">
+                            <i class="bi bi-chat-dots me-2"></i>
+                            Comentários
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin.reports') }}">
+                            <i class="bi bi-bar-chart me-2"></i>
+                            Relatórios
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Conteúdo principal -->
+        <div class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">🏄‍♂️ Gerenciar Spots</h1>
+                <div class="btn-toolbar mb-2 mb-md-0">
+                    <div class="btn-group me-2">
+                        <a href="{{ url_for('spots.add_spot') }}" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Novo Spot
+                        </a>
+                        <a href="{{ url_for('main.index') }}" class="btn btn-sm btn-outline-secondary">Voltar ao Site</a>
+                    </div>
+                </div>
+            </div>
+    
+    <!-- Estatísticas -->
+    <div class="stats-cards">
+        <div class="stat-card total">
+            <div class="stat-number text-primary">{{ stats.total }}</div>
+            <div class="stat-label">Total de Spots</div>
+        </div>
+        <div class="stat-card pending">
+            <div class="stat-number text-warning">{{ stats.pending }}</div>
+            <div class="stat-label">Pendentes</div>
+        </div>
+        <div class="stat-card approved">
+            <div class="stat-number text-success">{{ stats.approved }}</div>
+            <div class="stat-label">Aprovados</div>
+        </div>
+        <div class="stat-card rejected">
+            <div class="stat-number text-danger">{{ stats.rejected }}</div>
+            <div class="stat-label">Rejeitados</div>
+        </div>
+    </div>
+    
+    <!-- Filtros -->
+    <div class="filter-tabs">
+        <ul class="nav nav-pills" role="tablist">
+            <li class="nav-item">
+                <a class="nav-link {{ 'active' if status_filter == 'all' else '' }}" 
+                   href="{{ url_for('admin.spots', status='all') }}">
+                    Todos ({{ stats.total }})
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {{ 'active' if status_filter == 'pending' else '' }}" 
+                   href="{{ url_for('admin.spots', status='pending') }}">
+                    <i class="fas fa-clock text-warning"></i> Pendentes ({{ stats.pending }})
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {{ 'active' if status_filter == 'approved' else '' }}" 
+                   href="{{ url_for('admin.spots', status='approved') }}">
+                    <i class="fas fa-check text-success"></i> Aprovados ({{ stats.approved }})
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {{ 'active' if status_filter == 'rejected' else '' }}" 
+                   href="{{ url_for('admin.spots', status='rejected') }}">
+                    <i class="fas fa-times text-danger"></i> Rejeitados ({{ stats.rejected }})
+                </a>
+            </li>
+        </ul>
+    </div>
+    
+    <!-- Lista de Spots -->
+    {% if spots.items %}
+        {% for spot in spots.items %}
+        <div class="spot-card">
+            <div class="spot-header">
+                <div class="spot-info">
+                    <div class="d-flex align-items-center mb-2">
+                        <h5 class="mb-0 me-3">
+                            <i class="fas fa-map-marker-alt text-primary"></i>
+                            {{ spot.name }}
+                        </h5>
+                        <span class="status-badge status-{{ spot.status }}">
+                            {{ spot.status.title() }}
+                        </span>
+                    </div>
+                    <div class="spot-meta">
+                        <i class="fas fa-map-pin"></i> {{ spot.city or 'N/A' }}, {{ spot.state or 'N/A' }}
+                        <span class="mx-2">•</span>
+                        <i class="fas fa-user"></i> Por: {{ spot.creator.username if spot.creator else 'N/A' }}
+                        <span class="mx-2">•</span>
+                        <i class="fas fa-calendar"></i> {{ spot.created_at.strftime('%d/%m/%Y %H:%M') }}
+                    </div>
+                    <div class="coordinates mt-1">
+                        <i class="fas fa-crosshairs"></i> 
+                        {{ "%.6f"|format(spot.latitude) }}, {{ "%.6f"|format(spot.longitude) }}
+                    </div>
+                </div>
+                
+                <div class="spot-actions">
+                    <button class="btn btn-outline-info btn-sm collapse-toggle" 
+                            data-bs-toggle="collapse" 
+                            data-bs-target="#details-{{ spot.id }}">
+                        <i class="fas fa-eye"></i> Detalhes
+                    </button>
+                    
+                    {% if spot.status == 'pending' %}
+                        <form method="POST" action="{{ url_for('admin.approve_spot', spot_id=spot.id) }}" class="d-inline">
+                            <button type="submit" class="btn btn-success btn-sm" 
+                                    onclick="return confirm('Aprovar este spot?')">
+                                <i class="fas fa-check"></i> Aprovar
+                            </button>
+                        </form>
+                        
+                        <form method="POST" action="{{ url_for('admin.reject_spot', spot_id=spot.id) }}" class="d-inline">
+                            <button type="submit" class="btn btn-warning btn-sm" 
+                                    onclick="return confirm('Rejeitar este spot?')">
+                                <i class="fas fa-times"></i> Rejeitar
+                            </button>
+                        </form>
+                    {% elif spot.status == 'rejected' %}
+                        <form method="POST" action="{{ url_for('admin.reactivate_spot', spot_id=spot.id) }}" class="d-inline">
+                            <button type="submit" class="btn btn-info btn-sm" 
+                                    onclick="return confirm('Reativar este spot?')">
+                                <i class="fas fa-redo"></i> Reativar
+                            </button>
+                        </form>
+                    {% endif %}
+                    
+                    <div class="dropdown">
+                        <button class="btn btn-outline-secondary btn-sm dropdown-toggle" 
+                                data-bs-toggle="dropdown">
+                            <i class="fas fa-ellipsis-v"></i>
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a class="dropdown-item" href="{{ url_for('spots.new_spot_detail', spot_id=spot.id) }}" target="_blank">
+                                    <i class="fas fa-external-link-alt"></i> Ver Público
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="#" 
+                                   data-lat="{{ spot.latitude }}" 
+                                   data-lng="{{ spot.longitude }}" 
+                                   data-name="{{ spot.name }}"
+                                   onclick="openMapViewFromData(this)">
+                                    <i class="fas fa-map"></i> Ver no Mapa
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <button class="dropdown-item text-danger" 
+                                        data-id="{{ spot.id }}" 
+                                        data-name="{{ spot.name }}"
+                                        onclick="deleteSpotFromData(this)">
+                                    <i class="fas fa-trash"></i> Excluir Permanentemente
+                                </button>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Detalhes Colapsáveis -->
+            <div class="collapse" id="details-{{ spot.id }}">
+                <div class="spot-details">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6><i class="fas fa-info-circle"></i> Informações Básicas</h6>
+                            <table class="table table-sm">
+                                <tr>
+                                    <td><strong>Endereço:</strong></td>
+                                    <td>{{ spot.address or 'N/A' }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>País:</strong></td>
+                                    <td>{{ spot.country or 'N/A' }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Dificuldade:</strong></td>
+                                    <td>
+                                        {% if spot.difficulty %}
+                                            <span class="badge bg-{{ 'success' if spot.difficulty == 'iniciante' else 'warning' if spot.difficulty == 'intermediário' else 'danger' }}">
+                                                {{ spot.difficulty.title() }}
+                                            </span>
+                                        {% else %}
+                                            N/A
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <h6><i class="fas fa-water"></i> Características</h6>
+                            <table class="table table-sm">
+                                <tr>
+                                    <td><strong>Tipo de Onda:</strong></td>
+                                    <td>{{ spot.wave_type or 'N/A' }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Tipo de Fundo:</strong></td>
+                                    <td>{{ spot.bottom_type or 'N/A' }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Multidão:</strong></td>
+                                    <td>{{ spot.crowd_level or 'N/A' }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Melhor Vento:</strong></td>
+                                    <td>{{ spot.best_wind_direction or 'N/A' }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    {% if spot.description %}
+                    <div class="mt-3">
+                        <h6><i class="fas fa-file-text"></i> Descrição</h6>
+                        <div class="bg-white p-3 border rounded">
+                            {{ spot.description }}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if spot.status != 'pending' %}
+                    <div class="mt-3">
+                        <h6><i class="fas fa-history"></i> Histórico de Moderação</h6>
+                        <div class="bg-white p-3 border rounded">
+                            {% if spot.status == 'approved' %}
+                                <span class="text-success">
+                                    <i class="fas fa-check"></i> 
+                                    Aprovado em {{ spot.approved_at.strftime('%d/%m/%Y %H:%M') if spot.approved_at else 'N/A' }}
+                                    {% if spot.approver %}
+                                        por {{ spot.approver.username }}
+                                    {% endif %}
+                                </span>
+                            {% elif spot.status == 'rejected' %}
+                                <span class="text-danger">
+                                    <i class="fas fa-times"></i> 
+                                    Rejeitado em {{ spot.rejected_at.strftime('%d/%m/%Y %H:%M') if spot.rejected_at else 'N/A' }}
+                                    {% if spot.rejecter %}
+                                        por {{ spot.rejecter.username }}
+                                    {% endif %}
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+        
+        <!-- Paginação -->
+        {% if spots.pages > 1 %}
+        <nav aria-label="Navegação de spots">
+            <ul class="pagination justify-content-center">
+                {% if spots.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('admin.spots', status=status_filter, page=spots.prev_num) }}">
+                            Anterior
+                        </a>
+                    </li>
+                {% endif %}
+                
+                {% for page_num in spots.iter_pages() %}
+                    {% if page_num %}
+                        {% if page_num != spots.page %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('admin.spots', status=status_filter, page=page_num) }}">
+                                    {{ page_num }}
+                                </a>
+                            </li>
+                        {% else %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ page_num }}</span>
+                            </li>
+                        {% endif %}
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">...</span>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if spots.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('admin.spots', status=status_filter, page=spots.next_num) }}">
+                            Próximo
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+        
+    {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-map-marker-alt fa-3x text-muted mb-3"></i>
+            <h4 class="text-muted">Nenhum spot encontrado</h4>
+            <p class="text-muted">
+                {% if status_filter == 'pending' %}
+                    Não há spots pendentes de aprovação.
+                {% elif status_filter == 'approved' %}
+                    Não há spots aprovados ainda.
+                {% elif status_filter == 'rejected' %}
+                    Não há spots rejeitados.
+                {% else %}
+                    Nenhum spot foi criado ainda.
+                {% endif %}
+            </p>
+            <a href="{{ url_for('spots.add_spot') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Criar Primeiro Spot
+            </a>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Modal para exclusão -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirmar Exclusão</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Tem certeza que deseja excluir permanentemente o spot "<span id="spotNameToDelete"></span>"?</p>
+                <p class="text-danger"><strong>Esta ação não pode ser desfeita!</strong></p>
+                
+                <form id="deleteForm" method="POST">
+                    <div class="mb-3">
+                        <label for="confirmDelete" class="form-label">
+                            Digite <strong>DELETE</strong> para confirmar:
+                        </label>
+                        <input type="text" class="form-control" id="confirmDelete" name="confirm" 
+                               placeholder="DELETE" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" onclick="confirmDelete()">
+                    <i class="fas fa-trash"></i> Excluir Permanentemente
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para visualizar no mapa -->
+<div class="modal fade" id="mapModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Localização do Spot</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="modalMap" style="height: 400px; width: 100%;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+        </div> <!-- Fim do conteúdo principal -->
+    </div> <!-- Fim da row -->
+</div> <!-- Fim do container-fluid -->
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let currentSpotToDelete = null;
+    
+    function deleteSpot(spotId, spotName) {
+        currentSpotToDelete = spotId;
+        document.getElementById('spotNameToDelete').textContent = spotName;
+        document.getElementById('deleteForm').action = `/admin/spots/${spotId}/delete`;
+        document.getElementById('confirmDelete').value = '';
+        
+        const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+        modal.show();
+    }
+    
+    function deleteSpotFromData(element) {
+        const spotId = element.getAttribute('data-id');
+        const spotName = element.getAttribute('data-name');
+        deleteSpot(spotId, spotName);
+    }
+    
+    function confirmDelete() {
+        const confirmText = document.getElementById('confirmDelete').value;
+        if (confirmText === 'DELETE') {
+            document.getElementById('deleteForm').submit();
+        } else {
+            alert('Por favor, digite "DELETE" para confirmar a exclusão.');
+        }
+    }
+    
+    function openMapView(lat, lng, spotName) {
+        // Abrir o mapa colaborativo com foco no spot
+        const mapUrl = `{{ url_for('spots.spots_map') }}#${lat},${lng},15`;
+        window.open(mapUrl, '_blank');
+    }
+    
+    function openMapViewFromData(element) {
+        const lat = element.getAttribute('data-lat');
+        const lng = element.getAttribute('data-lng');
+        const spotName = element.getAttribute('data-name');
+        openMapView(lat, lng, spotName);
+    }
+</script>
+
+{% if status_filter == 'pending' and stats.pending > 0 %}
+<script>
+    // Auto-refresh para spots pendentes
+    setTimeout(() => {
+        if (document.visibilityState === 'visible') {
+            window.location.reload();
+        }
+    }, 30000); // Refresh a cada 30 segundos
+</script>
+{% endif %}
+{% endblock %}

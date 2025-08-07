@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+
+{% block title %}Reportar Condições - {{ spot.name }} - IAmSurfer{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">📋 Reportar Condições do Spot</h4>
+                    <small class="text-muted">{{ spot.name }} - {{ spot.city }}, {{ spot.state }}</small>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <div class="row">
+                            <!-- Condições Gerais -->
+                            <div class="col-md-6">
+                                <h6 class="text-primary mb-3">🌊 Condições das Ondas</h6>
+                                
+                                <div class="mb-3">
+                                    <label for="conditions" class="form-label">Condições Gerais *</label>
+                                    <select class="form-control" id="conditions" name="conditions" required>
+                                        <option value="">Selecione</option>
+                                        <option value="flat">Flat (sem ondas)</option>
+                                        <option value="poor">Ruim</option>
+                                        <option value="fair">Regular</option>
+                                        <option value="good">Bom</option>
+                                        <option value="epic">Épico</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="wave_height" class="form-label">Altura das Ondas (metros)</label>
+                                    <input type="number" step="0.1" class="form-control" id="wave_height" name="wave_height" placeholder="Ex: 1.5">
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="crowd_level" class="form-label">Nível de Multidão</label>
+                                    <select class="form-control" id="crowd_level" name="crowd_level">
+                                        <option value="">Selecione</option>
+                                        <option value="vazio">Vazio</option>
+                                        <option value="baixo">Baixo</option>
+                                        <option value="médio">Médio</option>
+                                        <option value="alto">Alto</option>
+                                        <option value="lotado">Lotado</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+            
+                            <!-- Condições do Vento -->
+                            <div class="col-md-6">
+                                <h6 class="text-primary mb-3">💨 Condições do Vento</h6>
+                                
+                                <div class="mb-3">
+                                    <label for="wind_direction" class="form-label">Direção do Vento</label>
+                                    <select class="form-control" id="wind_direction" name="wind_direction">
+                                        <option value="">Selecione</option>
+                                        <option value="N">Norte</option>
+                                        <option value="NE">Nordeste</option>
+                                        <option value="E">Leste</option>
+                                        <option value="SE">Sudeste</option>
+                                        <option value="S">Sul</option>
+                                        <option value="SW">Sudoeste</option>
+                                        <option value="W">Oeste</option>
+                                        <option value="NW">Noroeste</option>
+                                        <option value="calmo">Calmo</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="wind_speed" class="form-label">Velocidade do Vento (km/h)</label>
+                                    <input type="number" step="1" class="form-control" id="wind_speed" name="wind_speed" placeholder="Ex: 15">
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="water_temp" class="form-label">Temperatura da Água (°C)</label>
+                                    <input type="number" step="0.1" class="form-control" id="water_temp" name="water_temp" placeholder="Ex: 22.5">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Observações -->
+                        <div class="mb-3">
+                            <label for="notes" class="form-label">Observações Adicionais</label>
+                            <textarea class="form-control" id="notes" name="notes" rows="4" placeholder="Descreva outros detalhes sobre as condições, acesso, perigos, etc."></textarea>
+                        </div>
+                        
+                        <!-- Preview das Condições -->
+                        <div class="alert alert-light border" id="conditionsPreview" style="display: none;">
+                            <h6>📋 Preview do seu relatório:</h6>
+                            <div id="previewContent"></div>
+                        </div>
+                        
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-paper-plane"></i> Enviar Relatório
+                            </button>
+                            <a href="{{ url_for('spots.new_spot_detail', spot_id=spot.id) }}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Voltar
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Dicas -->
+            <div class="card mt-3">
+                <div class="card-body">
+                    <h6>💡 Dicas para um bom relatório:</h6>
+                    <ul class="small text-muted mb-0">
+                        <li>Seja específico sobre as condições atuais</li>
+                        <li>Mencione qualquer mudança nas condições durante o dia</li>
+                        <li>Inclua informações sobre acesso ou perigos</li>
+                        <li>Considere mencionar o horário da sua observação</li>
+                        <li>Seja respeitoso com outros surfistas e o local</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Função para atualizar o preview
+    function updatePreview() {
+        const conditions = document.getElementById('conditions').value;
+        const waveHeight = document.getElementById('wave_height').value;
+        const windDirection = document.getElementById('wind_direction').value;
+        const windSpeed = document.getElementById('wind_speed').value;
+        const crowdLevel = document.getElementById('crowd_level').value;
+        const waterTemp = document.getElementById('water_temp').value;
+        const notes = document.getElementById('notes').value;
+        
+        if (!conditions) {
+            document.getElementById('conditionsPreview').style.display = 'none';
+            return;
+        }
+        
+        let preview = `<strong>Condições:</strong> ${conditions.charAt(0).toUpperCase() + conditions.slice(1)}`;
+        
+        if (waveHeight) {
+            preview += `<br><strong>Altura das Ondas:</strong> ${waveHeight}m`;
+        }
+        
+        if (windDirection && windSpeed) {
+            preview += `<br><strong>Vento:</strong> ${windDirection} ${windSpeed}km/h`;
+        } else if (windDirection) {
+            preview += `<br><strong>Vento:</strong> ${windDirection}`;
+        }
+        
+        if (crowdLevel) {
+            preview += `<br><strong>Multidão:</strong> ${crowdLevel.charAt(0).toUpperCase() + crowdLevel.slice(1)}`;
+        }
+        
+        if (waterTemp) {
+            preview += `<br><strong>Temperatura da Água:</strong> ${waterTemp}°C`;
+        }
+        
+        if (notes) {
+            preview += `<br><strong>Observações:</strong> ${notes}`;
+        }
+        
+        document.getElementById('previewContent').innerHTML = preview;
+        document.getElementById('conditionsPreview').style.display = 'block';
+    }
+    
+    // Adicionar listeners para atualizar o preview
+    const inputs = ['conditions', 'wave_height', 'wind_direction', 'wind_speed', 'crowd_level', 'water_temp', 'notes'];
+    inputs.forEach(inputId => {
+        const element = document.getElementById(inputId);
+        if (element) {
+            element.addEventListener('input', updatePreview);
+            element.addEventListener('change', updatePreview);
+        }
+    });
+    
+    // Validação do formulário
+    document.querySelector('form').addEventListener('submit', function(e) {
+        const conditions = document.getElementById('conditions').value;
+        
+        if (!conditions) {
+            e.preventDefault();
+            alert('Por favor, selecione as condições gerais do spot.');
+            document.getElementById('conditions').focus();
+        }
+    });
+</script>
+{% endblock %}

@@ -13,7 +13,7 @@
                 <form method="POST" action="{{ url_for('auth.edit_profile') }}" enctype="multipart/form-data">
                     <div class="row mb-4">
                         <div class="col-md-4 text-center">
-                            <img src="{{ current_user.profile_image|img_url }}" class="img-fluid rounded-circle mb-3" style="max-width: 150px;">
+                            <img src="{{ current_user.profile_image_urls|profile_medium_url if current_user.profile_image_urls else current_user.profile_image|img_url }}" class="img-fluid rounded-circle mb-3" style="max-width: 150px; width: 150px; height: 150px; object-fit: cover;">
                             
                             <div class="mb-3">
                                 <label for="profile_image" class="form-label">Foto de Perfil</label>

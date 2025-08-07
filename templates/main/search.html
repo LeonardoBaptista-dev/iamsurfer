@@ -28,7 +28,7 @@
                         <div class="card">
                             <div class="card-body text-center">
                                 <div class="text-center">
-                                    <img src="{{ user.profile_image|img_url }}" class="rounded-circle mb-3" style="width: 80px; height: 80px; object-fit: cover;">
+                                    <img src="{{ user.profile_image_urls|profile_avatar_url if user.profile_image_urls else user.profile_image|img_url }}" class="rounded-circle mb-3" style="width: 80px; height: 80px; object-fit: cover;">
                                     <h5 class="card-title">{{ user.username }}</h5>
                                     {% if user.location %}
                                         <p class="text-muted"><i class="bi bi-geo-alt"></i> {{ user.location }}</p>

@@ -6,7 +6,7 @@ import os
 from dotenv import load_dotenv
 import time
 import re
-from cloud_storage import init_cloudinary
+
 from flask import url_for
 
 # Carrega variáveis de ambiente
@@ -32,8 +32,33 @@ app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 # Verificar se está em ambiente de produção (Render)
 is_production = os.environ.get('RENDER', False) or os.environ.get('FLASK_ENV') == 'production'
 
+# Configuração para desenvolvimento local vs produção
+# No Docker, mesmo em desenvolvimento, vamos usar armazenamento local
+USE_LOCAL_STORAGE = not is_production  # Use armazenamento local em desenvolvimento e Docker
+
+# Imprime informação sobre o modo de armazenamento
+print(f"🔧 Modo de armazenamento: {'LOCAL' if USE_LOCAL_STORAGE else 'CLOUDINARY'}")
+print(f"🗄️ Database URL: {'PostgreSQL' if 'postgresql' in app.config['SQLALCHEMY_DATABASE_URI'] else 'SQLite'}")
+print(f"🐳 Ambiente: {'DOCKER' if os.path.exists('/.dockerenv') else 'LOCAL'}")
+
 # Certifica-se de que a pasta instance existe
 os.makedirs(app.instance_path, exist_ok=True)
+
+# Certifica-se de que as pastas de upload existem
+upload_dirs = [
+    os.path.join(app.root_path, 'static/uploads'),
+    os.path.join(app.root_path, 'static/uploads/posts'),
+    os.path.join(app.root_path, 'static/uploads/posts/thumbnail'),
+    os.path.join(app.root_path, 'static/uploads/posts/small'),
+    os.path.join(app.root_path, 'static/uploads/posts/medium'),
+    os.path.join(app.root_path, 'static/uploads/posts/large'),
+    os.path.join(app.root_path, 'static/uploads/posts/original'),
+    os.path.join(app.root_path, 'static/uploads/profiles')
+]
+for dir_path in upload_dirs:
+    os.makedirs(dir_path, exist_ok=True)
+
+print(f"📁 Diretórios de upload criados: {len(upload_dirs)} pastas")
 
 # Filtro personalizado para transformar quebras de linha em <br>
 @app.template_filter('nl2br')
@@ -50,6 +75,124 @@ def img_url(path):
     if 'cloudinary.com' in path or path.startswith('http://') or path.startswith('https://'):
         return path  # Retorna a URL externa diretamente
     return url_for('static', filename=path)  # Arquivo local
+
+# Filtros para o novo sistema de imagens responsivas
+@app.template_filter('responsive_img')
+def responsive_img_filter(urls, alt="", css_class=""):
+    """Gera tag img responsiva com srcset"""
+    if USE_LOCAL_STORAGE:
+        from local_image_processor import ResponsiveImageHelper
+        if isinstance(urls, dict):
+            return Markup(ResponsiveImageHelper.get_responsive_img_tag(urls, alt, css_class))
+    else:
+        from image_processor import ResponsiveImageHelper
+        if isinstance(urls, dict):
+            return Markup(ResponsiveImageHelper.get_responsive_img_tag(urls, alt, css_class))
+    # Fallback para URLs simples
+    return Markup(f'<img src="{img_url(urls)}" alt="{alt}" class="{css_class}" loading="lazy">')
+
+@app.template_filter('thumbnail_url')
+def thumbnail_url_filter(urls):
+    """Retorna URL do thumbnail"""
+    if USE_LOCAL_STORAGE:
+        from local_image_processor import ResponsiveImageHelper
+        if isinstance(urls, dict):
+            return ResponsiveImageHelper.get_thumbnail_url(urls)
+    else:
+        from image_processor import ResponsiveImageHelper
+        if isinstance(urls, dict):
+            return ResponsiveImageHelper.get_thumbnail_url(urls)
+    return img_url(urls)
+
+@app.template_filter('feed_img_url')
+def feed_img_url_filter(urls, is_mobile=False):
+    """Retorna URL apropriada para feed"""
+    if USE_LOCAL_STORAGE:
+        from local_image_processor import ResponsiveImageHelper
+        if isinstance(urls, dict):
+            return ResponsiveImageHelper.get_feed_url(urls, is_mobile)
+    else:
+        from image_processor import ResponsiveImageHelper
+        if isinstance(urls, dict):
+            return ResponsiveImageHelper.get_feed_url(urls, is_mobile)
+    return img_url(urls)
+
+@app.template_filter('large_img_url')
+def large_img_url_filter(urls):
+    """Retorna URL da imagem grande"""
+    if isinstance(urls, dict):
+        if USE_LOCAL_STORAGE:
+            return f"/static/{urls.get('large', urls.get('original', urls.get('medium', '')))}"
+        else:
+            return urls.get('large', urls.get('original', urls.get('medium', '')))
+    return img_url(urls)
+
+# Filtros específicos para imagens de perfil
+@app.template_filter('profile_avatar')
+def profile_avatar_filter(urls, alt="", css_class="rounded-circle", size="small"):
+    """Gera tag img otimizada para avatares de perfil"""
+    if USE_LOCAL_STORAGE:
+        from local_image_processor import ResponsiveImageHelper
+        if isinstance(urls, dict):
+            return Markup(ResponsiveImageHelper.get_profile_avatar_tag(urls, alt, css_class, size))
+    else:
+        from image_processor import ResponsiveImageHelper
+        if isinstance(urls, dict):
+            return Markup(ResponsiveImageHelper.get_profile_avatar_tag(urls, alt, css_class, size))
+    # Fallback para compatibilidade com o sistema antigo
+    return Markup(f'<img src="{img_url(urls)}" alt="{alt}" class="{css_class}" loading="lazy">')
+
+@app.template_filter('profile_thumbnail_url')
+def profile_thumbnail_url_filter(urls):
+    """Retorna URL do thumbnail de perfil (64x64)"""
+    if USE_LOCAL_STORAGE:
+        from local_image_processor import ResponsiveImageHelper
+        if isinstance(urls, dict):
+            return ResponsiveImageHelper.get_profile_thumbnail_url(urls)
+    else:
+        from image_processor import ResponsiveImageHelper
+        if isinstance(urls, dict):
+            return ResponsiveImageHelper.get_profile_thumbnail_url(urls)
+    return img_url(urls)
+
+@app.template_filter('profile_avatar_url')
+def profile_avatar_url_filter(urls):
+    """Retorna URL do avatar padrão de perfil (150x150)"""
+    if USE_LOCAL_STORAGE:
+        from local_image_processor import ResponsiveImageHelper
+        if isinstance(urls, dict):
+            return ResponsiveImageHelper.get_profile_avatar_url(urls)
+    else:
+        from image_processor import ResponsiveImageHelper
+        if isinstance(urls, dict):
+            return ResponsiveImageHelper.get_profile_avatar_url(urls)
+    return img_url(urls)
+
+@app.template_filter('profile_medium_url')
+def profile_medium_url_filter(urls):
+    """Retorna URL da imagem média de perfil (300x300)"""
+    if USE_LOCAL_STORAGE:
+        from local_image_processor import ResponsiveImageHelper
+        if isinstance(urls, dict):
+            return ResponsiveImageHelper.get_profile_medium_url(urls)
+    else:
+        from image_processor import ResponsiveImageHelper
+        if isinstance(urls, dict):
+            return ResponsiveImageHelper.get_profile_medium_url(urls)
+    return img_url(urls)
+
+@app.template_filter('profile_large_url')
+def profile_large_url_filter(urls):
+    """Retorna URL da imagem grande de perfil (600x600)"""
+    if USE_LOCAL_STORAGE:
+        from local_image_processor import ResponsiveImageHelper
+        if isinstance(urls, dict):
+            return ResponsiveImageHelper.get_profile_large_url(urls)
+    else:
+        from image_processor import ResponsiveImageHelper
+        if isinstance(urls, dict):
+            return ResponsiveImageHelper.get_profile_large_url(urls)
+    return img_url(urls)
 
 # Inicializa o SQLAlchemy
 db = SQLAlchemy(app)
@@ -77,12 +220,13 @@ migrate = Migrate(app, db)
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 os.makedirs(os.path.join(app.config['UPLOAD_FOLDER'], 'posts'), exist_ok=True)
 os.makedirs(os.path.join(app.config['UPLOAD_FOLDER'], 'profile_pics'), exist_ok=True)
+os.makedirs(os.path.join(app.config['UPLOAD_FOLDER'], 'spots'), exist_ok=True)
+os.makedirs(os.path.join(app.config['UPLOAD_FOLDER'], 'sessions'), exist_ok=True)
 
 # Importa os modelos após inicializar o db
-from models import User
-
 @login_manager.user_loader
 def load_user(user_id):
+    from models import User
     return User.query.get(int(user_id))
 
 # Função para esperar o banco de dados inicializar
@@ -116,7 +260,7 @@ def init_db():
             tables_exist = inspector.get_table_names()
             
             # Importa aqui para evitar importação circular
-            from models import User, SurfSpot, SurfTrip, TripParticipant
+            from models import User, SurfSpot, SurfTrip, TripParticipant, Spot, SpotPhotoNew, PhotoSession, SessionPhoto, PhotoPurchase, SpotReport
             
             # Cria todas as tabelas se não existirem
             if not tables_exist or 'surf_trip' not in tables_exist:
@@ -185,13 +329,10 @@ def init_db():
             print("Continuando mesmo assim...")
 
 # Inicializa o Cloudinary se as credenciais estiverem definidas
-if os.environ.get('CLOUDINARY_CLOUD_NAME') or os.environ.get('CLOUDINARY_URL'):
-    init_cloudinary()
-    print("Cloudinary configurado para armazenamento de arquivos.")
-else:
-    print("Aviso: Credenciais do Cloudinary não encontradas. O armazenamento de arquivos utilizará o sistema de arquivos local.")
 
-# Importa e registra os blueprints depois de definir os modelos
+print("Armazenamento de arquivos configurado para uso local.")
+
+# Importa e registra os blueprints
 from routes.auth import auth
 from routes.main import main
 from routes.posts import posts
@@ -209,6 +350,10 @@ app.register_blueprint(messages)
 from routes.trips import trips
 app.register_blueprint(trips)
 
+# No final do arquivo, após os outros blueprints
+from routes.spots import spots
+app.register_blueprint(spots)
+
 if __name__ == '__main__':
     if wait_for_db():
         init_db()
@@ -216,4 +361,4 @@ if __name__ == '__main__':
 else:
     # Para quando estiver rodando com Flask CLI (gunicorn, etc)
     wait_for_db()
-    init_db() 
+    init_db()

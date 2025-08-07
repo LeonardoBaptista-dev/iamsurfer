@@ -1,0 +1,723 @@
+{% extends "base.html" %}
+
+{% block title %}Mapa Interativo - IAmSurfer{% endblock %}
+
+{% block extra_head %}
+<style>
+    #map {
+        height: 70vh;
+        width: 100%;
+        border-radius: 8px;
+        position: relative;
+    }
+    .map-instructions {
+        background: #e3f2fd;
+        border: 1px solid #2196f3;
+        border-radius: 5px;
+        padding: 8px;
+        margin-bottom: 10px;
+    }
+    .spot-info-window {
+        max-width: 280px;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    .spot-info-window img {
+        width: 100%;
+        height: 120px;
+        object-fit: cover;
+        border-radius: 5px;
+        margin-bottom: 8px;
+    }
+    .search-results {
+        max-height: 300px;
+        overflow-y: auto;
+    }
+    .nearby-spots {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+    .add-mode-active {
+        background-color: #28a745 !important;
+        border-color: #28a745 !important;
+    }
+    .pac-container {
+        z-index: 10000;
+    }
+    #addSpotForm {
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        max-width: 400px;
+    }
+    .loading-spinner {
+        display: none;
+        text-align: center;
+        padding: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-3">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">🗺️ Mapa Interativo de Spots</h5>
+                    {% if current_user.is_authenticated %}
+                        <div>
+                            <button class="btn btn-success btn-sm me-2" onclick="toggleAddMode()" id="addModeBtn">
+                                <i class="fas fa-map-marker-alt"></i> Modo Adicionar
+                            </button>
+                            <a href="{{ url_for('spots.add_spot') }}" class="btn btn-primary btn-sm">
+                                <i class="fas fa-plus"></i> Formulário Completo
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="card-body p-2">
+                    <div class="map-instructions" id="mapInstructions">
+                        <i class="fas fa-info-circle text-primary"></i>
+                        <strong>Como usar:</strong> Clique nos marcadores azuis para ver detalhes dos spots. 
+                        {% if current_user.is_authenticated %}
+                        <span id="addModeInstructions" style="display: none;">
+                            <strong class="text-success">Modo Adicionar Ativo:</strong> Clique em qualquer local do mapa para adicionar um novo spot!
+                        </span>
+                        {% endif %}
+                    </div>
+                    <div class="loading-spinner" id="loadingSpinner">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Carregando mapa...</span>
+                        </div>
+                        <p>Carregando Google Maps...</p>
+                    </div>
+                    <div id="map"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <!-- Busca com Google Places -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">🔍 Buscar Localização</h5>
+                </div>
+                <div class="card-body">
+                    <input type="text" class="form-control" id="searchInput" placeholder="Buscar cidade, praia ou endereço...">
+                    <small class="text-muted">Powered by Google Places</small>
+                </div>
+            </div>
+            
+            <!-- Spots Próximos -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5 class="mb-0">📍 Spots Próximos</h5>
+                </div>
+                <div class="card-body nearby-spots" id="nearbySpots">
+                    <p class="text-muted">Permita acesso à localização para ver spots próximos</p>
+                    <button class="btn btn-outline-primary btn-sm" onclick="getUserLocation()">
+                        <i class="fas fa-location-arrow"></i> Obter Minha Localização
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Estatísticas -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5 class="mb-0">📊 Estatísticas</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <strong id="totalSpots">{{ spots|length if spots else 0 }}</strong>
+                            <br>
+                            <small class="text-muted">Spots Aprovados</small>
+                        </div>
+                        <div class="col-6">
+                            <strong id="visibleSpots">0</strong>
+                            <br>
+                            <small class="text-muted">Visíveis no Mapa</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filtros -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5 class="mb-0">🎛️ Filtros</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-2">
+                        <label class="form-label">Dificuldade:</label>
+                        <select class="form-select form-select-sm" id="difficultyFilter" onchange="applyFilters()">
+                            <option value="">Todas</option>
+                            <option value="Iniciante">Iniciante</option>
+                            <option value="Intermediário">Intermediário</option>
+                            <option value="Avançado">Avançado</option>
+                            <option value="Profissional">Profissional</option>
+                        </select>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">Tipo de Onda:</label>
+                        <select class="form-select form-select-sm" id="waveTypeFilter" onchange="applyFilters()">
+                            <option value="">Todos</option>
+                            <option value="Beach Break">Beach Break</option>
+                            <option value="Point Break">Point Break</option>
+                            <option value="Reef Break">Reef Break</option>
+                            <option value="River Mouth">River Mouth</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-outline-secondary btn-sm" onclick="clearFilters()">
+                        <i class="fas fa-times"></i> Limpar Filtros
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Adicionar Spot Rápido -->
+<div class="modal fade" id="quickAddModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="quickAddForm" onsubmit="submitQuickSpot(event)">
+                <div class="modal-header">
+                    <h5 class="modal-title">🏄‍♂️ Adicionar Spot Rápido</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Nome do Spot *</label>
+                        <input type="text" class="form-control" id="quickSpotName" required maxlength="100">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Descrição Breve</label>
+                        <textarea class="form-control" id="quickSpotDescription" rows="3" maxlength="500"></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-6">
+                            <label class="form-label">Dificuldade</label>
+                            <select class="form-select" id="quickSpotDifficulty">
+                                <option value="Iniciante">Iniciante</option>
+                                <option value="Intermediário" selected>Intermediário</option>
+                                <option value="Avançado">Avançado</option>
+                                <option value="Profissional">Profissional</option>
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Tipo de Onda</label>
+                            <select class="form-select" id="quickSpotWaveType">
+                                <option value="Beach Break" selected>Beach Break</option>
+                                <option value="Point Break">Point Break</option>
+                                <option value="Reef Break">Reef Break</option>
+                                <option value="River Mouth">River Mouth</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <label class="form-label">Localização</label>
+                        <div class="row">
+                            <div class="col-6">
+                                <input type="number" class="form-control" id="quickSpotLat" placeholder="Latitude" step="any" readonly>
+                            </div>
+                            <div class="col-6">
+                                <input type="number" class="form-control" id="quickSpotLng" placeholder="Longitude" step="any" readonly>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <small class="text-muted">
+                            <i class="fas fa-info-circle"></i> 
+                            O spot será enviado para aprovação antes de aparecer no mapa público.
+                        </small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Salvar Spot
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Dados dos spots em JSON -->
+<script type="application/json" id="spots-data">
+{{ spots|safe }}
+</script>
+
+<!-- Google Maps API Script -->
+<script>
+    let map, userLocation, searchBox;
+    let spotsData = [];
+    let markers = [];
+    let isAddMode = false;
+    let addModeMarker = null;
+    
+    // Configuração do Google Maps
+    const mapConfig = {
+        zoom: 6,
+        center: { lat: -14.2350, lng: -51.9253 }, // Centro do Brasil
+        mapTypeId: 'hybrid'
+    };
+
+    // Carrega dados dos spots
+    function loadSpotsData() {
+        const spotsElement = document.getElementById('spots-data');
+        if (spotsElement) {
+            try {
+                spotsData = JSON.parse(spotsElement.textContent);
+                console.log('✅ Spots carregados:', spotsData.length);
+                updateStatsDisplay();
+            } catch (e) {
+                console.error('❌ Erro ao carregar spots:', e);
+                spotsData = [];
+            }
+        }
+    }
+
+    // Inicializa o Google Maps
+    function initMap() {
+        console.log('🗺️ Inicializando Google Maps...');
+        
+        // Esconde o spinner
+        document.getElementById('loadingSpinner').style.display = 'none';
+        
+        // Cria o mapa
+        map = new google.maps.Map(document.getElementById('map'), mapConfig);
+        
+        // Configura busca com Places API
+        setupPlacesSearch();
+        
+        // Adiciona spots ao mapa
+        addSpotsToMap();
+        
+        // Configura eventos do mapa
+        setupMapEvents();
+        
+        console.log('✅ Google Maps inicializado com sucesso!');
+    }
+
+    // Configura busca com Google Places
+    function setupPlacesSearch() {
+        const input = document.getElementById('searchInput');
+        const autocomplete = new google.maps.places.Autocomplete(input);
+        
+        autocomplete.bindTo('bounds', map);
+        autocomplete.setFields(['place_id', 'geometry', 'name', 'formatted_address']);
+        
+        autocomplete.addListener('place_changed', function() {
+            const place = autocomplete.getPlace();
+            if (!place.geometry) return;
+            
+            // Move o mapa para o local pesquisado
+            if (place.geometry.viewport) {
+                map.fitBounds(place.geometry.viewport);
+            } else {
+                map.setCenter(place.geometry.location);
+                map.setZoom(12);
+            }
+            
+            // Mostra informações do local
+            new google.maps.InfoWindow({
+                content: `
+                    <div style="max-width: 200px;">
+                        <strong>${place.name}</strong><br>
+                        <small>${place.formatted_address}</small>
+                    </div>
+                `,
+                position: place.geometry.location
+            }).open(map);
+        });
+    }
+
+    // Adiciona spots ao mapa
+    function addSpotsToMap() {
+        clearMarkers();
+        
+        spotsData.forEach(spot => {
+            const marker = new google.maps.Marker({
+                position: { lat: parseFloat(spot.lat), lng: parseFloat(spot.lng) },
+                map: map,
+                title: spot.name,
+                icon: {
+                    url: 'data:image/svg+xml;base64,' + btoa(`
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="32" height="32">
+                            <circle cx="12" cy="12" r="10" fill="#1976d2" stroke="white" stroke-width="2"/>
+                            <text x="12" y="16" text-anchor="middle" fill="white" font-size="12" font-weight="bold">🏄</text>
+                        </svg>
+                    `),
+                    scaledSize: new google.maps.Size(32, 32)
+                }
+            });
+            
+            // InfoWindow para cada spot
+            const infoWindow = new google.maps.InfoWindow({
+                content: createSpotInfoWindow(spot)
+            });
+            
+            marker.addListener('click', function() {
+                infoWindow.open(map, marker);
+            });
+            
+            markers.push(marker);
+        });
+        
+        updateVisibleSpotsCount();
+    }
+
+    // Cria conteúdo da InfoWindow
+    function createSpotInfoWindow(spot) {
+        const coverPhoto = spot.cover_photo ? 
+            `<img src="${spot.cover_photo}" alt="${spot.name}" onerror="this.style.display='none'">` : 
+            '';
+        
+        return `
+            <div class="spot-info-window">
+                ${coverPhoto}
+                <h6 style="margin: 0 0 8px 0; color: #1976d2;">${spot.name}</h6>
+                <p style="margin: 0 0 8px 0; font-size: 14px;">${spot.description || 'Spot de surf incrível!'}</p>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <span style="background: #e3f2fd; padding: 2px 6px; border-radius: 3px; font-size: 12px;">
+                        ${spot.difficulty || 'N/A'}
+                    </span>
+                    <span style="background: #f3e5f5; padding: 2px 6px; border-radius: 3px; font-size: 12px;">
+                        ${spot.wave_type || 'N/A'}
+                    </span>
+                </div>
+                <div style="text-align: center;">
+                    <a href="/spots/${spot.id}/detail" class="btn btn-primary btn-sm" style="text-decoration: none;">
+                        Ver Detalhes Completos
+                    </a>
+                </div>
+            </div>
+        `;
+    }
+
+    // Configura eventos do mapa
+    function setupMapEvents() {
+        map.addListener('click', function(event) {
+            if (isAddMode) {
+                handleMapClick(event);
+            }
+        });
+        
+        // Atualiza contadores quando o mapa se move
+        map.addListener('bounds_changed', function() {
+            setTimeout(updateVisibleSpotsCount, 100);
+        });
+    }
+
+    // Manipula clique no mapa (modo adicionar)
+    function handleMapClick(event) {
+        if (!isAddMode) return;
+        
+        const lat = event.latLng.lat();
+        const lng = event.latLng.lng();
+        
+        // Remove marcador anterior se existir
+        if (addModeMarker) {
+            addModeMarker.setMap(null);
+        }
+        
+        // Adiciona novo marcador temporário
+        addModeMarker = new google.maps.Marker({
+            position: { lat: lat, lng: lng },
+            map: map,
+            icon: {
+                url: 'data:image/svg+xml;base64,' + btoa(`
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="36" height="36">
+                        <circle cx="12" cy="12" r="10" fill="#28a745" stroke="white" stroke-width="2"/>
+                        <text x="12" y="16" text-anchor="middle" fill="white" font-size="12" font-weight="bold">+</text>
+                    </svg>
+                `),
+                scaledSize: new google.maps.Size(36, 36)
+            },
+            title: 'Novo spot será adicionado aqui'
+        });
+        
+        // Preenche coordenadas no modal
+        document.getElementById('quickSpotLat').value = lat.toFixed(6);
+        document.getElementById('quickSpotLng').value = lng.toFixed(6);
+        
+        // Abre modal para dados do spot
+        new bootstrap.Modal(document.getElementById('quickAddModal')).show();
+    }
+
+    // Toggle modo adicionar
+    function toggleAddMode() {
+        {% if current_user.is_authenticated %}
+        isAddMode = !isAddMode;
+        const btn = document.getElementById('addModeBtn');
+        const instructions = document.getElementById('addModeInstructions');
+        
+        if (isAddMode) {
+            btn.classList.add('add-mode-active');
+            btn.innerHTML = '<i class="fas fa-times"></i> Cancelar Modo';
+            instructions.style.display = 'inline';
+            map.setOptions({ cursor: 'crosshair' });
+        } else {
+            btn.classList.remove('add-mode-active');
+            btn.innerHTML = '<i class="fas fa-map-marker-alt"></i> Modo Adicionar';
+            instructions.style.display = 'none';
+            map.setOptions({ cursor: '' });
+            
+            // Remove marcador temporário
+            if (addModeMarker) {
+                addModeMarker.setMap(null);
+                addModeMarker = null;
+            }
+        }
+        {% endif %}
+    }
+
+    // Submete spot rápido
+    function submitQuickSpot(event) {
+        event.preventDefault();
+        
+        const formData = {
+            name: document.getElementById('quickSpotName').value,
+            description: document.getElementById('quickSpotDescription').value,
+            difficulty: document.getElementById('quickSpotDifficulty').value,
+            wave_type: document.getElementById('quickSpotWaveType').value,
+            latitude: parseFloat(document.getElementById('quickSpotLat').value),
+            longitude: parseFloat(document.getElementById('quickSpotLng').value)
+        };
+        
+        // Envia dados via AJAX
+        fetch('/spots/add', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Sucesso
+                bootstrap.Modal.getInstance(document.getElementById('quickAddModal')).hide();
+                
+                // Remove marcador temporário
+                if (addModeMarker) {
+                    addModeMarker.setMap(null);
+                    addModeMarker = null;
+                }
+                
+                // Desativa modo adicionar
+                toggleAddMode();
+                
+                // Mostra mensagem de sucesso
+                alert('🎉 Spot adicionado com sucesso! Ele será analisado por nossa equipe antes de aparecer no mapa público.');
+                
+                // Limpa formulário
+                document.getElementById('quickAddForm').reset();
+                
+            } else {
+                alert('❌ Erro ao adicionar spot: ' + (data.message || 'Erro desconhecido'));
+            }
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            alert('❌ Erro de comunicação com o servidor');
+        });
+    }
+
+    // Obtém localização do usuário
+    function getUserLocation() {
+        if (!navigator.geolocation) {
+            alert('Geolocalização não suportada pelo seu navegador');
+            return;
+        }
+        
+        navigator.geolocation.getCurrentPosition(
+            position => {
+                userLocation = {
+                    lat: position.coords.latitude,
+                    lng: position.coords.longitude
+                };
+                
+                // Move mapa para localização do usuário
+                map.setCenter(userLocation);
+                map.setZoom(12);
+                
+                // Adiciona marcador da localização do usuário
+                new google.maps.Marker({
+                    position: userLocation,
+                    map: map,
+                    icon: {
+                        url: 'data:image/svg+xml;base64,' + btoa(`
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+                                <circle cx="12" cy="12" r="8" fill="#ff5722" stroke="white" stroke-width="2"/>
+                                <circle cx="12" cy="12" r="3" fill="white"/>
+                            </svg>
+                        `),
+                        scaledSize: new google.maps.Size(24, 24)
+                    },
+                    title: 'Sua localização'
+                });
+                
+                showNearbySpots();
+            },
+            error => {
+                console.error('Erro ao obter localização:', error);
+                alert('Erro ao obter sua localização. Verifique as permissões do navegador.');
+            }
+        );
+    }
+
+    // Mostra spots próximos
+    function showNearbySpots() {
+        if (!userLocation || spotsData.length === 0) return;
+
+        const nearbySpots = spotsData
+            .map(spot => ({
+                ...spot,
+                distance: calculateDistance(userLocation.lat, userLocation.lng, spot.lat, spot.lng)
+            }))
+            .sort((a, b) => a.distance - b.distance)
+            .slice(0, 5);
+
+        const container = document.getElementById('nearbySpots');
+        container.innerHTML = nearbySpots.map(spot => `
+            <div class="mb-2 p-2 border rounded">
+                <a href="/spots/${spot.id}/detail" class="text-decoration-none">
+                    <strong>${spot.name}</strong>
+                </a>
+                <br>
+                <small class="text-muted">${spot.distance.toFixed(1)} km de distância</small>
+                <br>
+                <span class="badge bg-primary">${spot.difficulty || 'N/A'}</span>
+                <span class="badge bg-secondary">${spot.wave_type || 'N/A'}</span>
+            </div>
+        `).join('');
+    }
+
+    // Calcula distância entre duas coordenadas
+    function calculateDistance(lat1, lon1, lat2, lon2) {
+        const R = 6371; // Raio da Terra em km
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon/2) * Math.sin(dLon/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        return R * c;
+    }
+
+    // Aplica filtros
+    function applyFilters() {
+        const difficultyFilter = document.getElementById('difficultyFilter').value;
+        const waveTypeFilter = document.getElementById('waveTypeFilter').value;
+        
+        // Esconde todos os marcadores
+        markers.forEach(marker => marker.setVisible(false));
+        
+        // Mostra apenas marcadores que passam pelos filtros
+        markers.forEach((marker, index) => {
+            const spot = spotsData[index];
+            let show = true;
+            
+            if (difficultyFilter && spot.difficulty !== difficultyFilter) {
+                show = false;
+            }
+            
+            if (waveTypeFilter && spot.wave_type !== waveTypeFilter) {
+                show = false;
+            }
+            
+            marker.setVisible(show);
+        });
+        
+        updateVisibleSpotsCount();
+    }
+
+    // Limpa filtros
+    function clearFilters() {
+        document.getElementById('difficultyFilter').value = '';
+        document.getElementById('waveTypeFilter').value = '';
+        applyFilters();
+    }
+
+    // Remove todos os marcadores
+    function clearMarkers() {
+        markers.forEach(marker => marker.setMap(null));
+        markers = [];
+    }
+
+    // Atualiza contadores na interface
+    function updateStatsDisplay() {
+        document.getElementById('totalSpots').textContent = spotsData.length;
+    }
+
+    // Atualiza contador de spots visíveis
+    function updateVisibleSpotsCount() {
+        const visibleCount = markers.filter(marker => marker.getVisible()).length;
+        document.getElementById('visibleSpots').textContent = visibleCount;
+    }
+
+    // Inicialização
+    document.addEventListener('DOMContentLoaded', function() {
+        loadSpotsData();
+        // O Google Maps será inicializado automaticamente via callback
+    });
+</script>
+
+<!-- Script de carregamento do Google Maps -->
+<script>
+    // Função de fallback quando Google Maps não está disponível
+    function googleMapsError() {
+        console.warn('Google Maps não pôde ser carregado');
+        document.getElementById('loadingSpinner').style.display = 'none';
+        document.getElementById('map').innerHTML = `
+            <div class="d-flex justify-content-center align-items-center h-100 text-center p-4">
+                <div>
+                    <i class="fas fa-exclamation-triangle text-warning fa-3x mb-3"></i>
+                    <h5>Google Maps Indisponível</h5>
+                    <p class="text-muted">Configure uma chave de API do Google Maps para usar o mapa interativo.</p>
+                    <div class="mt-3">
+                        <strong>Lista de Spots:</strong>
+                        <div class="row mt-2">
+                            ${spotsData.map(spot => `
+                                <div class="col-md-6 mb-2">
+                                    <div class="card card-body">
+                                        <h6>${spot.name}</h6>
+                                        <p class="small">${spot.description || 'Sem descrição'}</p>
+                                        <div class="d-flex justify-content-between">
+                                            <span class="badge bg-primary">${spot.difficulty || 'N/A'}</span>
+                                            <span class="badge bg-secondary">${spot.wave_type || 'N/A'}</span>
+                                        </div>
+                                        <a href="/spots/${spot.id}/detail" class="btn btn-primary btn-sm mt-2">Ver Detalhes</a>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    // Se o Google Maps não carregar em 10 segundos, mostra fallback
+    setTimeout(function() {
+        if (typeof google === 'undefined') {
+            googleMapsError();
+        }
+    }, 10000);
+</script>
+
+<!-- Carregamento condicional do Google Maps -->
+<script async defer 
+    src="https://maps.googleapis.com/maps/api/js?key=DEMO_KEY&libraries=places&callback=initMap&onerror=googleMapsError">
+</script>
+
+<div class="mt-3 alert alert-info">
+    <i class="fas fa-info-circle"></i>
+    <strong>Demo do Google Maps:</strong> Para usar o mapa interativo completo, configure uma chave de API do Google Maps.
+    Veja as instruções no arquivo <code>google_maps_config.py</code>.
+</div>
+{% endblock %}

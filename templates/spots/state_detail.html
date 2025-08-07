@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>{{ state.name }}</h1>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('spots.spots_map') }}">Mapa do Surf</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ state.name }}</li>
+        </ol>
+    </nav>
+    
+    <div class="row">
+        {% for city in cities %}
+        <div class="col-md-4 mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">{{ city.name }}</h5>
+                    <a href="{{ url_for('spots.city_detail', city_id=city.id) }}" class="btn btn-primary">Ver picos</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

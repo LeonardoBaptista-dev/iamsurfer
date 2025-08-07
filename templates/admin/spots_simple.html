@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block title %}Administração de Spots - IAmSurfer{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h2>Gerenciar Spots de Surf</h2>
+    
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h3>{{ stats.total }}</h3>
+                    <p>Total de Spots</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h3>{{ stats.pending }}</h3>
+                    <p>Pendentes</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h3>{{ stats.approved }}</h3>
+                    <p>Aprovados</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h3>{{ stats.rejected }}</h3>
+                    <p>Rejeitados</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h5>Lista de Spots</h5>
+        </div>
+        <div class="card-body">
+            {% if spots.items %}
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th>Status</th>
+                        <th>Criado por</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for spot in spots.items %}
+                    <tr>
+                        <td>{{ spot.name }}</td>
+                        <td>
+                            {% if spot.status == 'pending' %}
+                                <span class="badge bg-warning">Pendente</span>
+                            {% elif spot.status == 'approved' %}
+                                <span class="badge bg-success">Aprovado</span>
+                            {% elif spot.status == 'rejected' %}
+                                <span class="badge bg-danger">Rejeitado</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ spot.creator.username if spot.creator else 'N/A' }}</td>
+                        <td>
+                            {% if spot.status == 'pending' %}
+                                <form method="POST" action="{{ url_for('admin.approve_spot', spot_id=spot.id) }}" style="display: inline;">
+                                    <button type="submit" class="btn btn-sm btn-success">Aprovar</button>
+                                </form>
+                                <form method="POST" action="{{ url_for('admin.reject_spot', spot_id=spot.id) }}" style="display: inline;">
+                                    <button type="submit" class="btn btn-sm btn-warning">Rejeitar</button>
+                                </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p>Nenhum spot encontrado.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

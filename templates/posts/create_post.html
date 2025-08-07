@@ -17,13 +17,39 @@
                             <textarea class="form-control" id="content" name="content" rows="4" placeholder="Compartilhe suas aventuras no mar..."></textarea>
                         </div>
                         <div class="mb-3">
-                            <label for="media" class="form-label">Adicionar Foto/Vídeo</label>
+                            <label for="media" class="form-label">
+                                <i class="bi bi-camera"></i> Adicionar Foto/Vídeo
+                            </label>
                             <input class="form-control" type="file" id="media" name="media" accept="image/*, video/*">
-                            <div class="form-text">Formatos suportados: JPG, PNG, GIF, MP4, MOV</div>
+                            <div class="form-text">
+                                <small>
+                                    <i class="bi bi-info-circle"></i> 
+                                    Formatos suportados: JPG, PNG, GIF, MP4, MOV (máx. 10MB)
+                                    <br>
+                                    <strong>Sistema inteligente:</strong> Suas imagens serão automaticamente otimizadas em múltiplos tamanhos para melhor performance!
+                                </small>
+                            </div>
                         </div>
-                        <div class="preview-container mb-3 d-none">
-                            <h5>Pré-visualização:</h5>
-                            <div id="preview" class="border rounded p-2 mt-2"></div>
+                        
+                        <!-- Preview de imagem com carregamento -->
+                        <div id="imagePreview" class="preview-container mb-3 d-none">
+                            <div class="card">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0">
+                                        <i class="bi bi-eye"></i> Pré-visualização
+                                    </h6>
+                                </div>
+                                <div class="card-body text-center">
+                                    <div id="previewContent"></div>
+                                    <div class="upload-progress mt-2 d-none">
+                                        <div class="progress">
+                                            <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                                                 role="progressbar" style="width: 0%"></div>
+                                        </div>
+                                        <small class="text-muted">Processando imagem...</small>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         <div class="d-grid">
                             <button type="submit" class="btn btn-primary">
@@ -47,38 +73,130 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const mediaInput = document.getElementById('media');
-        const previewContainer = document.querySelector('.preview-container');
-        const preview = document.getElementById('preview');
+        const previewContainer = document.getElementById('imagePreview');
+        const previewContent = document.getElementById('previewContent');
+        const uploadProgress = previewContainer?.querySelector('.upload-progress');
+        const progressBar = uploadProgress?.querySelector('.progress-bar');
         
-        mediaInput.addEventListener('change', function() {
-            if (this.files && this.files[0]) {
-                const file = this.files[0];
-                const reader = new FileReader();
+        // Configuração para preview de imagem avançado
+        if (mediaInput) {
+            mediaInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
                 
-                reader.onload = function(e) {
-                    preview.innerHTML = '';
-                    previewContainer.classList.remove('d-none');
-                    
-                    if (file.type.startsWith('image/')) {
-                        const img = document.createElement('img');
-                        img.src = e.target.result;
-                        img.classList.add('img-fluid', 'rounded');
-                        preview.appendChild(img);
-                    } else if (file.type.startsWith('video/')) {
-                        const video = document.createElement('video');
-                        video.src = e.target.result;
-                        video.classList.add('img-fluid', 'rounded');
-                        video.controls = true;
-                        preview.appendChild(video);
-                    }
-                };
+                if (!file) {
+                    previewContainer.classList.add('d-none');
+                    return;
+                }
                 
-                reader.readAsDataURL(file);
-            } else {
-                previewContainer.classList.add('d-none');
-                preview.innerHTML = '';
-            }
-        });
+                // Validação do arquivo
+                if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
+                    alert('Por favor, selecione apenas arquivos de imagem ou vídeo.');
+                    this.value = '';
+                    return;
+                }
+                
+                if (file.size > 10 * 1024 * 1024) { // 10MB
+                    alert('Arquivo muito grande. Máximo permitido: 10MB');
+                    this.value = '';
+                    return;
+                }
+                
+                // Mostra preview
+                previewContainer.classList.remove('d-none');
+                
+                if (file.type.startsWith('image/')) {
+                    showImagePreview(file);
+                } else if (file.type.startsWith('video/')) {
+                    showVideoPreview(file);
+                }
+            });
+        }
+        
+        function showImagePreview(file) {
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                previewContent.innerHTML = `
+                    <div class="position-relative d-inline-block">
+                        <img src="${e.target.result}" 
+                             class="img-fluid rounded shadow" 
+                             style="max-height: 300px; max-width: 100%;"
+                             alt="Preview da imagem">
+                        <div class="position-absolute top-0 end-0 m-2">
+                            <span class="badge bg-success">
+                                <i class="bi bi-check-circle"></i> Pronto
+                            </span>
+                        </div>
+                        <div class="position-absolute bottom-0 start-0 m-2">
+                            <span class="badge bg-dark bg-opacity-75">
+                                <i class="bi bi-file-image"></i> ${formatFileSize(file.size)}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <small class="text-muted">
+                            <i class="bi bi-magic"></i> 
+                            Esta imagem será otimizada automaticamente em múltiplos tamanhos
+                        </small>
+                    </div>
+                `;
+                
+                // Simula processamento
+                simulateProcessing();
+            };
+            
+            reader.readAsDataURL(file);
+        }
+        
+        function showVideoPreview(file) {
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                previewContent.innerHTML = `
+                    <div class="position-relative d-inline-block">
+                        <video controls class="rounded shadow" style="max-height: 300px; max-width: 100%;">
+                            <source src="${e.target.result}" type="${file.type}">
+                            Seu navegador não suporta vídeos.
+                        </video>
+                        <div class="position-absolute top-0 end-0 m-2">
+                            <span class="badge bg-info">
+                                <i class="bi bi-play-circle"></i> Vídeo
+                            </span>
+                        </div>
+                    </div>
+                `;
+            };
+            
+            reader.readAsDataURL(file);
+        }
+        
+        function simulateProcessing() {
+            uploadProgress?.classList.remove('d-none');
+            let progress = 0;
+            
+            const interval = setInterval(() => {
+                progress += Math.random() * 15 + 5;
+                if (progress >= 100) {
+                    progress = 100;
+                    clearInterval(interval);
+                    setTimeout(() => {
+                        uploadProgress?.classList.add('d-none');
+                    }, 1000);
+                }
+                
+                if (progressBar) {
+                    progressBar.style.width = `${progress}%`;
+                }
+            }, 300);
+        }
+        
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
     });
 </script>
 {% endblock %} 

@@ -1,6 +1,98 @@
 {% extends 'base.html' %}
 
-{% block title %}Gerenciamento de Comentários - Painel Admin{% endblock %}
+{% block title %}Gerenciar Comentários - Admin{% endblock %}
+
+{% block extra_head %}
+<style>
+    .stats-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: 8px;
+        padding: 1.5rem;
+        text-align: center;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        border-left: 4px solid;
+    }
+    
+    .stat-card.total { border-left-color: #007bff; }
+    .stat-card.recent { border-left-color: #28a745; }
+    .stat-card.flagged { border-left-color: #dc3545; }
+    .stat-card.users { border-left-color: #6f42c1; }
+    
+    .stat-number {
+        font-size: 2rem;
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-label {
+        color: #666;
+        font-size: 0.875rem;
+    }
+    
+    .filter-tabs {
+        background: white;
+        border-radius: 8px;
+        padding: 0.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .filter-tabs .nav-pills .nav-link {
+        border-radius: 6px;
+        margin: 0 0.25rem;
+    }
+    
+    .comment-card {
+        background: white;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        overflow: hidden;
+    }
+    
+    .comment-header {
+        padding: 1rem;
+        border-bottom: 1px solid #eee;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .comment-info {
+        flex: 1;
+    }
+    
+    .comment-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+    
+    .btn-group-sm .btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+    }
+    
+    .comment-meta {
+        font-size: 0.875rem;
+        color: #666;
+    }
+    
+    .comment-content {
+        background: #f8f9fa;
+        padding: 0.75rem;
+        margin: 0.5rem 0;
+        border-radius: 6px;
+        font-style: italic;
+    }
+</style>
+{% endblock %}
 
 {% block content %}
 <div class="container-fluid mt-4">
@@ -17,25 +109,37 @@
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('admin.users') }}">
-                            <i class="fas fa-users me-2"></i>
+                            <i class="bi bi-people me-2"></i>
                             Usuários
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('admin.posts') }}">
-                            <i class="fas fa-image me-2"></i>
+                            <i class="bi bi-images me-2"></i>
                             Posts
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin.spots') }}">
+                            <i class="bi bi-geo-alt me-2"></i>
+                            Spots de Surf
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin.messages') }}">
+                            <i class="bi bi-envelope me-2"></i>
+                            Mensagens
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link active" href="{{ url_for('admin.comments') }}">
-                            <i class="fas fa-comments me-2"></i>
+                            <i class="bi bi-chat-dots me-2"></i>
                             Comentários
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('admin.reports') }}">
-                            <i class="fas fa-chart-bar me-2"></i>
+                            <i class="bi bi-bar-chart me-2"></i>
                             Relatórios
                         </a>
                     </li>
@@ -46,117 +150,174 @@
         <!-- Conteúdo principal -->
         <div class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
             <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                <h1 class="h2">Gerenciamento de Comentários</h1>
+                <h1 class="h2">💬 Gerenciar Comentários</h1>
+                <div class="btn-toolbar mb-2 mb-md-0">
+                    <div class="btn-group me-2">
+                        <a href="{{ url_for('main.index') }}" class="btn btn-sm btn-outline-secondary">Voltar ao Site</a>
+                    </div>
+                </div>
             </div>
+    
+    <!-- Estatísticas -->
+    <div class="stats-cards">
+        <div class="stat-card total">
+            <div class="stat-number text-primary">{{ comments.total }}</div>
+            <div class="stat-label">Total de Comentários</div>
+        </div>
+        <div class="stat-card recent">
+            <div class="stat-number text-success">-</div>
+            <div class="stat-label">Esta Semana</div>
+        </div>
+        <div class="stat-card flagged">
+            <div class="stat-number text-danger">0</div>
+            <div class="stat-label">Denunciados</div>
+        </div>
+        <div class="stat-card users">
+            <div class="stat-number text-purple">-</div>
+            <div class="stat-label">Usuários Únicos</div>
+        </div>
+    </div>
 
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    {% for category, message in messages %}
-                        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                            {{ message }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    <!-- Filtros -->
+    <div class="filter-tabs">
+        <ul class="nav nav-pills">
+            <li class="nav-item">
+                <a class="nav-link active" href="#" data-filter="all">Todos</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#" data-filter="recent">Recentes</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#" data-filter="flagged">Denunciados</a>
+            </li>
+        </ul>
+    </div>
+
+    <!-- Lista de comentários -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <span class="text-muted">{{ comments.total }} comentário(s) encontrado(s)</span>
+        </div>
+        <div class="input-group" style="max-width: 300px;">
+            <input type="text" class="form-control" placeholder="Buscar comentário" id="searchInput">
+            <button class="btn btn-outline-secondary" type="button" id="searchButton">
+                <i class="bi bi-search"></i>
+            </button>
+        </div>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div id="comments-list">
+        {% for comment in comments.items %}
+        <div class="comment-card" data-filter="{% if loop.index <= 10 %}recent{% endif %}">
+            <div class="comment-header">
+                <div class="comment-info">
+                    <div class="d-flex align-items-center mb-2">
+                        <img src="{{ comment.author.profile_image|img_url }}" class="rounded-circle me-3" width="40" height="40">
+                        <div class="flex-grow-1">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div>
+                                    <h6 class="mb-0">
+                                        <a href="{{ url_for('main.user_profile', username=comment.author.username) }}" 
+                                           class="text-decoration-none text-dark fw-bold">{{ comment.author.username }}</a>
+                                    </h6>
+                                    <small class="text-muted">{{ comment.created_at.strftime('%d/%m/%Y %H:%M') }}</small>
+                                </div>
+                                <small class="text-muted">
+                                    Comentário em: 
+                                    <a href="{{ url_for('posts.view_post', post_id=comment.post.id) }}" 
+                                       class="text-decoration-none">Post #{{ comment.post.id }}</a>
+                                </small>
+                            </div>
+                            <div class="comment-content">
+                                "{{ comment.content }}"
+                            </div>
                         </div>
-                    {% endfor %}
-                {% endif %}
-            {% endwith %}
-
-            <div class="table-responsive">
-                <table class="table table-striped table-sm">
-                    <thead>
-                        <tr>
-                            <th scope="col">#</th>
-                            <th scope="col">Autor</th>
-                            <th scope="col">Post</th>
-                            <th scope="col">Conteúdo</th>
-                            <th scope="col">Data</th>
-                            <th scope="col">Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for comment in comments.items %}
-                        <tr>
-                            <td>{{ comment.id }}</td>
-                            <td>
-                                <div class="d-flex align-items-center">
-                                    <img src="{{ comment.author.profile_image|img_url }}" class="rounded-circle me-2" width="32" height="32">
-                                    <a href="{{ url_for('main.user_profile', username=comment.author.username) }}">
-                                        {{ comment.author.username }}
-                                    </a>
-                                </div>
-                            </td>
-                            <td>
-                                <a href="{{ url_for('posts.view_post', post_id=comment.post.id) }}">
-                                    Post #{{ comment.post.id }}
-                                </a>
-                            </td>
-                            <td>{{ comment.content[:50] + '...' if comment.content|length > 50 else comment.content }}</td>
-                            <td>{{ comment.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
-                            <td>
-                                <div class="btn-group">
-                                    <a href="{{ url_for('posts.view_post', post_id=comment.post.id) }}" class="btn btn-sm btn-info" title="Ver Post">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
-                                    <form action="{{ url_for('admin.delete_comment', comment_id=comment.id) }}" method="post" class="d-inline-block">
-                                        <button type="submit" class="btn btn-sm btn-danger" 
-                                                onclick="return confirm('Tem certeza que deseja excluir este comentário?')" title="Excluir">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </form>
-                                </div>
-                            </td>
-                        </tr>
-                        {% else %}
-                        <tr>
-                            <td colspan="6" class="text-center">Nenhum comentário encontrado.</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                    </div>
+                </div>
+                <div class="comment-actions">
+                    <div class="btn-group btn-group-sm">
+                        <a href="{{ url_for('posts.view_post', post_id=comment.post.id) }}" 
+                           class="btn btn-outline-info" title="Ver post">
+                            <i class="bi bi-eye"></i>
+                        </a>
+                        <form action="{{ url_for('admin.delete_comment', comment_id=comment.id) }}" method="post" class="d-inline">
+                            <button type="submit" class="btn btn-outline-danger" 
+                                    onclick="return confirm('Tem certeza que deseja excluir este comentário?')" title="Excluir comentário">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
             </div>
-
-            <!-- Paginação -->
-            <nav aria-label="Navegação por páginas">
-                <ul class="pagination justify-content-center">
-                    {% if comments.has_prev %}
-                    <li class="page-item">
-                        <a class="page-link" href="{{ url_for('admin.comments', page=comments.prev_num) }}">Anterior</a>
-                    </li>
-                    {% else %}
-                    <li class="page-item disabled">
-                        <span class="page-link">Anterior</span>
-                    </li>
-                    {% endif %}
-
-                    {% for page_num in comments.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
-                        {% if page_num %}
-                            {% if comments.page == page_num %}
-                            <li class="page-item active">
-                                <span class="page-link">{{ page_num }}</span>
-                            </li>
-                            {% else %}
-                            <li class="page-item">
-                                <a class="page-link" href="{{ url_for('admin.comments', page=page_num) }}">{{ page_num }}</a>
-                            </li>
-                            {% endif %}
-                        {% else %}
-                        <li class="page-item disabled">
-                            <span class="page-link">...</span>
-                        </li>
-                        {% endif %}
-                    {% endfor %}
-
-                    {% if comments.has_next %}
-                    <li class="page-item">
-                        <a class="page-link" href="{{ url_for('admin.comments', page=comments.next_num) }}">Próximo</a>
-                    </li>
-                    {% else %}
-                    <li class="page-item disabled">
-                        <span class="page-link">Próximo</span>
-                    </li>
-                    {% endif %}
-                </ul>
-            </nav>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-chat-dots display-1 text-muted"></i>
+            <h5 class="mt-3 text-muted">Nenhum comentário encontrado</h5>
+        </div>
+        {% endfor %}
+    </div>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('searchInput');
+        const searchButton = document.getElementById('searchButton');
+        const filterTabs = document.querySelectorAll('[data-filter]');
+        const commentCards = document.querySelectorAll('.comment-card');
+        
+        // Função de busca
+        function performSearch() {
+            const searchTerm = searchInput.value.trim();
+            if (searchTerm) {
+                window.location.href = "{{ url_for('admin.comments') }}?q=" + encodeURIComponent(searchTerm);
+            }
+        }
+        
+        searchButton.addEventListener('click', performSearch);
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                performSearch();
+            }
+        });
+        
+        // Função de filtros
+        filterTabs.forEach(tab => {
+            tab.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Atualizar abas ativas
+                filterTabs.forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                
+                const filter = this.getAttribute('data-filter');
+                
+                // Filtrar cards
+                commentCards.forEach(card => {
+                    const cardFilters = card.getAttribute('data-filter') || '';
+                    if (filter === 'all' || cardFilters.includes(filter)) {
+                        card.style.display = 'block';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+            });
+        });
+    });
+</script>
 {% endblock %} 
