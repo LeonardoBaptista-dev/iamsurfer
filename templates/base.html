@@ -24,7 +24,7 @@
     {% block extra_head %}{% endblock %}
 
     <!-- Favicon -->
-    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/logo.png') }}">
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='img/logo.svg') }}">
 </head>
 
 <body>
@@ -33,11 +33,11 @@
         <div class="container">
             {% if current_user.is_authenticated and current_user.is_admin %}
             <a class="navbar-brand" href="{{ url_for('admin.index') }}">
-                <img src="{{ url_for('static', filename='img/logo.png') }}" alt="IAmSurfer Logo" height="28" style="object-fit: contain;">IAmSurfer
+                <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="IAmSurfer Logo" height="28" style="object-fit: contain;">IAmSurfer
             </a>
             {% else %}
             <a class="navbar-brand" href="{{ url_for('main.index') }}">
-                <img src="{{ url_for('static', filename='img/logo.png') }}" alt="IAmSurfer Logo" height="28" style="object-fit: contain;">IAmSurfer
+                <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="IAmSurfer Logo" height="28" style="object-fit: contain;">IAmSurfer
             </a>
             {% endif %}
 

@@ -84,7 +84,7 @@
         {% else %}
         <!-- CTA not logged in -->
         <div class="sidebar-card" style="background:var(--gradient);color:#fff;border:none;">
-                <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo" class="mb-2 d-block mx-auto" style="height: 48px; object-fit: contain;">
+                <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="Logo" class="mb-2 d-block mx-auto" style="height: 48px; object-fit: contain;">
                 <h6 style="font-weight:800;letter-spacing:-.3px;font-size:1rem;">Bem-vindo ao IAmSurfer</h6>
                 <p style="font-size:.82rem;opacity:.85;margin-bottom:16px;">A rede social para surfistas compartilharem
                     experiências.</p>
@@ -152,7 +152,7 @@
         {% else %}
         <!-- Empty State -->
         <div class="card text-center py-5 px-4">
-            <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo" class="mb-3 d-block mx-auto" style="height: 64px; opacity:0.6; object-fit: contain;">
+            <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="Logo" class="mb-3 d-block mx-auto" style="height: 64px; opacity:0.6; object-fit: contain;">
             <h5 style="font-weight:700;">Nenhum post ainda</h5>
             {% if current_user.is_authenticated %}
             <p style="color:var(--text-muted);font-size:.9rem;">Siga outros surfistas ou compartilhe sua primeira
