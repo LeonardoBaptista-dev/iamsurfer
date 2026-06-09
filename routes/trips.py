@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, abort
 from flask_login import login_required, current_user
 from models import User, SurfSpot, SurfTrip, TripParticipant
-from app import db
+from extensions import db
 from datetime import datetime
 from sqlalchemy import desc
 from wtforms import StringField, TextAreaField, DateTimeField, IntegerField, FloatField, SelectField

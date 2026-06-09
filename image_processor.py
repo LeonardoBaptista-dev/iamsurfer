@@ -229,6 +229,39 @@ class ImageProcessor:
         except Exception as e:
             return {'error': f'Erro no processamento: {str(e)}'}
 
+    @classmethod
+    def process_and_upload_video(cls, file: FileStorage, post_id: int) -> Dict[str, str]:
+        """
+        Faz upload do vídeo enviando parâmetros de otimização nativos para o Cloudinary
+        (Ex: converter para MP4, reduzir para no máximo 720p para economizar dados)
+        """
+        import uuid
+        
+        try:
+            # ID único para o vídeo
+            unique_id = f"video_post_{post_id}_{uuid.uuid4().hex[:8]}"
+            
+            # Parametros para tratar o video (otimizando auto formato e limite 720p)
+            result = cloudinary.uploader.upload(
+                file,
+                resource_type="video",
+                public_id=unique_id,
+                folder="iamsurfer/posts/videos",
+                eager=[
+                    {"width": 720, "crop": "limit"}
+                ],
+                eager_async=True
+            )
+            
+            url = result.get('secure_url')
+            if url:
+                return {'success': True, 'url': url}
+            else:
+                return {'error': 'Falha na resposta ao enviar vídeo para Cloudinary'}
+                
+        except Exception as e:
+            return {'error': f'Erro no processamento de vídeo: {str(e)}'}
+
 class ResponsiveImageHelper:
     """
     Helper para gerar tags de imagem responsivas nos templates

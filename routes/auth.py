@@ -1,7 +1,7 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request, send_file
+from flask import Blueprint, render_template, redirect, url_for, flash, request, send_file, current_app
 from flask_login import login_user, logout_user, current_user, login_required
 from werkzeug.security import generate_password_hash, check_password_hash
-from app import db, app
+from extensions import db
 from werkzeug.urls import url_parse
 import os
 import uuid
@@ -97,21 +97,9 @@ def logout():
 @auth.route('/profile')
 @login_required
 def profile():
-    from models import Post  # Import aqui para evitar import circular
-    
-    # Verifica se há um parâmetro de consulta 'username'
-    username = request.args.get('username')
-    
-    # Se um nome de usuário foi fornecido e não é o usuário atual
-    if username and username != current_user.username:
-        # Redireciona para a página de perfil do usuário específico
-        return redirect(url_for('main.user_profile', username=username))
-    
-    # Obtenha os posts do usuário atual ordenados por data de criação decrescente
-    user_posts = current_user.posts.order_by(Post.created_at.desc()).all()
-    
-    # Caso contrário, exibe o perfil do usuário atual
-    return render_template('auth/profile.html', user=current_user, user_posts=user_posts)
+    # O perfil próprio usa a mesma página (estilo Instagram) do perfil público
+    username = request.args.get('username') or current_user.username
+    return redirect(url_for('main.user_profile', username=username))
 
 @auth.route('/profile/edit', methods=['GET', 'POST'])
 @login_required
@@ -130,16 +118,14 @@ def edit_profile():
             
             if file and file.filename:
                 try:
-                    # Usa o novo sistema de processamento local para perfis
-                    from local_image_processor import ResponsiveImageHelper
+                    from local_image_processor import LocalImageProcessor
                     
                     # Remove imagens antigas se existirem
                     if current_user.profile_image_urls:
-                        from local_image_processor import LocalImageProcessor
                         LocalImageProcessor.delete_image_files(current_user.profile_image_urls)
                     
                     # Processa e salva a nova imagem de perfil
-                    success, message, urls = ResponsiveImageHelper.process_and_save_profile(file)
+                    success, message, urls = LocalImageProcessor.process_and_save_profile(file)
                     
                     if success and urls:
                         # Gera hash da nova imagem para deduplicação
@@ -162,7 +148,7 @@ def edit_profile():
                         flash(f'Erro ao processar imagem: {message}', 'danger')
                         
                 except Exception as e:
-                    app.logger.error(f"Erro ao processar imagem de perfil: {str(e)}")
+                    current_app.logger.error(f"Erro ao processar imagem de perfil: {str(e)}")
                     flash(f'Erro ao processar imagem: {str(e)}', 'danger')
         
         # Salva todas as alterações no banco de dados
@@ -174,7 +160,7 @@ def edit_profile():
                 flash('Perfil atualizado com sucesso!', 'success')
         except Exception as e:
             db.session.rollback()
-            app.logger.error(f"Erro ao atualizar perfil no banco de dados: {str(e)}")
+            current_app.logger.error(f"Erro ao atualizar perfil no banco de dados: {str(e)}")
             flash(f'Erro ao atualizar perfil: {str(e)}', 'danger')
         
         # Redireciona após processar tudo

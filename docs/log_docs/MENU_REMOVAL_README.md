@@ -107,7 +107,7 @@ Menu: Início | Explorar | Caronas | Mapa Colaborativo
 - 🗺️ Mapa real interativo 
 - 🏄 Marcadores personalizados para spots
 - ➕ Clique no mapa para adicionar spots
-- 📍 Localização do usuário (GPS)
+-  Localização do usuário (GPS)
 - 🔍 Busca por nome de spots
 - 🎛️ Filtros por dificuldade e tipo
 - 📊 Estatísticas em tempo real

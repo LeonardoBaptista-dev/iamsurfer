@@ -3,102 +3,46 @@
 {% block title %}Seguidores de {{ user.username }} - IAmSurfer{% endblock %}
 
 {% block content %}
-<div class="container">
-    <div class="row mb-4">
-        <div class="col">
-            <h2>Seguidores de {{ user.username }}</h2>
-            <p class="text-muted">Pessoas que seguem {{ user.username }}</p>
-        </div>
+<div class="col-12 col-lg-7 mx-auto">
+
+    <div class="d-flex align-items-center gap-2 mb-4">
+        <a href="{{ url_for('main.user_profile', username=user.username) }}" class="btn btn-sm p-1"
+            style="color:var(--text-secondary);background:none;border:none;"><i class="bi bi-arrow-left fs-5"></i></a>
+        <h4 class="mb-0" style="font-weight:700;letter-spacing:-.3px;">Seguidores de {{ user.username }}</h4>
     </div>
-    
-    <div class="row">
-        <div class="col-lg-8">
-            {% if followers %}
-                <div class="card">
-                    <ul class="list-group list-group-flush">
-                        {% for follower in followers %}
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                <div class="d-flex align-items-center">
-                                    <img src="{{ follower.profile_image_urls|profile_thumbnail_url if follower.profile_image_urls else follower.profile_image|img_url }}" class="rounded-circle me-3" style="width: 50px; height: 50px; object-fit: cover;">
-                                    <div>
-                                        <h5 class="mb-0">{{ follower.username }}</h5>
-                                        {% if follower.location %}
-                                            <small class="text-muted"><i class="bi bi-geo-alt"></i> {{ follower.location }}</small>
-                                        {% endif %}
-                                    </div>
-                                </div>
-                                
-                                <div>
-                                    <a href="{{ url_for('main.user_profile', username=follower.username) }}" class="btn btn-sm btn-outline-primary">Ver Perfil</a>
-                                    
-                                    {% if current_user.is_authenticated and current_user.id != follower.id %}
-                                        {% if current_user.is_following(follower) %}
-                                            <a href="{{ url_for('main.unfollow', username=follower.username) }}" class="btn btn-sm btn-outline-secondary">
-                                                <i class="bi bi-person-dash"></i> Deixar de Seguir
-                                            </a>
-                                        {% else %}
-                                            <a href="{{ url_for('main.follow', username=follower.username) }}" class="btn btn-sm btn-primary">
-                                                <i class="bi bi-person-plus"></i> Seguir
-                                            </a>
-                                        {% endif %}
-                                    {% endif %}
-                                </div>
-                            </li>
-                        {% endfor %}
-                    </ul>
-                </div>
-            {% else %}
-                <div class="card p-5 text-center">
-                    <i class="bi bi-people display-1 text-muted mb-3"></i>
-                    <h4>Sem Seguidores</h4>
-                    <p class="text-muted">{{ user.username }} ainda não tem seguidores.</p>
-                </div>
+
+    {% if followers %}
+    <div class="dm-list">
+        {% for follower in followers %}
+        <div class="dm-row" style="cursor:default;">
+            <a href="{{ url_for('main.user_profile', username=follower.username) }}">
+                <img src="{{ follower.profile_image_urls|profile_thumbnail_url if follower.profile_image_urls else follower.profile_image|img_url }}"
+                    class="dm-avatar" alt="{{ follower.username }}">
+            </a>
+            <div class="flex-grow-1 min-w-0">
+                <a href="{{ url_for('main.user_profile', username=follower.username) }}"
+                    class="dm-name text-decoration-none d-block">{{ follower.username }}</a>
+                {% if follower.location %}
+                <span class="dm-preview"><i class="bi bi-geo-alt"></i> {{ follower.location }}</span>
+                {% endif %}
+            </div>
+            {% if current_user.is_authenticated and current_user.id != follower.id %}
+                {% if current_user.is_following(follower) %}
+                <a href="{{ url_for('main.unfollow', username=follower.username) }}" class="btn btn-secondary btn-sm">Seguindo</a>
+                {% else %}
+                <a href="{{ url_for('main.follow', username=follower.username) }}" class="btn btn-follow btn-sm">Seguir</a>
+                {% endif %}
             {% endif %}
         </div>
-        
-        <div class="col-lg-4">
-            <div class="card">
-                <div class="card-header">
-                    <h5>Sobre {{ user.username }}</h5>
-                </div>
-                <div class="card-body text-center">
-                    <div class="d-flex align-items-center">
-                        <img src="{{ user.profile_image_urls|profile_avatar_url if user.profile_image_urls else user.profile_image|img_url }}" class="rounded-circle mb-3" style="width: 100px; height: 100px; object-fit: cover;">
-                        <div>
-                            <h3>{{ user.username }}</h3>
-                            {% if user.location %}
-                                <p class="text-muted"><i class="bi bi-geo-alt"></i> {{ user.location }}</p>
-                            {% endif %}
-                        </div>
-                    </div>
-                    
-                    <div class="row mt-4">
-                        <div class="col-md-6">
-                            <div class="card text-center">
-                                <div class="card-body">
-                                    <h5 class="mb-0">0</h5>
-                                    <small class="text-muted">Seguidores</small>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="card text-center">
-                                <div class="card-body">
-                                    <h5 class="mb-0">0</h5>
-                                    <small class="text-muted">Seguindo</small>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="mt-4">
-                        <a href="{{ url_for('main.user_profile', username=user.username) }}" class="btn btn-primary">
-                            Ver Perfil Completo
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
+        {% endfor %}
     </div>
+    {% else %}
+    <div class="card text-center py-5 px-4">
+        <i class="bi bi-people display-4 text-muted mb-2"></i>
+        <h5 style="font-weight:700;">Sem seguidores</h5>
+        <p style="color:var(--text-muted);font-size:.9rem;">{{ user.username }} ainda não tem seguidores.</p>
+    </div>
+    {% endif %}
+
 </div>
-{% endblock %} 
+{% endblock %}

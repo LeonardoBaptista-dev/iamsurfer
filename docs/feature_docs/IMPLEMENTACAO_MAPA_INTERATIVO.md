@@ -66,7 +66,7 @@ const autocomplete = new google.maps.places.Autocomplete(input);
 autocomplete.bindTo('bounds', map);
 ```
 
-### 📍 **Localização do Usuário**
+###  **Localização do Usuário**
 ```javascript
 // Geolocalização + spots próximos
 navigator.geolocation.getCurrentPosition(position => {

@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, current_app
 from flask_login import login_required, current_user
 from models import State, City, SurfSpot, Photographer, SpotPhoto, Spot, SpotPhotoNew, PhotoSession, SessionPhoto, PhotoPurchase, SpotReport
-from app import db
+from extensions import db
 from werkzeug.utils import secure_filename
 import os
 import json
@@ -55,14 +55,24 @@ spots = Blueprint('spots', __name__)
 @spots.route('/spots/map')
 def spots_map():
     """Exibe o mapa interativo GRATUITO com todos os spots aprovados"""
+    from models import Post
     approved_spots = Spot.query.filter_by(status='approved', is_active=True).all()
     spots_data = []
     
     for spot in approved_spots:
         cover_photo = SpotPhotoNew.query.filter_by(spot_id=spot.id, is_cover=True).first()
+        
+        # Buscar a última interação (relato/post mais recente desse pico)
+        last_post = Post.query.filter_by(spot_id=spot.id).order_by(Post.created_at.desc()).first()
+        last_interaction = last_post.created_at.isoformat() if last_post else "2000-01-01T00:00:00"
+
         spots_data.append({
             'id': spot.id,
             'name': spot.name,
+            'city': spot.city or '',
+            'state': spot.state or '',
+            'country': spot.country or 'Brasil',
+            'last_interaction': last_interaction,
             'lat': spot.latitude,
             'lng': spot.longitude,
             'description': spot.description[:100] + '...' if spot.description and len(spot.description) > 100 else spot.description,
@@ -157,7 +167,10 @@ def new_spot_detail(spot_id):
     
     photos = SpotPhotoNew.query.filter_by(spot_id=spot_id).all()
     sessions = PhotoSession.query.filter_by(spot_id=spot_id, is_active=True).all()
-    recent_reports = SpotReport.query.filter_by(spot_id=spot_id).order_by(SpotReport.report_date.desc()).limit(5).all()
+    
+    # Fetch posts related to this spot instead of structured spot reports
+    from models import Post
+    recent_reports = Post.query.filter_by(spot_id=spot_id).order_by(Post.created_at.desc()).limit(15).all()
     
     return render_template('spots/new_detail.html', spot=spot, photos=photos, sessions=sessions, reports=recent_reports)
 
@@ -243,8 +256,8 @@ def spot_photos(spot_id):
                 db.session.rollback()
                 flash(f'Erro ao adicionar foto: {str(e)}', 'error')
     
-    photos = SpotPhotoNew.query.filter_by(spot_id=spot_id).all()
-    return render_template('spots/photos.html', spot=spot, photos=photos)
+    # As fotos são exibidas/enviadas pela página de detalhe do spot (aba Fotos + modal)
+    return redirect(url_for('spots.new_spot_detail', spot_id=spot_id))
 
 @spots.route('/api/spots/search')
 def search_spots():

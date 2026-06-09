@@ -89,7 +89,7 @@ def create_pending_spots():
     
     created_count = 0
     for spot_data in pending_spots:
-        print(f"📍 Criando: {spot_data['name']}...")
+        print(f" Criando: {spot_data['name']}...")
         
         # Tentar criar o spot
         create_response = session.post(f"{base_url}/spots/add", data=spot_data)

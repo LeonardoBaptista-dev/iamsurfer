@@ -2,149 +2,68 @@
 
 {% block title %}Minhas Caronas - IAmSurfer{% endblock %}
 
+{% macro trip_row(trip, subtitle) %}
+<a href="{{ url_for('trips.view_trip', trip_id=trip.id) }}" class="trip-card">
+    <div class="d-flex justify-content-between align-items-start gap-3">
+        <div class="min-w-0">
+            <div style="font-weight:700;font-size:1rem;color:var(--text-primary);">{{ trip.title }}</div>
+            <div class="trip-route">
+                <i class="bi bi-geo-alt-fill"></i> {{ trip.departure_location }}
+                <i class="bi bi-arrow-right arrow"></i> {{ trip.get_destination_display() }}
+            </div>
+            <div class="d-flex align-items-center gap-3 flex-wrap" style="font-size:.8rem;color:var(--text-muted);">
+                <span><i class="bi bi-calendar-event me-1"></i>{{ trip.departure_time.strftime('%d/%m/%Y %H:%M') }}</span>
+                <span>{{ subtitle }}</span>
+            </div>
+        </div>
+        <span class="trip-status {{ trip.status|lower }}">{{ trip.status }}</span>
+    </div>
+</a>
+{% endmacro %}
+
 {% block content %}
-<div class="container">
-    <div class="row mb-4">
-        <div class="col-md-8">
-            <h1>Minhas Caronas</h1>
-            <p class="lead">Gerenciar suas caronas de surf.</p>
-        </div>
-        <div class="col-md-4 text-end">
-            <a href="{{ url_for('trips.create_trip') }}" class="btn btn-primary"><i class="fa fa-plus"></i> Criar Carona</a>
-        </div>
+<div class="col-lg-9 mx-auto">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="mb-0" style="font-weight:700;letter-spacing:-.3px;">Minhas caronas</h4>
+        <a href="{{ url_for('trips.create_trip') }}" class="btn btn-follow btn-sm">
+            <i class="bi bi-plus-lg me-1"></i> Criar carona
+        </a>
     </div>
 
-    <div class="row">
-        <div class="col-md-12 mb-4">
-            <div class="card shadow-sm">
-                <div class="card-header bg-light">
-                    <h5 class="mb-0">Caronas que Estou Oferecendo</h5>
-                </div>
-                <div class="card-body p-0">
-                    {% if created_trips %}
-                        <div class="list-group list-group-flush">
-                            {% for trip in created_trips %}
-                                <div class="list-group-item">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <div>
-                                            <h5><a href="{{ url_for('trips.view_trip', trip_id=trip.id) }}">{{ trip.title }}</a></h5>
-                                            <div class="text-muted">
-                                                <i class="fa fa-map-marker-alt"></i> {{ trip.departure_location }} → {{ trip.get_destination_display() }}
-                                            </div>
-                                            <div>
-                                                <i class="fa fa-clock"></i> {{ trip.departure_time.strftime('%d/%m/%Y às %H:%M') }}
-                                                <span class="ms-3"><i class="fa fa-user"></i> {{ trip.get_available_seats() }} vagas disponíveis</span>
-                                                <span class="ms-3">
-                                                    <i class="fa fa-circle 
-                                                    {% if trip.status == 'Scheduled' %}text-success
-                                                    {% elif trip.status == 'Ongoing' %}text-primary
-                                                    {% elif trip.status == 'Completed' %}text-muted
-                                                    {% else %}text-danger{% endif %}"></i>
-                                                    {{ trip.status }}
-                                                </span>
-                                            </div>
-                                        </div>
-                                        <div>
-                                            {% if trip.status == 'Scheduled' %}
-                                                <a href="{{ url_for('trips.manage_participants', trip_id=trip.id) }}" class="btn btn-sm btn-outline-primary mb-2">Gerenciar Participantes</a>
-                                                <a href="{{ url_for('trips.view_trip', trip_id=trip.id) }}" class="btn btn-sm btn-outline-secondary">Ver detalhes</a>
-                                            {% else %}
-                                                <a href="{{ url_for('trips.view_trip', trip_id=trip.id) }}" class="btn btn-sm btn-outline-secondary">Ver detalhes</a>
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                </div>
-                            {% endfor %}
-                        </div>
-                    {% else %}
-                        <div class="text-center p-4">
-                            <p class="text-muted">Você ainda não ofereceu nenhuma carona.</p>
-                            <a href="{{ url_for('trips.create_trip') }}" class="btn btn-primary">Criar Carona</a>
-                        </div>
-                    {% endif %}
-                </div>
-            </div>
+    <!-- Oferecendo -->
+    <h6 class="sidebar-card-title" style="font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--text-muted);margin-bottom:12px;">
+        Oferecendo
+    </h6>
+    {% if created_trips %}
+        {% for trip in created_trips %}{{ trip_row(trip, trip.get_available_seats() ~ ' vagas') }}{% endfor %}
+    {% else %}
+        <div class="card text-center py-4 px-3 mb-4">
+            <p class="text-muted mb-2" style="font-size:.88rem;">Você ainda não ofereceu caronas.</p>
+            <div><a href="{{ url_for('trips.create_trip') }}" class="btn btn-primary btn-sm">Criar carona</a></div>
         </div>
-        
-        <div class="col-md-12 mb-4">
-            <div class="card shadow-sm">
-                <div class="card-header bg-light">
-                    <h5 class="mb-0">Caronas que Estou Participando</h5>
-                </div>
-                <div class="card-body p-0">
-                    {% if participating_trips %}
-                        <div class="list-group list-group-flush">
-                            {% for trip in participating_trips %}
-                                <div class="list-group-item">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <div>
-                                            <h5><a href="{{ url_for('trips.view_trip', trip_id=trip.id) }}">{{ trip.title }}</a></h5>
-                                            <div class="text-muted">
-                                                <i class="fa fa-map-marker-alt"></i> {{ trip.departure_location }} → {{ trip.get_destination_display() }}
-                                            </div>
-                                            <div>
-                                                <i class="fa fa-clock"></i> {{ trip.departure_time.strftime('%d/%m/%Y às %H:%M') }}
-                                                <span class="ms-3"><i class="fa fa-user"></i> Organizado por {{ trip.creator.username }}</span>
-                                                <span class="ms-3">
-                                                    <i class="fa fa-circle 
-                                                    {% if trip.status == 'Scheduled' %}text-success
-                                                    {% elif trip.status == 'Ongoing' %}text-primary
-                                                    {% elif trip.status == 'Completed' %}text-muted
-                                                    {% else %}text-danger{% endif %}"></i>
-                                                    {{ trip.status }}
-                                                </span>
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <a href="{{ url_for('trips.view_trip', trip_id=trip.id) }}" class="btn btn-sm btn-outline-secondary">Ver detalhes</a>
-                                        </div>
-                                    </div>
-                                </div>
-                            {% endfor %}
-                        </div>
-                    {% else %}
-                        <div class="text-center p-4">
-                            <p class="text-muted">Você ainda não está participando de nenhuma carona.</p>
-                            <a href="{{ url_for('trips.list_trips') }}" class="btn btn-primary">Encontrar Caronas</a>
-                        </div>
-                    {% endif %}
-                </div>
-            </div>
+    {% endif %}
+
+    <!-- Participando -->
+    <h6 style="font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--text-muted);margin:24px 0 12px;">
+        Participando
+    </h6>
+    {% if participating_trips %}
+        {% for trip in participating_trips %}{{ trip_row(trip, 'por ' ~ trip.creator.username) }}{% endfor %}
+    {% else %}
+        <div class="card text-center py-4 px-3 mb-4">
+            <p class="text-muted mb-2" style="font-size:.88rem;">Você não está participando de nenhuma carona.</p>
+            <div><a href="{{ url_for('trips.list_trips') }}" class="btn btn-primary btn-sm">Encontrar caronas</a></div>
         </div>
-        
-        {% if pending_trips %}
-        <div class="col-md-12">
-            <div class="card shadow-sm">
-                <div class="card-header bg-light">
-                    <h5 class="mb-0">Solicitações Pendentes</h5>
-                </div>
-                <div class="card-body p-0">
-                    <div class="list-group list-group-flush">
-                        {% for trip in pending_trips %}
-                            <div class="list-group-item">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <h5><a href="{{ url_for('trips.view_trip', trip_id=trip.id) }}">{{ trip.title }}</a></h5>
-                                        <div class="text-muted">
-                                            <i class="fa fa-map-marker-alt"></i> {{ trip.departure_location }} → {{ trip.get_destination_display() }}
-                                        </div>
-                                        <div>
-                                            <i class="fa fa-clock"></i> {{ trip.departure_time.strftime('%d/%m/%Y às %H:%M') }}
-                                            <span class="ms-3"><i class="fa fa-user"></i> Organizado por {{ trip.creator.username }}</span>
-                                            <span class="badge bg-warning text-dark ms-2">Aguardando aprovação</span>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <a href="{{ url_for('trips.view_trip', trip_id=trip.id) }}" class="btn btn-sm btn-outline-secondary">Ver detalhes</a>
-                                    </div>
-                                </div>
-                            </div>
-                        {% endfor %}
-                    </div>
-                </div>
-            </div>
-        </div>
-        {% endif %}
-    </div>
+    {% endif %}
+
+    <!-- Pendentes -->
+    {% if pending_trips %}
+    <h6 style="font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--text-muted);margin:24px 0 12px;">
+        Solicitações pendentes
+    </h6>
+    {% for trip in pending_trips %}{{ trip_row(trip, 'por ' ~ trip.creator.username) }}{% endfor %}
+    {% endif %}
+
 </div>
 {% endblock %}

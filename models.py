@@ -1,4 +1,4 @@
-from app import db
+from extensions import db
 from flask_login import UserMixin
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -14,6 +14,7 @@ class User(UserMixin, db.Model):
     bio = db.Column(db.Text)
     location = db.Column(db.String(100))
     is_admin = db.Column(db.Boolean, default=False)
+    is_public = db.Column(db.Boolean, default=True)  # Perfis públicos por padrão
     joined_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     # Relacionamentos
@@ -131,33 +132,27 @@ class User(UserMixin, db.Model):
         return self.notifications.order_by(Notification.created_at.desc()).limit(limit).all()
 
     def get_conversations(self):
-        """Retorna lista de conversas únicas com outros usuários"""
-        from sqlalchemy import or_, and_, func
-        
-        # Query para buscar conversas únicas
-        subquery = db.session.query(
-            func.greatest(Message.sender_id, Message.recipient_id).label('user1'),
-            func.least(Message.sender_id, Message.recipient_id).label('user2'),
-            func.max(Message.timestamp).label('last_message_time')
-        ).filter(
+        """Retorna a última mensagem de cada conversa única com outros usuários.
+
+        Implementado em Python para ser portável (greatest/least não existem no
+        SQLite). Como as mensagens vêm ordenadas por timestamp desc, a primeira
+        vez que vemos um interlocutor já é a mensagem mais recente da conversa.
+        """
+        from sqlalchemy import or_
+
+        messages = Message.query.filter(
             or_(Message.sender_id == self.id, Message.recipient_id == self.id)
-        ).group_by(
-            func.greatest(Message.sender_id, Message.recipient_id),
-            func.least(Message.sender_id, Message.recipient_id)
-        ).subquery()
-        
-        # Busca as últimas mensagens de cada conversa
-        conversations = db.session.query(Message).join(
-            subquery,
-            and_(
-                Message.timestamp == subquery.c.last_message_time,
-                or_(
-                    and_(Message.sender_id == subquery.c.user1, Message.recipient_id == subquery.c.user2),
-                    and_(Message.sender_id == subquery.c.user2, Message.recipient_id == subquery.c.user1)
-                )
-            )
         ).order_by(Message.timestamp.desc()).all()
-        
+
+        seen_users = set()
+        conversations = []
+        for message in messages:
+            other_id = message.recipient_id if message.sender_id == self.id else message.sender_id
+            if other_id in seen_users:
+                continue
+            seen_users.add(other_id)
+            conversations.append(message)
+
         return conversations
 
 class Post(db.Model):
@@ -170,10 +165,18 @@ class Post(db.Model):
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, nullable=True, onupdate=datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    # Spot tagging: post pode ser vinculado a um pico de surf (opcional)
+    spot_id = db.Column(db.Integer, db.ForeignKey('spot.id'), nullable=True)
+    post_type = db.Column(db.String(20), default='regular')  # regular, spot_report, spot_photo
+    
+    __table_args__ = (
+        db.Index('idx_post_user_time', 'user_id', 'created_at'),
+    )
     
     # Relacionamentos
     comments = db.relationship('Comment', backref='post', lazy=True, cascade="all, delete-orphan")
     likes = db.relationship('Like', backref='post', lazy=True, cascade="all, delete-orphan")
+    spot = db.relationship('Spot', foreign_keys=[spot_id], backref='feed_posts', lazy='joined')
 
     @property
     def date_posted(self):
@@ -342,7 +345,10 @@ class SurfTrip(db.Model):
         if hasattr(self, 'destination_text') and self.destination_text:
             return self.destination_text
         elif self.destination:
-            return f"{self.destination.name}, {self.destination.city.name}"
+            # A cidade pode não estar cadastrada para o pico
+            if self.destination.city:
+                return f"{self.destination.name}, {self.destination.city.name}"
+            return self.destination.name
         else:
             return "Destino não especificado"
 
@@ -538,6 +544,10 @@ class SpotReport(db.Model):
     notes = db.Column(db.Text)
     report_date = db.Column(db.DateTime, default=datetime.utcnow)
     
+    __table_args__ = (
+        db.Index('idx_spotreport_user_time', 'user_id', 'report_date'),
+    )
+    
     user = db.relationship('User', backref='spot_reports')
 
     def __repr__(self):
@@ -556,7 +566,7 @@ class Notification(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     # Relacionamentos
-    user = db.relationship('User', foreign_keys=[user_id], backref='notifications')
+    user = db.relationship('User', foreign_keys=[user_id], backref=db.backref('notifications', lazy='dynamic'))
     related_user = db.relationship('User', foreign_keys=[related_user_id])
     related_post = db.relationship('Post', foreign_keys=[related_post_id])
     related_message = db.relationship('Message', foreign_keys=[related_message_id])

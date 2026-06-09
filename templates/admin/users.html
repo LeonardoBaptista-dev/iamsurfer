@@ -10,53 +10,64 @@
         gap: 1rem;
         margin-bottom: 2rem;
     }
-    
+
     .stat-card {
         background: white;
         border-radius: 8px;
         padding: 1.5rem;
         text-align: center;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         border-left: 4px solid;
     }
-    
-    .stat-card.total { border-left-color: #007bff; }
-    .stat-card.active { border-left-color: #28a745; }
-    .stat-card.inactive { border-left-color: #dc3545; }
-    .stat-card.admin { border-left-color: #6f42c1; }
-    
+
+    .stat-card.total {
+        border-left-color: #007bff;
+    }
+
+    .stat-card.active {
+        border-left-color: #28a745;
+    }
+
+    .stat-card.inactive {
+        border-left-color: #dc3545;
+    }
+
+    .stat-card.admin {
+        border-left-color: #6f42c1;
+    }
+
     .stat-number {
         font-size: 2rem;
         font-weight: bold;
         margin-bottom: 0.5rem;
     }
-    
+
     .stat-label {
         color: #666;
         font-size: 0.875rem;
     }
-    
+
     .filter-tabs {
         background: white;
         border-radius: 8px;
         padding: 0.5rem;
         margin-bottom: 1.5rem;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
-    
+
     .filter-tabs .nav-pills .nav-link {
         border-radius: 6px;
         margin: 0 0.25rem;
     }
-    
+
     .user-card {
         background: white;
         border-radius: 8px;
         margin-bottom: 1rem;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         overflow: hidden;
     }
-    
+
     .user-header {
         padding: 1rem;
         border-bottom: 1px solid #eee;
@@ -64,16 +75,16 @@
         justify-content: space-between;
         align-items: center;
     }
-    
+
     .user-info {
         flex: 1;
     }
-    
+
     .user-actions {
         display: flex;
         gap: 0.5rem;
     }
-    
+
     .status-badge {
         padding: 0.25rem 0.75rem;
         border-radius: 20px;
@@ -81,30 +92,30 @@
         font-weight: 500;
         text-transform: uppercase;
     }
-    
+
     .status-active {
         background: #d4edda;
         color: #155724;
         border: 1px solid #c3e6cb;
     }
-    
+
     .status-inactive {
         background: #f8d7da;
         color: #721c24;
         border: 1px solid #f5c6cb;
     }
-    
+
     .status-admin {
         background: #e2e3f3;
         color: #383d41;
         border: 1px solid #c3c4d5;
     }
-    
+
     .btn-group-sm .btn {
         padding: 0.25rem 0.5rem;
         font-size: 0.75rem;
     }
-    
+
     .user-meta {
         font-size: 0.875rem;
         color: #666;
@@ -167,131 +178,140 @@
 
         <!-- Conteúdo principal -->
         <div class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
-            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                <h1 class="h2">👥 Gerenciar Usuários</h1>
+            <div
+                class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">Gerenciar Usuários</h1>
                 <div class="btn-toolbar mb-2 mb-md-0">
                     <div class="btn-group me-2">
-                        <a href="{{ url_for('main.index') }}" class="btn btn-sm btn-outline-secondary">Voltar ao Site</a>
+                        <a href="{{ url_for('main.index') }}" class="btn btn-sm btn-outline-secondary">Voltar ao
+                            Site</a>
                     </div>
                 </div>
             </div>
-    
-    <!-- Estatísticas -->
-    <div class="stats-cards">
-        <div class="stat-card total">
-            <div class="stat-number text-primary">{{ users.total }}</div>
-            <div class="stat-label">Total de Usuários</div>
-        </div>
-        <div class="stat-card active">
-            <div class="stat-number text-success">-</div>
-            <div class="stat-label">Usuários Ativos</div>
-        </div>
-        <div class="stat-card inactive">
-            <div class="stat-number text-danger">-</div>
-            <div class="stat-label">Usuários Inativos</div>
-        </div>
-        <div class="stat-card admin">
-            <div class="stat-number text-purple">-</div>
-            <div class="stat-label">Administradores</div>
-        </div>
-    </div>
 
-    <!-- Filtros -->
-    <div class="filter-tabs">
-        <ul class="nav nav-pills">
-            <li class="nav-item">
-                <a class="nav-link active" href="#" data-filter="all">Todos</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="#" data-filter="active">Ativos</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="#" data-filter="inactive">Inativos</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="#" data-filter="admin">Administradores</a>
-            </li>
-        </ul>
-    </div>
-
-    <!-- Lista de usuários -->
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <div>
-            <span class="text-muted">{{ users.total }} usuário(s) encontrado(s)</span>
-        </div>
-        <div class="input-group" style="max-width: 300px;">
-            <input type="text" class="form-control" placeholder="Buscar usuário" id="searchInput">
-            <button class="btn btn-outline-secondary" type="button" id="searchButton">
-                <i class="bi bi-search"></i>
-            </button>
-        </div>
-    </div>
-
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            <!-- Estatísticas -->
+            <div class="stats-cards">
+                <div class="stat-card total">
+                    <div class="stat-number text-primary">{{ users.total }}</div>
+                    <div class="stat-label">Total de Usuários</div>
                 </div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
+                <div class="stat-card active">
+                    <div class="stat-number text-success">-</div>
+                    <div class="stat-label">Usuários Ativos</div>
+                </div>
+                <div class="stat-card inactive">
+                    <div class="stat-number text-danger">-</div>
+                    <div class="stat-label">Usuários Inativos</div>
+                </div>
+                <div class="stat-card admin">
+                    <div class="stat-number text-purple">-</div>
+                    <div class="stat-label">Administradores</div>
+                </div>
+            </div>
 
-    <div id="users-list">
-        {% for user in users.items %}
-        <div class="user-card" data-status="{% if user.is_admin %}admin{% elif user.active %}active{% else %}inactive{% endif %}">
-            <div class="user-header">
-                <div class="user-info">
-                    <div class="d-flex align-items-center mb-2">
-                        <img src="{{ user.profile_image|img_url }}" class="rounded-circle me-3" width="40" height="40">
-                        <div>
-                            <h6 class="mb-0">
-                                <a href="{{ url_for('main.user_profile', username=user.username) }}" 
-                                   class="text-decoration-none text-dark fw-bold">{{ user.username }}</a>
-                            </h6>
-                            <small class="text-muted">{{ user.email }}</small>
+            <!-- Filtros -->
+            <div class="filter-tabs">
+                <ul class="nav nav-pills">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#" data-filter="all">Todos</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" data-filter="active">Ativos</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" data-filter="inactive">Inativos</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" data-filter="admin">Administradores</a>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Lista de usuários -->
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <span class="text-muted">{{ users.total }} usuário(s) encontrado(s)</span>
+                </div>
+                <div class="input-group" style="max-width: 300px;">
+                    <input type="text" class="form-control" placeholder="Buscar usuário" id="searchInput">
+                    <button class="btn btn-outline-secondary" type="button" id="searchButton">
+                        <i class="bi bi-search"></i>
+                    </button>
+                </div>
+            </div>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
+
+            <div id="users-list">
+                {% for user in users.items %}
+                <div class="user-card"
+                    data-status="{% if user.is_admin %}admin{% elif user.active %}active{% else %}inactive{% endif %}">
+                    <div class="user-header">
+                        <div class="user-info">
+                            <div class="d-flex align-items-center mb-2">
+                                <img src="{{ user.profile_image|img_url }}" class="rounded-circle me-3" width="40"
+                                    height="40">
+                                <div>
+                                    <h6 class="mb-0">
+                                        <a href="{{ url_for('main.user_profile', username=user.username) }}"
+                                            class="text-decoration-none text-dark fw-bold">{{ user.username }}</a>
+                                    </h6>
+                                    <small class="text-muted">{{ user.email }}</small>
+                                </div>
+                            </div>
+                            <div class="user-meta">
+                                <span class="me-3"><i class="bi bi-calendar me-1"></i>{{
+                                    user.joined_at.strftime('%d/%m/%Y') }}</span>
+                                <span class="me-3"><i class="bi bi-geo-alt me-1"></i>{{ user.location or 'Não informado'
+                                    }}</span>
+                                <span class="me-3"><i class="bi bi-image me-1"></i>{{ user.posts.count() }}
+                                    post(s)</span>
+                                {% if user.is_admin %}
+                                <span class="status-badge status-admin">Admin</span>
+                                {% elif user.active %}
+                                <span class="status-badge status-active">Ativo</span>
+                                {% else %}
+                                <span class="status-badge status-inactive">Inativo</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="user-actions">
+                            <div class="btn-group btn-group-sm">
+                                <a href="{{ url_for('main.user_profile', username=user.username) }}"
+                                    class="btn btn-outline-info" title="Ver perfil">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                {% if user.id != current_user.id %}
+                                <form action="{{ url_for('admin.toggle_admin', user_id=user.id) }}" method="POST"
+                                    class="d-inline">
+                                    <button type="submit" class="btn btn-outline-warning"
+                                        title="{% if user.is_admin %}Remover admin{% else %}Tornar admin{% endif %}">
+                                        <i class="bi bi-shield{% if user.is_admin %}-x{% else %}-plus{% endif %}"></i>
+                                    </button>
+                                </form>
+                                <form action="{{ url_for('admin.delete_user', user_id=user.id) }}" method="POST"
+                                    class="d-inline"
+                                    onsubmit="return confirm('Tem certeza que deseja excluir esse usuário? Essa ação não pode ser desfeita.');">
+                                    <button type="submit" class="btn btn-outline-danger" title="Excluir usuário">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </div>
                         </div>
                     </div>
-                    <div class="user-meta">
-                        <span class="me-3"><i class="bi bi-calendar me-1"></i>{{ user.joined_at.strftime('%d/%m/%Y') }}</span>
-                        <span class="me-3"><i class="bi bi-geo-alt me-1"></i>{{ user.location or 'Não informado' }}</span>
-                        <span class="me-3"><i class="bi bi-image me-1"></i>{{ user.posts.count() }} post(s)</span>
-                        {% if user.is_admin %}
-                            <span class="status-badge status-admin">Admin</span>
-                        {% elif user.active %}
-                            <span class="status-badge status-active">Ativo</span>
-                        {% else %}
-                            <span class="status-badge status-inactive">Inativo</span>
-                        {% endif %}
-                    </div>
                 </div>
-                <div class="user-actions">
-                    <div class="btn-group btn-group-sm">
-                        <a href="{{ url_for('main.user_profile', username=user.username) }}" 
-                           class="btn btn-outline-info" title="Ver perfil">
-                            <i class="bi bi-eye"></i>
-                        </a>
-                        {% if user.id != current_user.id %}
-                            <form action="{{ url_for('admin.toggle_admin', user_id=user.id) }}" method="POST" class="d-inline">
-                                <button type="submit" class="btn btn-outline-warning" 
-                                        title="{% if user.is_admin %}Remover admin{% else %}Tornar admin{% endif %}">
-                                    <i class="bi bi-shield{% if user.is_admin %}-x{% else %}-plus{% endif %}"></i>
-                                </button>
-                            </form>
-                            <form action="{{ url_for('admin.delete_user', user_id=user.id) }}" method="POST" class="d-inline" 
-                                  onsubmit="return confirm('Tem certeza que deseja excluir esse usuário? Essa ação não pode ser desfeita.');">
-                                <button type="submit" class="btn btn-outline-danger" title="Excluir usuário">
-                                    <i class="bi bi-trash"></i>
-                                </button>
-                            </form>
-                        {% endif %}
-                    </div>
-                </div>
+                {% endfor %}
             </div>
-        </div>
-        {% endfor %}
-    </div>
         </div>
     </div>
 </div>
@@ -299,12 +319,12 @@
 
 {% block scripts %}
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
         const searchInput = document.getElementById('searchInput');
         const searchButton = document.getElementById('searchButton');
         const filterTabs = document.querySelectorAll('[data-filter]');
         const userCards = document.querySelectorAll('.user-card');
-        
+
         // Função de busca
         function performSearch() {
             const searchTerm = searchInput.value.trim();
@@ -312,25 +332,25 @@
                 window.location.href = "{{ url_for('admin.users') }}?q=" + encodeURIComponent(searchTerm);
             }
         }
-        
+
         searchButton.addEventListener('click', performSearch);
-        searchInput.addEventListener('keypress', function(e) {
+        searchInput.addEventListener('keypress', function (e) {
             if (e.key === 'Enter') {
                 performSearch();
             }
         });
-        
+
         // Função de filtros
         filterTabs.forEach(tab => {
-            tab.addEventListener('click', function(e) {
+            tab.addEventListener('click', function (e) {
                 e.preventDefault();
-                
+
                 // Atualizar abas ativas
                 filterTabs.forEach(t => t.classList.remove('active'));
                 this.classList.add('active');
-                
+
                 const filter = this.getAttribute('data-filter');
-                
+
                 // Filtrar cards
                 userCards.forEach(card => {
                     const status = card.getAttribute('data-status');
@@ -344,4 +364,4 @@
         });
     });
 </script>
-{% endblock %} 
+{% endblock %}

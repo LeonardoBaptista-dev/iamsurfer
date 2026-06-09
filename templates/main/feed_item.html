@@ -1,0 +1,161 @@
+        {# ─── Regular Post ─── #}
+        {% if item.kind == 'post' %}
+        {% set post = item.obj %}
+        <article class="card post-card mb-4 fade-in">
+            <!-- Header -->
+            <div class="post-header">
+                <img src="{{ post.author.profile_image_urls|profile_thumbnail_url if post.author.profile_image_urls else post.author.profile_image|img_url }}"
+                    class="post-avatar" alt="{{ post.author.username }}">
+                <div class="flex-grow-1">
+                    <div class="d-flex align-items-center gap-2">
+                        <a href="{{ url_for('main.user_profile', username=post.author.username) }}"
+                            class="post-username text-dark text-decoration-none">{{ post.author.username }}</a>
+                        {% if post.spot %}
+                        <span style="font-size:.78rem;color:var(--text-muted);">está em</span>
+                        <a href="{{ url_for('spots.new_spot_detail', spot_id=post.spot.id) }}"
+                            style="font-size:.78rem;color:var(--brand-light);font-weight:600;">
+                            <i class="bi bi-geo-alt-fill" style="font-size:.7rem;"></i> {{ post.spot.name }}
+                        </a>
+                        {% endif %}
+                    </div>
+                    <div class="post-time">{{ post.created_at.strftime('%d/%m/%Y %H:%M') }}</div>
+                </div>
+                {% if current_user.is_authenticated and (post.user_id == current_user.id or current_user.is_admin) %}
+                <div class="dropdown">
+                    <button class="btn btn-sm p-1" style="color:var(--text-muted);background:none;border:none;"
+                        data-bs-toggle="dropdown">
+                        <i class="bi bi-three-dots"></i>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li>
+                            <form action="{{ url_for('posts.delete_post', post_id=post.id) }}" method="POST">
+                                <button type="submit" class="dropdown-item text-danger"
+                                    onclick="return confirm('Excluir post?')">
+                                    <i class="bi bi-trash"></i> Excluir
+                                </button>
+                            </form>
+                        </li>
+                    </ul>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Image / Video -->
+            {% if post.has_multiple_images %}
+            <div style="line-height:0;overflow:hidden;">
+                {{ post.image_urls|responsive_img(post.content[:50], "post-image w-100") }}
+            </div>
+            {% elif post.image_url %}
+            <div style="line-height:0;overflow:hidden;">
+                <img src="{{ post.image_url|img_url }}" class="post-image w-100" loading="lazy" alt="Post">
+            </div>
+            {% endif %}
+
+            {% if post.video_url %}
+            <video src="{{ post.video_url|img_url }}" class="w-100" controls
+                style="max-height:480px;object-fit:cover;"></video>
+            {% endif %}
+
+            <!-- Actions -->
+            <div class="post-actions">
+                {% if current_user.is_authenticated %}
+                <form action="{{ url_for('posts.like_post', post_id=post.id) }}" method="POST" class="d-inline">
+                    <button type="submit"
+                        class="post-action-btn {% if current_user.likes.filter_by(post_id=post.id).first() %}liked{% endif %}">
+                        <i
+                            class="bi bi-heart{% if current_user.likes.filter_by(post_id=post.id).first() %}-fill{% endif %}"></i>
+                        <span>{{ post.likes|length }}</span>
+                    </button>
+                </form>
+                {% else %}
+                <span class="post-action-btn">
+                    <i class="bi bi-heart"></i> <span>{{ post.likes|length }}</span>
+                </span>
+                {% endif %}
+
+                <a href="{{ url_for('posts.view_post', post_id=post.id) }}"
+                    class="post-action-btn text-decoration-none">
+                    <i class="bi bi-chat-bubble"></i>
+                    <span>{{ post.comments|length }}</span>
+                </a>
+
+                <a href="{{ url_for('posts.view_post', post_id=post.id) }}" class="post-action-btn text-decoration-none"
+                    style="margin-left:auto;">
+                    <i class="bi bi-arrow-up-right-square"></i>
+                </a>
+            </div>
+
+            <!-- Caption -->
+            {% if post.content %}
+            <div class="post-caption">
+                <strong>{{ post.author.username }}</strong> {{ post.content }}
+            </div>
+            {% endif %}
+
+            {% if post.comments %}
+            <div class="px-4 pb-3">
+                <a href="{{ url_for('posts.view_post', post_id=post.id) }}"
+                    style="font-size:.82rem;color:var(--text-muted);">
+                    Ver todos os {{ post.comments|length }} comentário{{ 's' if post.comments|length != 1 else '' }}
+                </a>
+            </div>
+            {% endif %}
+        </article>
+
+        {# ─── Spot Report ─── #}
+        {% elif item.kind == 'spot_report' %}
+
+        <article class="card post-card mb-4 fade-in">
+            <!-- Header -->
+            <div class="post-header">
+                <img src="{{ item.author.profile_image_urls|profile_thumbnail_url if item.author.profile_image_urls else item.author.profile_image|img_url }}"
+                    class="post-avatar" alt="{{ item.author.username }}">
+                <div class="flex-grow-1">
+                    <div class="d-flex align-items-center gap-2">
+                        <a href="{{ url_for('main.user_profile', username=item.author.username) }}"
+                            class="post-username text-dark text-decoration-none">{{ item.author.username }}</a>
+                        <span style="font-size:.78rem;color:var(--text-muted);">reportou condições em</span>
+                        {% if item.spot %}
+                        <a href="{{ url_for('spots.new_spot_detail', spot_id=item.spot.id) }}"
+                            style="font-size:.78rem;color:var(--brand-light);font-weight:600;">
+                            <i class="bi bi-geo-alt-fill" style="font-size:.7rem;"></i> {{ item.spot.name }}
+                        </a>
+                        {% endif %}
+                    </div>
+                    <div class="post-time">{{ item.created_at.strftime('%d/%m/%Y %H:%M') }}</div>
+                </div>
+            </div>
+
+            <!-- Conditions Card -->
+            <div class="px-4 pb-4 pt-1">
+                <div class="rounded-3 p-3" style="background:var(--bg);border:1.5px solid var(--border);">
+                    <div class="d-flex align-items-center gap-2 mb-2" style="--cond-color: {{ cond_color }};">
+                        {% set cond = item.conditions or 'fair' %}
+                        {% if cond == 'epic' %}{% set cond_icon = 'bi-stars' %}{% set cond_color = '#22c55e' %}
+                        {% elif cond == 'good' %}{% set cond_icon = 'bi-emoji-smile' %}{% set cond_color = '#84cc16' %}
+                        {% elif cond == 'poor' %}{% set cond_icon = 'bi-emoji-frown' %}{% set cond_color = '#ef4444' %}
+                        {% elif cond == 'flat' %}{% set cond_icon = 'bi-dash-circle' %}{% set cond_color = '#94a3b8' %}
+                        {% else %}{% set cond_icon = 'bi-emoji-neutral' %}{% set cond_color = '#f59e0b' %}{% endif %}
+                        <i class="bi {{ cond_icon }} fs-4" style="color: var(--cond-color);"></i>
+                        <span style="font-weight:700;font-size:1rem;color: var(--cond-color);">
+                            {{ cond|capitalize }}
+                        </span>
+                        {% if item.wave_height %}
+                        <span class="ms-auto d-flex align-items-center" style="font-size:.82rem;color:var(--text-muted);">
+                            <img src="{{ url_for('static', filename='img/logo.png') }}" alt="" height="14" class="me-1" style="opacity: 0.7; object-fit: contain;"> {{ item.wave_height }}m
+                        </span>
+                        {% endif %}
+                    </div>
+                    {% if item.crowd_level %}
+                    <div style="font-size:.82rem;color:var(--text-secondary);">
+                        <i class="bi bi-people"></i> Crowd: {{ item.crowd_level|capitalize }}
+                    </div>
+                    {% endif %}
+                    {% if item.notes %}
+                    <p style="font-size:.88rem;color:var(--text-primary);margin-top:10px;margin-bottom:0;">{{ item.notes
+                        }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </article>
+        {% endif %}

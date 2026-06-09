@@ -87,7 +87,7 @@ Edite `templates/spots/map_interactive.html`, linha final:
 - Busca por cidade, praia, endereço
 - Move o mapa automaticamente para o local
 
-### 📍 **Localização do Usuário**
+###  **Localização do Usuário**
 - Botão "Obter Minha Localização"
 - Marcador vermelho para sua posição
 - Lista de spots próximos ordenados por distância

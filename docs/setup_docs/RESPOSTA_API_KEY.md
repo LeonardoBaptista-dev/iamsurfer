@@ -21,11 +21,11 @@ Seu sistema IAmSurfer já está rodando com um **mapa interativo totalmente grat
 ## 🗺️ **O que você já tem funcionando:**
 
 ### **Arquivo Ativo:** `templates/spots/map_free.html`
-- 📍 **Marcadores coloridos** por dificuldade
+-  **Marcadores coloridos** por dificuldade
 - 🔍 **Busca em tempo real** (nome, cidade, estado)
 - 🎛️ **Filtros avançados** (dificuldade, tipo de onda)
 - ➕ **Adicionar spots** clicando no mapa
-- 📍 **Geolocalização** ("Minha Localização")
+-  **Geolocalização** ("Minha Localização")
 - 📱 **Design responsivo** (funciona em celular)
 
 ### **Rota Configurada:** `/spots/map`

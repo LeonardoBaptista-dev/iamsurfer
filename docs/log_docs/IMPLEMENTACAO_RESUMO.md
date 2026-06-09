@@ -34,7 +34,7 @@
 - **Template:** `templates/spots/add_spot.html` (MODIFICADO)
 
 #### **Melhorias:**
-- 📍 Coordenadas preenchidas automaticamente via URL (`?lat=X&lng=Y`)
+-  Coordenadas preenchidas automaticamente via URL (`?lat=X&lng=Y`)
 - 💡 Alerta informativo quando vem do mapa
 - ✨ Destaque visual nos campos preenchidos
 - 🎯 Scroll automático para seção relevante

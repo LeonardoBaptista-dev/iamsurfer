@@ -3,97 +3,75 @@
 {% block title %}Conversa com {{ other_user.username }} - IAmSurfer{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-12">
-        <!-- Cabeçalho da conversa -->
-        <div class="card mb-3">
-            <div class="card-body">
-                <div class="d-flex align-items-center justify-content-between">
-                    <div class="d-flex align-items-center">
-                        <a href="{{ url_for('messages.inbox') }}" class="btn btn-outline-secondary btn-sm me-3">
-                            <i class="bi bi-arrow-left"></i> Voltar
-                        </a>
-                        <img src="{{ other_user.profile_image_urls|profile_thumbnail_url if other_user.profile_image_urls else other_user.profile_image|img_url }}" 
-                             class="rounded-circle me-2" width="40" height="40" style="object-fit: cover;">
-                        <div>
-                            <h5 class="mb-0">{{ other_user.username }}</h5>
-                            <small class="text-muted">
-                                <a href="{{ url_for('main.user_profile', username=other_user.username) }}" class="text-decoration-none">
-                                    Ver perfil
-                                </a>
-                            </small>
-                        </div>
-                    </div>
-                </div>
+<div class="col-12 col-lg-7 mx-auto">
+    <div class="card" style="overflow:hidden;">
+        <!-- Header -->
+        <div class="d-flex align-items-center gap-2 p-3" style="border-bottom:1px solid var(--border);">
+            <a href="{{ url_for('messages.inbox') }}" class="btn btn-sm p-1"
+                style="color:var(--text-secondary);background:none;border:none;"><i class="bi bi-arrow-left fs-5"></i></a>
+            <img src="{{ other_user.profile_image_urls|profile_thumbnail_url if other_user.profile_image_urls else other_user.profile_image|img_url }}"
+                class="rounded-circle" width="40" height="40" style="object-fit:cover;">
+            <div>
+                <a href="{{ url_for('main.user_profile', username=other_user.username) }}"
+                    class="d-block text-decoration-none" style="font-weight:700;font-size:.92rem;color:var(--text-primary);">
+                    {{ other_user.username }}
+                </a>
+                <a href="{{ url_for('main.user_profile', username=other_user.username) }}"
+                    class="text-decoration-none" style="font-size:.75rem;color:var(--text-muted);">Ver perfil</a>
             </div>
         </div>
 
-        <!-- Container da conversa -->
-        <div class="card">
-            <div class="card-body" style="height: 400px; overflow-y: auto;" id="messagesContainer">
-                {% if messages %}
-                    {% for message in messages %}
-                        <div class="d-flex mb-3 {% if message.sender_id == current_user.id %}justify-content-end{% endif %}">
-                            {% if message.sender_id != current_user.id %}
-                                <img src="{{ other_user.profile_image_urls|profile_thumbnail_url if other_user.profile_image_urls else other_user.profile_image|img_url }}" 
-                                     class="rounded-circle me-2" width="30" height="30" style="object-fit: cover;">
-                            {% endif %}
-                            <div class="message-bubble {% if message.sender_id == current_user.id %}bg-primary text-white{% else %}bg-light{% endif %} p-3 rounded" 
-                                 style="max-width: 70%;">
-                                <p class="mb-1">{{ message.content }}</p>
-                                <small class="{% if message.sender_id == current_user.id %}text-white-50{% else %}text-muted{% endif %}">
-                                    {{ message.timestamp.strftime('%d/%m %H:%M') }}
-                                    {% if message.sender_id == current_user.id and message.read %}
-                                        <i class="bi bi-check2-all ms-1"></i>
-                                    {% elif message.sender_id == current_user.id %}
-                                        <i class="bi bi-check2 ms-1"></i>
-                                    {% endif %}
-                                </small>
-                            </div>
-                            {% if message.sender_id == current_user.id %}
-                                <img src="{{ current_user.profile_image_urls|profile_thumbnail_url if current_user.profile_image_urls else current_user.profile_image|img_url }}" 
-                                     class="rounded-circle ms-2" width="30" height="30" style="object-fit: cover;">
-                            {% endif %}
-                        </div>
-                    {% endfor %}
-                {% else %}
-                    <div class="text-center text-muted py-5">
-                        <i class="bi bi-chat-text display-4 mb-3"></i>
-                        <p>Nenhuma mensagem ainda. Comece a conversa!</p>
+        <!-- Thread -->
+        <div class="chat-window" id="messagesContainer">
+            {% if messages %}
+                {% for message in messages %}
+                {% set mine = message.sender_id == current_user.id %}
+                <div class="chat-line {% if mine %}mine{% endif %}">
+                    {% if not mine %}
+                    <img src="{{ other_user.profile_image_urls|profile_thumbnail_url if other_user.profile_image_urls else other_user.profile_image|img_url }}"
+                        class="chat-mini-avatar">
+                    {% endif %}
+                    <div class="chat-bubble">
+                        {{ message.content }}
+                        <span class="chat-meta">
+                            {{ message.timestamp.strftime('%d/%m %H:%M') }}
+                            {% if mine and message.read %}<i class="bi bi-check2-all"></i>
+                            {% elif mine %}<i class="bi bi-check2"></i>{% endif %}
+                        </span>
                     </div>
-                {% endif %}
-            </div>
-            
-            <!-- Formulário para nova mensagem -->
-            <div class="card-footer">
-                <form method="POST" id="messageForm">
-                    <div class="input-group">
-                        <input type="text" class="form-control" name="content" id="messageInput" 
-                               placeholder="Digite sua mensagem..." required maxlength="1000">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-send"></i>
-                        </button>
-                    </div>
-                </form>
-            </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="text-center text-muted py-5">
+                    <i class="bi bi-chat-text display-5 mb-2 d-block"></i>
+                    <p style="font-size:.9rem;">Nenhuma mensagem ainda. Comece a conversa!</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Composer -->
+        <div class="p-3" style="border-top:1px solid var(--border);">
+            <form method="POST" id="messageForm" class="d-flex gap-2">
+                <input type="text" class="form-control" name="content" id="messageInput"
+                    placeholder="Digite sua mensagem..." required maxlength="1000"
+                    style="border-radius:var(--radius-pill);">
+                <button type="submit" class="btn btn-primary" style="border-radius:var(--radius-pill);">
+                    <i class="bi bi-send-fill"></i>
+                </button>
+            </form>
         </div>
     </div>
 </div>
+{% endblock %}
 
+{% block scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Scroll para baixo quando carrega a página
     const container = document.getElementById('messagesContainer');
-    container.scrollTop = container.scrollHeight;
-    
-    // Foco no input de mensagem
-    document.getElementById('messageInput').focus();
-    
-    // Auto-scroll quando nova mensagem é enviada
-    document.getElementById('messageForm').addEventListener('submit', function() {
-        setTimeout(function() {
-            container.scrollTop = container.scrollHeight;
-        }, 100);
+    if (container) container.scrollTop = container.scrollHeight;
+    document.getElementById('messageInput')?.focus();
+    document.getElementById('messageForm')?.addEventListener('submit', function() {
+        setTimeout(() => { if (container) container.scrollTop = container.scrollHeight; }, 100);
     });
 });
 </script>

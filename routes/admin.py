@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, abort, jsonify
 from flask_login import login_required, current_user
 from models import User, Post, Comment, Message, Spot
-from app import db
+from extensions import db
 from functools import wraps
 from sqlalchemy import func
 from datetime import datetime

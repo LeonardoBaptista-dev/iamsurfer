@@ -1,71 +1,62 @@
 {% extends "base.html" %}
 
-{% block title %}Buscar Usuários - IAmSurfer{% endblock %}
+{% block title %}Buscar surfistas - IAmSurfer{% endblock %}
 
 {% block content %}
-<div class="container">
-    <div class="row mb-4">
-        <div class="col-md-8">
-            <h2>Buscar Usuários</h2>
+<div class="col-12 col-lg-7 mx-auto">
+
+    <h4 class="mb-3" style="font-weight:700;letter-spacing:-.3px;">Buscar surfistas</h4>
+
+    <form class="d-flex gap-2 mb-4" action="{{ url_for('main.search') }}" method="GET">
+        <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-search"></i></span>
+            <input class="form-control" type="search" name="q" placeholder="Nome de usuário"
+                value="{{ query or '' }}" aria-label="Buscar">
         </div>
-        <div class="col-md-4">
-            <form class="d-flex" action="{{ url_for('main.search') }}" method="GET">
-                <input class="form-control me-2" type="search" name="q" placeholder="Nome de usuário" value="{{ query or '' }}" aria-label="Buscar">
-                <button class="btn btn-primary" type="submit">Buscar</button>
-            </form>
-        </div>
-    </div>
-    
+        <button class="btn btn-primary" type="submit">Buscar</button>
+    </form>
+
     {% if query %}
-        <div class="mb-4">
-            <h4>Resultados para "{{ query }}"</h4>
-        </div>
-        
         {% if results %}
-            <div class="row">
-                {% for user in results %}
-                    <div class="col-md-4 mb-4">
-                        <div class="card">
-                            <div class="card-body text-center">
-                                <div class="text-center">
-                                    <img src="{{ user.profile_image_urls|profile_avatar_url if user.profile_image_urls else user.profile_image|img_url }}" class="rounded-circle mb-3" style="width: 80px; height: 80px; object-fit: cover;">
-                                    <h5 class="card-title">{{ user.username }}</h5>
-                                    {% if user.location %}
-                                        <p class="text-muted"><i class="bi bi-geo-alt"></i> {{ user.location }}</p>
-                                    {% endif %}
-                                    
-                                    <div class="d-grid gap-2">
-                                        <a href="{{ url_for('main.user_profile', username=user.username) }}" class="btn btn-outline-primary">Ver Perfil</a>
-                                        
-                                        {% if current_user.is_authenticated and current_user.id != user.id %}
-                                            {% if current_user.is_following(user) %}
-                                                <a href="{{ url_for('main.unfollow', username=user.username) }}" class="btn btn-outline-secondary">
-                                                    <i class="bi bi-person-dash"></i> Deixar de Seguir
-                                                </a>
-                                            {% else %}
-                                                <a href="{{ url_for('main.follow', username=user.username) }}" class="btn btn-primary">
-                                                    <i class="bi bi-person-plus"></i> Seguir
-                                                </a>
-                                            {% endif %}
-                                        {% endif %}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                {% endfor %}
+        <p class="text-muted mb-2" style="font-size:.85rem;">Resultados para "<strong>{{ query }}</strong>"</p>
+        <div class="dm-list">
+            {% for user in results %}
+            <div class="dm-row" style="cursor:default;">
+                <a href="{{ url_for('main.user_profile', username=user.username) }}">
+                    <img src="{{ user.profile_image_urls|profile_thumbnail_url if user.profile_image_urls else user.profile_image|img_url }}"
+                        class="dm-avatar" alt="{{ user.username }}">
+                </a>
+                <div class="flex-grow-1 min-w-0">
+                    <a href="{{ url_for('main.user_profile', username=user.username) }}"
+                        class="dm-name text-decoration-none d-block">{{ user.username }}</a>
+                    {% if user.location %}
+                    <span class="dm-preview"><i class="bi bi-geo-alt"></i> {{ user.location }}</span>
+                    {% endif %}
+                </div>
+                {% if current_user.is_authenticated and current_user.id != user.id %}
+                    {% if current_user.is_following(user) %}
+                    <a href="{{ url_for('main.unfollow', username=user.username) }}" class="btn btn-secondary btn-sm">Seguindo</a>
+                    {% else %}
+                    <a href="{{ url_for('main.follow', username=user.username) }}" class="btn btn-follow btn-sm">Seguir</a>
+                    {% endif %}
+                {% endif %}
             </div>
+            {% endfor %}
+        </div>
         {% else %}
-            <div class="alert alert-info">
-                Nenhum usuário encontrado para "{{ query }}". Tente uma nova busca.
-            </div>
+        <div class="card text-center py-5 px-4">
+            <i class="bi bi-emoji-frown display-4 text-muted mb-2"></i>
+            <h5 style="font-weight:700;">Nada encontrado</h5>
+            <p style="color:var(--text-muted);font-size:.9rem;">Nenhum surfista para "{{ query }}". Tente outra busca.</p>
+        </div>
         {% endif %}
     {% else %}
-        <div class="card p-5 text-center">
-            <i class="bi bi-search display-1 text-muted mb-3"></i>
-            <h4>Busque por outros surfistas</h4>
-            <p class="text-muted">Digite um nome de usuário na caixa de pesquisa acima para encontrar outros surfistas.</p>
-        </div>
+    <div class="card text-center py-5 px-4">
+        <i class="bi bi-search display-4 text-muted mb-2"></i>
+        <h5 style="font-weight:700;">Encontre outros surfistas</h5>
+        <p style="color:var(--text-muted);font-size:.9rem;">Digite um nome de usuário acima para começar.</p>
+    </div>
     {% endif %}
+
 </div>
-{% endblock %} 
+{% endblock %}

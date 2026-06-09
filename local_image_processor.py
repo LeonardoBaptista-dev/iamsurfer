@@ -264,6 +264,136 @@ class LocalImageProcessor:
                         os.remove(file_path)
         except Exception as e:
             print(f"Erro ao deletar arquivos: {e}")
+            
+    @staticmethod
+    def process_and_save_video(file: FileStorage) -> Tuple[bool, str, Optional[str]]:
+        """
+        Processa vídeo localmente.
+        Tenta comprimir via FFmpeg reduzindo resolução (máx 720p) e bitrate.
+        Caso o FFmpeg não esteja disponível na máquina local, salva o arquivo bruto (fallback).
+        """
+        import subprocess
+        from werkzeug.utils import secure_filename
+        
+        if not file:
+            return False, "Nenhum arquivo fornecido", None
+            
+        try:
+            # Garante que as pastas existam
+            video_folder = os.path.join(current_app.root_path, 'static', 'uploads', 'videos')
+            os.makedirs(video_folder, exist_ok=True)
+            
+            # Gera nome seguro com UUID
+            filename = secure_filename(file.filename)
+            unique_name = f"{uuid.uuid4().hex}_{filename}"
+            final_path = os.path.join(video_folder, unique_name)
+            
+            # Caminho temporário para o FFmpeg processar
+            temp_path = os.path.join(video_folder, f"temp_{unique_name}")
+            file.seek(0)
+            file.save(temp_path)
+            
+            relative_path = f"uploads/videos/{unique_name}"
+            
+            # Tenta compressão via FFmpeg
+            try:
+                # Comando FFmpeg: resolução para 720p máx (mantendo o aspect ratio), codec h264, bitrate de áudio comprimido
+                cmd = [
+                    'ffmpeg', '-y', '-i', temp_path,
+                    '-vf', 'scale=trunc(iw/2)*2:trunc(ih/2)*2,scale=\'min(1280,iw)\':-2',
+                    '-c:v', 'libx264', '-crf', '28', '-preset', 'fast',
+                    '-c:a', 'aac', '-b:a', '128k',
+                    final_path
+                ]
+                
+                # Roda FFmpeg silenciando a saída. Se o FFmpeg não existir, levanta FileNotFoundError
+                subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
+                
+                # O vídeo comprimido foi gerado. Apaga o temporário bruto.
+                if os.path.exists(temp_path):
+                    os.remove(temp_path)
+                    
+                return True, "Vídeo processado e comprimido localmente", relative_path
+                
+            except (subprocess.SubprocessError, FileNotFoundError):
+                # Fallback: Se o PC de Dev não tem FFmpeg ou deu erro no processamento
+                if os.path.exists(final_path):
+                    os.remove(final_path)  # Cleanup the partial file if it crashed
+                
+                # Usa o arquivo original como versão final
+                os.rename(temp_path, final_path)
+                
+                return True, "Aviso: FFmpeg não disponível ou falhou. Vídeo salvo localmente sem compressão extra.", relative_path
+                
+        except Exception as e:
+            # Em caso de erro fatal
+            if 'temp_path' in locals() and os.path.exists(temp_path):
+                os.remove(temp_path)
+            return False, f"Erro ao processar vídeo: {str(e)}", None
+
+    @staticmethod
+    def process_and_save_profile(file: FileStorage) -> Tuple[bool, str, Optional[Dict[str, str]]]:
+        """
+        Processa imagem de perfil em múltiplos tamanhos otimizados para avatares
+        
+        Returns:
+            Tuple[bool, str, Optional[Dict[str, str]]]: (success, message, urls_dict)
+        """
+        # Validação
+        is_valid, error_msg, img = LocalImageProcessor.validate_image(file)
+        if not is_valid:
+            return False, error_msg, None
+        
+        try:
+            # Gera hash do arquivo original
+            file.seek(0)
+            file_content = file.read()
+            file_hash = hashlib.md5(file_content).hexdigest()
+            file.seek(0)
+            
+            # Cria crop quadrado (essencial para avatares)
+            img_square = LocalImageProcessor.create_square_crop(img)
+            
+            # Processa cada tamanho específico para perfil
+            urls = {}
+            
+            for size_name, (width, height) in LocalImageProcessor.PROFILE_SIZES.items():
+                # Redimensiona e otimiza com qualidade específica para perfil
+                buffer = LocalImageProcessor.resize_and_optimize(
+                    img_square, 
+                    (width, height), 
+                    LocalImageProcessor.PROFILE_QUALITY[size_name]
+                )
+                
+                # Gera nome do arquivo com prefixo profile
+                filename = f"profile_{LocalImageProcessor.generate_filename(file.filename, size_name, file_hash)}"
+                
+                # Salva na pasta profiles com subpastas por tamanho
+                relative_path = LocalImageProcessor.save_profile_file(buffer, filename, size_name)
+                urls[size_name] = relative_path
+            
+            return True, "Imagem de perfil processada com sucesso", urls
+            
+        except Exception as e:
+            return False, f"Erro ao processar imagem de perfil: {str(e)}", None
+
+    @staticmethod
+    def save_profile_file(buffer: io.BytesIO, filename: str, size: str) -> str:
+        """
+        Salva arquivo de perfil na estrutura organizada
+        """
+        # Cria estrutura de pastas para perfis
+        relative_dir = f"uploads/profiles/{size}"
+        full_dir = os.path.join(current_app.root_path, 'static', relative_dir)
+        os.makedirs(full_dir, exist_ok=True)
+        
+        # Salva o arquivo
+        file_path = os.path.join(full_dir, filename)
+        with open(file_path, 'wb') as f:
+            f.write(buffer.getvalue())
+        
+        # Retorna caminho relativo para URLs
+        return f"{relative_dir}/{filename}"
 
 
 class ResponsiveImageHelper:
@@ -332,70 +462,6 @@ class ResponsiveImageHelper:
         if not urls:
             return "/static/uploads/default_post.jpg"
         return f"/static/{urls.get('large', urls.get('original', urls.get('medium', '')))}"
-    
-    @staticmethod
-    def process_and_save_profile(file: FileStorage) -> Tuple[bool, str, Optional[Dict[str, str]]]:
-        """
-        Processa imagem de perfil em múltiplos tamanhos otimizados para avatares
-        
-        Returns:
-            Tuple[bool, str, Optional[Dict[str, str]]]: (success, message, urls_dict)
-        """
-        # Validação
-        is_valid, error_msg, img = LocalImageProcessor.validate_image(file)
-        if not is_valid:
-            return False, error_msg, None
-        
-        try:
-            # Gera hash do arquivo original
-            file.seek(0)
-            file_content = file.read()
-            file_hash = hashlib.md5(file_content).hexdigest()
-            file.seek(0)
-            
-            # Cria crop quadrado (essencial para avatares)
-            img_square = LocalImageProcessor.create_square_crop(img)
-            
-            # Processa cada tamanho específico para perfil
-            urls = {}
-            
-            for size_name, (width, height) in LocalImageProcessor.PROFILE_SIZES.items():
-                # Redimensiona e otimiza com qualidade específica para perfil
-                buffer = LocalImageProcessor.resize_and_optimize(
-                    img_square, 
-                    (width, height), 
-                    LocalImageProcessor.PROFILE_QUALITY[size_name]
-                )
-                
-                # Gera nome do arquivo com prefixo profile
-                filename = f"profile_{LocalImageProcessor.generate_filename(file.filename, size_name, file_hash)}"
-                
-                # Salva na pasta profiles com subpastas por tamanho
-                relative_path = LocalImageProcessor.save_profile_file(buffer, filename, size_name)
-                urls[size_name] = relative_path
-            
-            return True, "Imagem de perfil processada com sucesso", urls
-            
-        except Exception as e:
-            return False, f"Erro ao processar imagem de perfil: {str(e)}", None
-
-    @staticmethod
-    def save_profile_file(buffer: io.BytesIO, filename: str, size: str) -> str:
-        """
-        Salva arquivo de perfil na estrutura organizada
-        """
-        # Cria estrutura de pastas para perfis
-        relative_dir = f"uploads/profiles/{size}"
-        full_dir = os.path.join(current_app.root_path, 'static', relative_dir)
-        os.makedirs(full_dir, exist_ok=True)
-        
-        # Salva o arquivo
-        file_path = os.path.join(full_dir, filename)
-        with open(file_path, 'wb') as f:
-            f.write(buffer.getvalue())
-        
-        # Retorna caminho relativo para URLs
-        return f"{relative_dir}/{filename}"
     
     @staticmethod
     def get_profile_avatar_tag(urls: Dict[str, str], alt: str = "", css_class: str = "rounded-circle", size: str = "small") -> str:

@@ -3,67 +3,43 @@
 {% block title %}Ver Mensagem - IAmSurfer{% endblock %}
 
 {% block content %}
-<div class="container">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card mb-4">
-                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                    <h4 class="mb-0">
-                        {% if current_user.id == message.sender_id %}
-                            Mensagem para {{ message.recipient.username }}
-                        {% else %}
-                            Mensagem de {{ message.sender.username }}
-                        {% endif %}
-                    </h4>
-                    <small class="text-white">{{ message.timestamp.strftime('%d/%m/%Y %H:%M') }}</small>
+<div class="col-12 col-lg-6 mx-auto">
+
+    {% if current_user.id == message.sender_id %}
+    <a href="{{ url_for('messages.sent') }}" class="d-inline-flex align-items-center gap-1 mb-3 text-decoration-none"
+        style="color:var(--text-secondary);font-size:.85rem;font-weight:600;"><i class="bi bi-arrow-left"></i> Enviadas</a>
+    {% else %}
+    <a href="{{ url_for('messages.inbox') }}" class="d-inline-flex align-items-center gap-1 mb-3 text-decoration-none"
+        style="color:var(--text-secondary);font-size:.85rem;font-weight:600;"><i class="bi bi-arrow-left"></i> Caixa de entrada</a>
+    {% endif %}
+
+    <div class="card">
+        <div class="card-body p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3" style="border-bottom:1px solid var(--border);padding-bottom:12px;">
+                <div style="font-weight:700;">
+                    {% if current_user.id == message.sender_id %}Para {{ message.recipient.username }}
+                    {% else %}De {{ message.sender.username }}{% endif %}
                 </div>
-                <div class="card-body">
-                    <div class="mb-4">
-                        {{ message.content|nl2br }}
-                    </div>
-                    
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            {% if current_user.id == message.recipient_id %}
-                                <a href="{{ url_for('messages.send_message', username=message.sender.username) }}" class="btn btn-primary">
-                                    <i class="bi bi-reply"></i> Responder
-                                </a>
-                            {% endif %}
-                        </div>
-                        <form action="{{ url_for('messages.delete_message', message_id=message.id) }}" method="POST" onsubmit="return confirm('Tem certeza que deseja excluir esta mensagem?');">
-                            <button type="submit" class="btn btn-danger">
-                                <i class="bi bi-trash"></i> Excluir
-                            </button>
-                        </form>
-                    </div>
-                </div>
+                <span class="dm-time">{{ message.timestamp.strftime('%d/%m/%Y %H:%M') }}</span>
             </div>
-            
-            <div class="mt-3">
-                {% if current_user.id == message.sender_id %}
-                    <a href="{{ url_for('messages.sent') }}" class="btn btn-secondary">
-                        <i class="bi bi-arrow-left"></i> Voltar para mensagens enviadas
-                    </a>
-                {% else %}
-                    <a href="{{ url_for('messages.inbox') }}" class="btn btn-secondary">
-                        <i class="bi bi-arrow-left"></i> Voltar para caixa de entrada
-                    </a>
-                {% endif %}
+
+            <p style="font-size:.95rem;line-height:1.6;">{{ message.content|nl2br }}</p>
+
+            <div class="d-flex justify-content-between align-items-center mt-4">
+                {% if current_user.id == message.recipient_id %}
+                <a href="{{ url_for('messages.send_message', username=message.sender.username) }}" class="btn btn-primary btn-sm">
+                    <i class="bi bi-reply me-1"></i> Responder
+                </a>
+                {% else %}<span></span>{% endif %}
+                <form action="{{ url_for('messages.delete_message', message_id=message.id) }}" method="POST"
+                    onsubmit="return confirm('Excluir esta mensagem?');">
+                    <button type="submit" class="btn btn-sm" style="background:none;color:#ef4444;border:none;">
+                        <i class="bi bi-trash"></i> Excluir
+                    </button>
+                </form>
             </div>
         </div>
     </div>
+
 </div>
 {% endblock %}
-
-{% block scripts %}
-<script>
-    // Filtro personalizado para substituir quebras de linha por <br>
-    (function() {
-        var filters = document.getElementsByClassName('message-content');
-        for (var i = 0; i < filters.length; i++) {
-            var content = filters[i].innerHTML;
-            filters[i].innerHTML = content.replace(/\n/g, '<br>');
-        }
-    })();
-</script>
-{% endblock %} 

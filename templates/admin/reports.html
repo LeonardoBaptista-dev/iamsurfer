@@ -10,47 +10,58 @@
         gap: 1rem;
         margin-bottom: 2rem;
     }
-    
+
     .stat-card {
         background: white;
         border-radius: 8px;
         padding: 1.5rem;
         text-align: center;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         border-left: 4px solid;
     }
-    
-    .stat-card.users { border-left-color: #007bff; }
-    .stat-card.posts { border-left-color: #28a745; }
-    .stat-card.spots { border-left-color: #ffc107; }
-    .stat-card.comments { border-left-color: #17a2b8; }
-    
+
+    .stat-card.users {
+        border-left-color: #007bff;
+    }
+
+    .stat-card.posts {
+        border-left-color: #28a745;
+    }
+
+    .stat-card.spots {
+        border-left-color: #ffc107;
+    }
+
+    .stat-card.comments {
+        border-left-color: #17a2b8;
+    }
+
     .stat-number {
         font-size: 2rem;
         font-weight: bold;
         margin-bottom: 0.5rem;
     }
-    
+
     .stat-label {
         color: #666;
         font-size: 0.875rem;
     }
-    
+
     .chart-container {
         background: white;
         border-radius: 8px;
         padding: 1.5rem;
         margin-bottom: 1.5rem;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
-    
+
     .chart-title {
         font-size: 1.25rem;
         font-weight: 600;
         margin-bottom: 1rem;
         color: #333;
     }
-    
+
     .report-section {
         margin-bottom: 2rem;
     }
@@ -112,15 +123,17 @@
 
         <!-- Conteúdo principal -->
         <div class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
-            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                <h1 class="h2">📊 Relatórios e Estatísticas</h1>
+            <div
+                class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">Relatórios e Estatísticas</h1>
                 <div class="btn-toolbar mb-2 mb-md-0">
                     <div class="btn-group me-2">
-                        <a href="{{ url_for('main.index') }}" class="btn btn-sm btn-outline-secondary">Voltar ao Site</a>
+                        <a href="{{ url_for('main.index') }}" class="btn btn-sm btn-outline-secondary">Voltar ao
+                            Site</a>
                     </div>
                 </div>
             </div>
-    
+
             <!-- Estatísticas Gerais -->
             <div class="stats-cards">
                 <div class="stat-card users">
@@ -146,7 +159,7 @@
                 <div class="row">
                     <div class="col-md-6">
                         <div class="chart-container">
-                            <div class="chart-title">📈 Crescimento da Plataforma</div>
+                            <div class="chart-title">Crescimento da Plataforma</div>
                             <div class="row text-center">
                                 <div class="col-6">
                                     <h4 class="text-primary">{{ new_users_this_week or 0 }}</h4>
@@ -161,14 +174,15 @@
                     </div>
                     <div class="col-md-6">
                         <div class="chart-container">
-                            <div class="chart-title">🏆 Top Usuários</div>
+                            <div class="chart-title">Top Usuários</div>
                             <div class="list-group list-group-flush">
                                 {% for username, profile_image, post_count in top_posters[:5] %}
                                 <div class="list-group-item d-flex justify-content-between align-items-center">
                                     <div class="d-flex align-items-center">
-                                        <img src="{{ profile_image|img_url }}" class="rounded-circle me-2" width="32" height="32">
-                                        <a href="{{ url_for('main.user_profile', username=username) }}" 
-                                           class="text-decoration-none">{{ username }}</a>
+                                        <img src="{{ profile_image|img_url }}" class="rounded-circle me-2" width="32"
+                                            height="32">
+                                        <a href="{{ url_for('main.user_profile', username=username) }}"
+                                            class="text-decoration-none">{{ username }}</a>
                                     </div>
                                     <span class="badge bg-primary rounded-pill">{{ post_count }} posts</span>
                                 </div>
@@ -187,7 +201,7 @@
                 <div class="row">
                     <div class="col-md-12">
                         <div class="chart-container">
-                            <div class="chart-title">📊 Resumo Detalhado</div>
+                            <div class="chart-title">Resumo Detalhado</div>
                             <div class="table-responsive">
                                 <table class="table table-striped">
                                     <thead>

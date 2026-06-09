@@ -3,43 +3,62 @@
 {% block title %}Caronas para Surf - IAmSurfer{% endblock %}
 
 {% block content %}
-<div class="container">
-    <div class="row mb-4">
-        <div class="col-md-8">
-            <h1>Caronas para Surf</h1>
-            <p class="lead">Encontre ou ofereça caronas para ir surfar.</p>
-        </div>
-        <div class="col-md-4 text-end">
-            <a href="{{ url_for('trips.create_trip') }}" class="btn btn-primary"><i class="fa fa-plus"></i> Criar Carona</a>
+<div class="container mt-4">
+    <!-- Header Hero Section -->
+    <div class="row justify-content-center mb-4">
+        <div class="col-lg-10">
+            <div class="card wide-card shadow-sm border-0" style="border-radius: 20px; overflow: hidden;">
+                <div class="card-header border-0 py-4 text-center" style="background: var(--gradient); color: white;">
+                    <h3 class="mb-1" style="font-weight: 800; letter-spacing: -0.5px;"><i class="bi bi-car-front-fill me-2"></i>CARONAS PARA SURF</h3>
+                    <p class="mb-0 opacity-75 small">Encontre ou ofereça caronas para ir surfar.</p>
+                </div>
+                <div class="card-body text-center p-3">
+                    <a href="{{ url_for('trips.create_trip') }}" class="btn btn-follow px-4 py-2" style="font-weight: 700; text-transform: uppercase;">
+                        <i class="bi bi-plus-lg me-1"></i> Criar Carona
+                    </a>
+                </div>
+            </div>
         </div>
     </div>
 
-    <div class="row">
-        <div class="col-md-12">
+    <!-- Rides List -->
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
             {% if trips %}
-                <div class="card">
-                    <div class="card-header bg-light">
-                        <h5 class="mb-0">Próximas caronas disponíveis</h5>
-                    </div>
-                    <div class="list-group list-group-flush">
-                        {% for trip in trips %}
-                            <div class="card mb-3">
-                                <div class="card-body">
-                                    <h5 class="card-title">{{ trip.title }}</h5>
-                                    <p class="card-text">
-                                        <strong>De:</strong> {{ trip.departure_location }} <br>
-                                        <strong>Para:</strong> {{ trip.get_destination_display() }} <br>
-                                        <strong>Data:</strong> {{ trip.departure_time.strftime('%d/%m/%Y %H:%M') }}
-                                    </p>
-                                    <a href="{{ url_for('trips.view_trip', trip_id=trip.id) }}" class="btn btn-primary">Ver Detalhes</a>
+                <h6 class="mb-3" style="font-weight: 700; color: var(--text-secondary); text-transform: uppercase; font-size: 0.85rem;">Próximas caronas disponíveis</h6>
+                <div class="row">
+                    {% for trip in trips %}
+                        <div class="col-md-6 mb-4">
+                            <div class="card border-0 shadow-sm" style="border-radius: 16px; overflow: hidden; transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform='translateY(0)'">
+                                <div class="card-body p-4">
+                                    <h5 class="card-title fw-bold" style="color: var(--brand); font-size: 1.15rem;">{{ trip.title }}</h5>
+                                    <div class="d-flex align-items-center mb-3 mt-3 text-muted" style="font-size: 0.9rem;">
+                                        <i class="bi bi-geo-alt-fill text-danger me-2"></i>
+                                        <div>
+                                            <strong>De:</strong> {{ trip.departure_location }} <br>
+                                            <strong>Para:</strong> {{ trip.get_destination_display() }}
+                                        </div>
+                                    </div>
+                                    <div class="d-flex align-items-center mb-4 text-muted" style="font-size: 0.9rem;">
+                                        <i class="bi bi-calendar-event me-2 text-primary"></i>
+                                        <strong>Data:</strong>&nbsp;{{ trip.departure_time.strftime('%d/%m/%Y %H:%M') }}
+                                    </div>
+                                    <div class="d-grid">
+                                        <a href="{{ url_for('trips.view_trip', trip_id=trip.id) }}" class="btn btn-outline-primary py-2 fw-bold" style="border-radius: 10px;">Ver Detalhes</a>
+                                    </div>
                                 </div>
                             </div>
-                        {% endfor %}
-                    </div>
+                        </div>
+                    {% endfor %}
                 </div>
             {% else %}
-                <div class="alert alert-info">
-                    Não há caronas disponíveis no momento. Seja o primeiro a <a href="{{ url_for('trips.create_trip') }}">criar uma carona</a>!
+                <div class="card border-0 shadow-sm text-center py-5" style="border-radius: 20px;">
+                    <div class="card-body">
+                        <i class="bi bi-compass text-muted mb-3" style="font-size: 3rem;"></i>
+                        <h5 class="fw-bold text-dark">Nenhuma carona no radar</h5>
+                        <p class="text-muted mb-4">Não há caronas disponíveis no momento. Seja o primeiro a agitar o outside!</p>
+                        <a href="{{ url_for('trips.create_trip') }}" class="btn btn-follow px-4 py-2"><i class="bi bi-plus-lg me-1"></i> Criar Carona</a>
+                    </div>
                 </div>
             {% endif %}
         </div>

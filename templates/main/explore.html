@@ -3,60 +3,72 @@
 {% block title %}Explorar - IAmSurfer{% endblock %}
 
 {% block content %}
-<div class="container">
-    <div class="row mb-4">
-        <div class="col">
-            <h2>Explorar</h2>
-            <p class="text-muted">Descubra os posts mais recentes da comunidade surfista</p>
+<div class="container py-4">
+    <!-- Header banner -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="d-flex align-items-center mb-2">
+                <i class="bi bi-compass-fill me-3" style="font-size: 2rem; color: var(--brand);"></i>
+                <h2 class="fw-bolder mb-0" style="color: var(--text-primary); letter-spacing: -0.5px;">Explorar</h2>
+            </div>
+            <p class="text-muted ms-1" style="font-size: 1.05rem;">Descubra os posts mais recentes da comunidade surfista</p>
         </div>
     </div>
     
-    <div class="row">
+    <div class="row g-4">
         <div class="col-lg-8">
             {% if posts %}
                 {% for post in posts %}
-                    <div class="card mb-4">
-                        <div class="card-header d-flex justify-content-between align-items-center">
-                            <div>
-                                <img src="{{ post.author.profile_image_urls|profile_thumbnail_url if post.author.profile_image_urls else post.author.profile_image|img_url }}" class="rounded-circle me-2" width="32" height="32" style="object-fit: cover;">
-                                <a href="{{ url_for('main.user_profile', username=post.author.username) }}" class="fw-bold text-decoration-none">{{ post.author.username }}</a>
+                    <div class="card border-0 shadow-sm mb-4" style="border-radius: 16px; overflow: hidden;">
+                        <div class="card-header bg-white border-0 py-3 px-4 d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center">
+                                <img src="{{ post.author.profile_image_urls|profile_thumbnail_url if post.author.profile_image_urls else post.author.profile_image|img_url }}" class="rounded-circle shadow-sm me-3" width="40" height="40" style="object-fit: cover; border: 2px solid var(--brand-faint);">
+                                <div>
+                                    <a href="{{ url_for('main.user_profile', username=post.author.username) }}" class="fw-bold text-decoration-none d-block lh-1 mb-1" style="color: var(--brand); font-size: 0.95rem;">{{ post.author.username }}</a>
+                                    <small class="text-muted fw-medium" style="font-size: 0.75rem;">{{ post.created_at.strftime('%d/%m/%Y %H:%M') }}</small>
+                                </div>
                             </div>
-                            <small class="text-muted">{{ post.created_at.strftime('%d/%m/%Y %H:%M') }}</small>
                         </div>
                         
-                        <div class="card-body">
+                        <div class="card-body px-4 pb-4 pt-1">
                             {% if post.content %}
-                                <p class="card-text">{{ post.content|nl2br }}</p>
+                                <p class="card-text mb-3 text-secondary" style="font-size: 1rem; line-height: 1.5;">{{ post.content|nl2br }}</p>
                             {% endif %}
                             
                             {% if post.image_url %}
-                                <img src="{{ post.image_url|img_url }}" class="img-fluid rounded mb-3">
+                                <div class="ratio ratio-4x3 mb-3">
+                                    <img src="{{ post.image_url|img_url }}" class="rounded-4 w-100 object-fit-cover shadow-sm" alt="Post de {{ post.author.username }}">
+                                </div>
                             {% endif %}
                             
                             {% if post.video_url %}
-                                <video src="{{ post.video_url|img_url }}" class="img-fluid rounded mb-3" controls></video>
+                                <div class="ratio ratio-16x9 mb-3">
+                                    <video src="{{ post.video_url|img_url }}" class="rounded-4 w-100 shadow-sm" controls></video>
+                                </div>
                             {% endif %}
                             
-                            <div class="d-flex justify-content-between">
-                                <div>
+                            <div class="d-flex justify-content-between align-items-center border-top pt-3 mt-3" style="border-color: var(--border)!important;">
+                                <div class="d-flex gap-2">
                                     {% if current_user.is_authenticated %}
-                                    <form action="{{ url_for('posts.like_post', post_id=post.id) }}" method="POST" class="d-inline">
-                                        <button type="submit" class="btn btn-sm {% if current_user.is_authenticated and current_user.likes.filter_by(post_id=post.id).first() %}btn-primary{% else %}btn-outline-primary{% endif %}">
-                                            <i class="bi bi-heart{% if current_user.is_authenticated and current_user.likes.filter_by(post_id=post.id).first() %}-fill{% endif %}"></i> {{ post.likes|length }} Curtidas
+                                    <form action="{{ url_for('posts.like_post', post_id=post.id) }}" method="POST" class="d-inline mb-0">
+                                        <button type="submit" class="btn btn-sm rounded-pill px-3 fw-bold {% if current_user.likes.filter_by(post_id=post.id).first() %}btn-primary{% else %}btn-light text-muted{% endif %}" style="transition: all 0.2s;">
+                                            <i class="bi bi-heart-fill me-1 {% if current_user.likes.filter_by(post_id=post.id).first() %}text-white{% else %}text-danger{% endif %}"></i>
+                                            {{ post.likes|length }}
                                         </button>
                                     </form>
                                     {% else %}
-                                    <span class="btn btn-sm btn-outline-primary disabled">
-                                        <i class="bi bi-heart"></i> {{ post.likes|length }} Curtidas
+                                    <span class="btn btn-sm btn-light text-muted rounded-pill px-3 fw-bold disabled">
+                                        <i class="bi bi-heart-fill text-muted me-1"></i> {{ post.likes|length }}
                                     </span>
                                     {% endif %}
                                     
-                                    <a href="{{ url_for('posts.view_post', post_id=post.id) }}" class="btn btn-sm btn-outline-primary ms-2">
-                                        <i class="bi bi-chat"></i> {{ post.comments|length }} Comentários
+                                    <a href="{{ url_for('posts.view_post', post_id=post.id) }}" class="btn btn-sm btn-light text-muted rounded-pill px-3 fw-bold text-decoration-none" style="transition: all 0.2s;">
+                                        <i class="bi bi-chat-fill me-1 text-primary"></i>
+                                        {{ post.comments|length }}
                                     </a>
                                 </div>
-                                <a href="{{ url_for('posts.view_post', post_id=post.id) }}" class="btn btn-sm btn-primary">
-                                    Ver post completo
+                                <a href="{{ url_for('posts.view_post', post_id=post.id) }}" class="text-decoration-none fw-bold" style="font-size: 0.85rem; color: var(--brand);">
+                                    Ver post completo <i class="bi bi-arrow-right-short"></i>
                                 </a>
                             </div>
                         </div>
@@ -78,28 +90,26 @@
         </div>
         
         <div class="col-lg-4">
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5><i class="bi bi-info-circle"></i> Sobre Explorar</h5>
+            <div class="card border-0 shadow-sm mb-4" style="border-radius: 16px;">
+                <div class="card-header bg-white border-0 pt-4 px-4 pb-2">
+                    <h6 class="mb-0 fw-bold" style="color: var(--text-primary);"><i class="bi bi-info-circle me-2 text-muted"></i>Sobre a Comunidade</h6>
                 </div>
-                <div class="card-body">
-                    <p>Aqui você encontra os posts mais recentes de todos os surfistas da comunidade, mesmo aqueles que você não segue.</p>
-                    <p>É uma ótima maneira de descobrir novos surfistas e conteúdos interessantes!</p>
+                <div class="card-body px-4 pb-4 pt-1">
+                    <p class="text-secondary mb-3" style="font-size: 0.9rem;">Aqui você encontra os posts mais recentes de todos os surfistas da plataforma. É o espaço perfeito para descobrir novos talentos, picos e histórias épicas!</p>
                 </div>
             </div>
             
             {% if current_user.is_authenticated %}
-                <div class="card">
-                    <div class="card-header">
-                        <h5><i class="bi bi-lightning"></i> Ações Rápidas</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="d-grid gap-2">
-                            <a href="{{ url_for('posts.new_post') }}" class="btn btn-primary">
-                                <i class="bi bi-plus-lg"></i> Criar Post
+                <div class="card border-0 shadow-sm mb-4" style="border-radius: 16px; background: var(--gradient);">
+                    <div class="card-body p-4 text-center">
+                        <i class="bi bi-lightning-charge-fill text-white fs-1 mb-2 opacity-75"></i>
+                        <h6 class="text-white fw-bold mb-3">Compartilhe sua Trip</h6>
+                        <div class="d-flex flex-column gap-2">
+                            <a href="{{ url_for('posts.new_post') }}" class="btn btn-light fw-bold rounded-pill text-primary py-2 shadow-sm">
+                                <i class="bi bi-plus-lg me-1"></i> Criar Novo Post
                             </a>
-                            <a href="{{ url_for('main.search') }}" class="btn btn-outline-primary">
-                                <i class="bi bi-search"></i> Buscar Surfistas
+                            <a href="{{ url_for('main.search') }}" class="btn text-white fw-medium bg-white bg-opacity-10 rounded-pill py-2 border-0 hover-opacity border border-light border-opacity-25" style="border: 1px solid rgba(255,255,255,0.3)!important;">
+                                <i class="bi bi-search me-1"></i> Procurar Surfistas
                             </a>
                         </div>
                     </div>

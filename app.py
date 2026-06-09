@@ -37,9 +37,9 @@ is_production = os.environ.get('RENDER', False) or os.environ.get('FLASK_ENV') =
 USE_LOCAL_STORAGE = not is_production  # Use armazenamento local em desenvolvimento e Docker
 
 # Imprime informação sobre o modo de armazenamento
-print(f"🔧 Modo de armazenamento: {'LOCAL' if USE_LOCAL_STORAGE else 'CLOUDINARY'}")
-print(f"🗄️ Database URL: {'PostgreSQL' if 'postgresql' in app.config['SQLALCHEMY_DATABASE_URI'] else 'SQLite'}")
-print(f"🐳 Ambiente: {'DOCKER' if os.path.exists('/.dockerenv') else 'LOCAL'}")
+print(f"[storage] Modo: {'LOCAL' if USE_LOCAL_STORAGE else 'CLOUDINARY'}")
+print(f"[db] URL: {'PostgreSQL' if 'postgresql' in app.config['SQLALCHEMY_DATABASE_URI'] else 'SQLite'}")
+print(f"[env] Ambiente: {'DOCKER' if os.path.exists('/.dockerenv') else 'LOCAL'}")
 
 # Certifica-se de que a pasta instance existe
 os.makedirs(app.instance_path, exist_ok=True)
@@ -58,7 +58,7 @@ upload_dirs = [
 for dir_path in upload_dirs:
     os.makedirs(dir_path, exist_ok=True)
 
-print(f"📁 Diretórios de upload criados: {len(upload_dirs)} pastas")
+print(f"Diretórios de upload criados: {len(upload_dirs)} pastas")
 
 # Filtro personalizado para transformar quebras de linha em <br>
 @app.template_filter('nl2br')
@@ -194,8 +194,10 @@ def profile_large_url_filter(urls):
             return ResponsiveImageHelper.get_profile_large_url(urls)
     return img_url(urls)
 
+from extensions import db
+
 # Inicializa o SQLAlchemy
-db = SQLAlchemy(app)
+db.init_app(app)
 
 # Rota de health check para monitoramento do Render
 @app.route('/healthz')
@@ -332,33 +334,29 @@ def init_db():
 
 print("Armazenamento de arquivos configurado para uso local.")
 
-# Importa e registra os blueprints
-from routes.auth import auth
-from routes.main import main
-from routes.posts import posts
-from routes.admin import admin
-from routes.messages import messages
+# Blueprints são importados dentro de uma função para evitar importação circular
+def register_blueprints():
+    from routes.auth import auth
+    from routes.main import main
+    from routes.posts import posts
+    from routes.admin import admin
+    from routes.messages import messages
+    from routes.trips import trips
+    from routes.spots import spots
+    app.register_blueprint(auth)
+    app.register_blueprint(main)
+    app.register_blueprint(posts)
+    app.register_blueprint(admin)
+    app.register_blueprint(messages)
+    app.register_blueprint(trips)
+    app.register_blueprint(spots)
 
-# Registra os blueprints
-app.register_blueprint(auth)
-app.register_blueprint(main)
-app.register_blueprint(posts)
-app.register_blueprint(admin)
-app.register_blueprint(messages)
-
-# Deve ser importado depois de inicializar os outros modelos
-from routes.trips import trips
-app.register_blueprint(trips)
-
-# No final do arquivo, após os outros blueprints
-from routes.spots import spots
-app.register_blueprint(spots)
+register_blueprints()
 
 if __name__ == '__main__':
     if wait_for_db():
         init_db()
         app.run(debug=True, host='0.0.0.0')
 else:
-    # Para quando estiver rodando com Flask CLI (gunicorn, etc)
     wait_for_db()
     init_db()

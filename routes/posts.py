@@ -1,17 +1,11 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, abort, send_file, send_from_directory
 from flask_login import login_required, current_user
 from models import Post, Comment, Like, Notification
-from app import db, app
+from extensions import db
+from flask import current_app as app
 import os
-from werkzeug.utils import secure_filename
-from datetime import datetime
 import uuid
-import io
-from io import BytesIO
-# Importa o módulo de armazenamento em nuvem
-
-# Importa os processadores de imagem (local e produção)
-from app import app
+from werkzeug.utils import secure_filename
 
 # Função para determinar qual processador usar
 def get_image_processor():
@@ -36,9 +30,13 @@ def allowed_file(filename):
 def new_post():
     if request.method == 'POST':
         content = request.form.get('content')
+        spot_id = request.form.get('spot_id')
+        post_type = request.form.get('post_type', 'regular')
         
+        if spot_id == "": spot_id = None
+
         # Cria post inicialmente sem mídia
-        post = Post(content=content, user_id=current_user.id)
+        post = Post(content=content, user_id=current_user.id, spot_id=spot_id, post_type=post_type)
         
         # Salva o post para ter um ID
         db.session.add(post)
@@ -97,15 +95,32 @@ def new_post():
                             return redirect(url_for('posts.new_post'))
                 
                 elif is_video:
-                    # Salva vídeo localmente
-                    filename = secure_filename(file.filename)
-                    video_folder = os.path.join(app.root_path, 'static', 'uploads', 'videos')
-                    os.makedirs(video_folder, exist_ok=True)
-                    unique_name = f"{uuid.uuid4().hex}_{filename}"
-                    video_path = os.path.join(video_folder, unique_name)
-                    file.save(video_path)
-                    # Salva o caminho relativo para uso na aplicação
-                    post.video_url = url_for('static', filename=f'uploads/videos/{unique_name}')
+                    # Usa o sistema de processamento que abstrai Nuvem/Local
+                    processor = get_image_processor()
+                    
+                    if hasattr(processor, 'process_and_save_video'):
+                        # Ambiente de Dev Local
+                        success, message, url_path = processor.process_and_save_video(file)
+                        if success:
+                            post.video_url = url_for('static', filename=url_path)
+                            print(message)  # Ex: Aviso dizendo se usou FFmpeg
+                        else:
+                            flash(f"Erro local: {message}", 'danger')
+                            db.session.rollback()
+                            return redirect(url_for('posts.new_post'))
+                            
+                    elif hasattr(processor, 'process_and_upload_video'):
+                        # Ambiente Produtivo Cloudinary
+                        result = processor.process_and_upload_video(file, post.id)
+                        if result.get('success'):
+                            post.video_url = result['url']
+                        else:
+                            flash(result.get('error', 'Erro desconhecido'), 'danger')
+                            db.session.rollback()
+                            return redirect(url_for('posts.new_post'))
+                    else:
+                        flash('Processador de vídeo não configurado', 'danger')
+                        return redirect(url_for('posts.new_post'))
                 else:
                     flash('Erro ao fazer upload do arquivo. Tente novamente.', 'danger')
                     return redirect(url_for('posts.new_post'))
@@ -124,7 +139,9 @@ def new_post():
         flash('Post criado com sucesso!', 'success')
         return redirect(url_for('main.index'))
     
-    return render_template('posts/create_post.html')
+    from models import Spot
+    spots = Spot.query.filter_by(status='approved', is_active=True).order_by(Spot.name).all()
+    return render_template('posts/create_post.html', spots=spots)
 
 # Rota adicional para compatibilidade com os testes
 @posts.route('/posts/new', methods=['GET', 'POST'])
@@ -263,9 +280,13 @@ def like_post_alt(post_id):
 def create_post():
     if request.method == 'POST':
         content = request.form.get('content')
+        spot_id = request.form.get('spot_id')
+        post_type = request.form.get('post_type', 'regular')
         
+        if spot_id == "": spot_id = None
+
         # Cria post inicialmente sem mídia
-        post = Post(content=content, user_id=current_user.id)
+        post = Post(content=content, user_id=current_user.id, spot_id=spot_id, post_type=post_type)
         
         if 'media' in request.files and request.files['media'].filename:
             file = request.files['media']
@@ -300,5 +321,6 @@ def create_post():
         
         flash('Post criado com sucesso!', 'success')
         return redirect(url_for('main.index'))
-        
-    return render_template('posts/create.html') 
+
+    # Rota legada: o formulário oficial de criação é posts.new_post
+    return redirect(url_for('posts.new_post'))

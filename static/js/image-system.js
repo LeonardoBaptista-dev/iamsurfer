@@ -18,8 +18,6 @@ class ImageViewer {
         this.createModal();
         this.bindEvents();
         this.setupLazyLoading();
-        this.setupProgressiveLoading();
-        this.detectConnectionSpeed();
     }
 
     createModal() {
