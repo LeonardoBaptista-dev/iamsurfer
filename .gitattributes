@@ -1,0 +1,5 @@
+# Garante que scripts shell tenham SEMPRE fim de linha LF, mesmo clonando no
+# Windows — senão o bash dentro do container Docker quebra com erro de '\r'.
+*.sh text eol=lf
+entrypoint.sh text eol=lf
+migrate.sh text eol=lf
