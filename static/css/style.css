@@ -94,6 +94,13 @@ a:hover {
     color: #a5b4fc;
 }
 
+/* Centraliza verticalmente cada item (o <li>) na altura da barra, senão o
+   link encosta no topo quando a linha fica mais alta (avatar/busca). */
+.navbar .nav-item {
+    display: flex;
+    align-items: center;
+}
+
 .navbar .nav-link {
     color: rgba(255, 255, 255, .82) !important;
     font-size: .875rem;
@@ -101,9 +108,10 @@ a:hover {
     padding: 6px 12px !important;
     border-radius: var(--radius-sm);
     transition: background .15s, color .15s;
-    display: flex;
+    display: inline-flex;
     align-items: center;
     gap: 6px;
+    line-height: 1;
 }
 
 .navbar .nav-link:hover,
@@ -114,6 +122,9 @@ a:hover {
 
 .navbar .nav-link i {
     font-size: 1rem;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
 }
 
 /* Search bar inside navbar */
