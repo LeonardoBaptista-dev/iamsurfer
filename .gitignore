@@ -38,6 +38,7 @@ static/uploads/posts/*
 static/uploads/profile_pics/*
 static/uploads/profiles/*
 static/uploads/spots/*
+static/uploads/sessions/*
 !static/uploads/posts/.gitkeep
 !static/uploads/profile_pics/.gitkeep
 !static/uploads/default_profile.jpg
