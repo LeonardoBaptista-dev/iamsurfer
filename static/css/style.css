@@ -112,6 +112,7 @@ a:hover {
     align-items: center;
     gap: 6px;
     line-height: 1;
+    white-space: nowrap;   /* impede que o texto (ex.: "Novo Post") quebre em 2 linhas */
 }
 
 .navbar .nav-link:hover,
@@ -125,6 +126,7 @@ a:hover {
     line-height: 1;
     display: inline-flex;
     align-items: center;
+    flex-shrink: 0;
 }
 
 /* Search bar inside navbar */
