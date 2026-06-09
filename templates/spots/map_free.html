@@ -68,39 +68,113 @@
         padding: 20px;
     }
 
+    /* Popup do Leaflet repaginado no design system */
+    .leaflet-popup-content-wrapper {
+        border-radius: 14px;
+        box-shadow: 0 10px 30px rgba(17, 24, 39, .2);
+        padding: 0;
+        overflow: hidden;
+        border: 1px solid var(--border);
+    }
+
     .leaflet-popup-content {
-        margin: 8px 12px;
-        line-height: 1.4;
+        margin: 0 !important;
+        width: 250px !important;
+        line-height: 1.5;
+        font-family: 'Inter', system-ui, sans-serif;
     }
 
-    .spot-popup {
-        min-width: 200px;
+    .leaflet-popup-close-button {
+        color: #fff !important;
+        right: 6px !important;
+        top: 6px !important;
+        font-size: 22px !important;
+        text-shadow: 0 1px 4px rgba(0, 0, 0, .5);
+        z-index: 2;
     }
 
-    .spot-popup img {
+    .spot-pop .cover {
         width: 100%;
-        height: 100px;
+        height: 120px;
         object-fit: cover;
-        border-radius: 5px;
-        margin-bottom: 8px;
+        display: block;
     }
 
-    .spot-popup h6 {
-        margin: 0 0 8px 0;
-        color: #3730a3;
+    .spot-pop .cover-fallback {
+        height: 70px;
+        background: var(--gradient);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: rgba(255, 255, 255, .9);
+        font-size: 1.6rem;
     }
 
-    .spot-popup p {
-        margin: 0 0 8px 0;
-        font-size: 14px;
+    .spot-pop .body {
+        padding: 12px 14px 14px;
     }
 
-    .spot-popup .badges {
-        margin-bottom: 8px;
+    .spot-pop .title {
+        font-weight: 800;
+        font-size: 1.02rem;
+        color: var(--text-primary);
+        letter-spacing: -.3px;
+        margin: 0;
     }
 
-    .spot-popup .badge {
-        margin-right: 5px;
+    .spot-pop .loc {
+        font-size: .78rem;
+        color: var(--text-muted);
+        margin: 2px 0 10px;
+    }
+
+    .spot-pop .fc {
+        display: flex;
+        gap: 14px;
+        justify-content: center;
+        align-items: center;
+        font-size: .82rem;
+        font-weight: 600;
+        color: var(--text-secondary);
+        background: var(--brand-faint);
+        border-radius: 8px;
+        padding: 7px 8px;
+        margin-bottom: 10px;
+    }
+
+    .spot-pop .tags {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+        margin-bottom: 12px;
+    }
+
+    .spot-pop .tag {
+        font-size: .66rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .4px;
+        padding: 3px 10px;
+        border-radius: 100px;
+        background: var(--brand-faint);
+        color: var(--brand);
+    }
+
+    .spot-pop .btn-detail {
+        display: block;
+        text-align: center;
+        background: var(--brand);
+        color: #fff;
+        font-weight: 700;
+        font-size: .82rem;
+        padding: 9px;
+        border-radius: 10px;
+        text-decoration: none;
+    }
+
+    .spot-pop .btn-detail:hover {
+        background: var(--brand-hover);
+        color: #fff;
     }
 
     .custom-marker {
@@ -427,7 +501,8 @@
             // Popup para cada spot
             const popupContent = createSpotPopup(spot);
             marker.bindPopup(popupContent, {
-                maxWidth: 300,
+                maxWidth: 250,
+                minWidth: 250,
                 className: 'spot-popup'
             });
 
@@ -439,31 +514,30 @@
 
     // Cria conteúdo do popup
     function createSpotPopup(spot) {
-        const coverPhoto = spot.cover_photo ?
-            `<img src="${spot.cover_photo}" alt="${spot.name}" onerror="this.style.display='none'">` :
-            '';
+        const cover = spot.cover_photo ?
+            `<img class="cover" src="/static/uploads/spots/${spot.cover_photo}" alt="${spot.name}" onerror="this.style.display='none'">` :
+            `<div class="cover-fallback"><i class="bi bi-water"></i></div>`;
 
         const hasFc = (spot.wave !== null && spot.wave !== undefined) || (spot.wind !== null && spot.wind !== undefined);
         const forecast = hasFc ? `
-                <div style="display:flex;gap:16px;justify-content:center;align-items:center;font-size:.82rem;margin:8px 0;color:#374151;background:#eef2ff;border-radius:8px;padding:6px 8px;">
-                    <span><i class="bi bi-water" style="color:#3730a3"></i> ${spot.wave != null ? spot.wave.toFixed(1) + ' m' : '–'} ${spot.wave_dir || ''}</span>
-                    <span><i class="bi bi-wind" style="color:#6b7280"></i> ${spot.wind != null ? Math.round(spot.wind) + ' km/h' : '–'}</span>
+                <div class="fc">
+                    <span><i class="bi bi-water" style="color:var(--brand)"></i> ${spot.wave != null ? spot.wave.toFixed(1) + ' m' : '–'} ${spot.wave_dir || ''}</span>
+                    <span><i class="bi bi-wind" style="color:var(--text-muted)"></i> ${spot.wind != null ? Math.round(spot.wind) + ' km/h' : '–'}</span>
                 </div>` : '';
 
+        const tags = [];
+        if (spot.difficulty) tags.push(`<span class="tag">${spot.difficulty}</span>`);
+        if (spot.wave_type) tags.push(`<span class="tag">${String(spot.wave_type).replace(/_/g, ' ')}</span>`);
+
         return `
-            <div class="spot-popup">
-                ${coverPhoto}
-                <h6>${spot.name}</h6>
-                <p>${spot.description || 'Spot de surf incrível!'}</p>
-                ${forecast}
-                <div class="badges">
-                    <span class="badge bg-primary">${spot.difficulty || 'N/A'}</span>
-                    <span class="badge bg-secondary">${spot.wave_type || 'N/A'}</span>
-                </div>
-                <div class="text-center">
-                    <a href="/spots/${spot.id}/detail" class="btn btn-primary btn-sm">
-                        Ver Detalhes Completos
-                    </a>
+            <div class="spot-pop">
+                ${cover}
+                <div class="body">
+                    <p class="title">${spot.name}</p>
+                    <div class="loc"><i class="bi bi-geo-alt"></i> ${[spot.city, spot.state].filter(Boolean).join(', ') || spot.country || ''}</div>
+                    ${forecast}
+                    ${tags.length ? `<div class="tags">${tags.join('')}</div>` : ''}
+                    <a href="/spots/${spot.id}/detail" class="btn-detail">Ver detalhes</a>
                 </div>
             </div>
         `;
@@ -887,7 +961,8 @@
 
             const popupContent = createSpotPopup(spot);
             marker.bindPopup(popupContent, {
-                maxWidth: 300,
+                maxWidth: 250,
+                minWidth: 250,
                 className: 'spot-popup'
             });
 
