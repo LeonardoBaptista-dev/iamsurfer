@@ -987,6 +987,30 @@ main h1.h2 {
     color: var(--brand-light);
 }
 
+/* ─── Coesão de paleta (overrides) ───────────────── */
+/* Unifica o azul padrão do Bootstrap com o indigo da marca */
+.text-primary {
+    color: var(--brand) !important;
+}
+
+.text-purple {
+    color: var(--brand) !important;
+}
+
+/* Mantém success/danger num único tom em todo o app */
+.text-success {
+    color: #15803d !important;
+}
+
+.text-danger {
+    color: #b91c1c !important;
+}
+
+/* Remove a "corzinha" colorida na margem dos cards do admin */
+.stat-card {
+    border-left-width: 0 !important;
+}
+
 /* ─── Trips ──────────────────────────────────────── */
 .trip-status {
     display: inline-flex;
@@ -1008,10 +1032,10 @@ main h1.h2 {
     background: currentColor;
 }
 
-.trip-status.scheduled { background: #dcfce7; color: #166534; }
-.trip-status.ongoing   { background: var(--brand-faint); color: var(--brand); }
+.trip-status.scheduled { background: var(--brand-faint); color: var(--brand); }
+.trip-status.ongoing   { background: var(--brand); color: #fff; }
 .trip-status.completed { background: #f1f5f9; color: #64748b; }
-.trip-status.cancelled { background: #fee2e2; color: #991b1b; }
+.trip-status.cancelled { background: #fef2f2; color: #b91c1c; }
 
 .trip-card {
     display: block;

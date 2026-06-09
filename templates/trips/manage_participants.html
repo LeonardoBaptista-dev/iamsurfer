@@ -35,10 +35,10 @@
                     </div>
                     <div class="d-flex gap-2 flex-shrink-0">
                         <form action="{{ url_for('trips.participant_action', participant_id=participant.id, action='approve') }}" method="POST">
-                            <button type="submit" class="btn btn-sm" style="background:#22c55e;color:#fff;"><i class="bi bi-check-lg"></i></button>
+                            <button type="submit" class="btn btn-sm btn-primary"><i class="bi bi-check-lg"></i> Aprovar</button>
                         </form>
                         <form action="{{ url_for('trips.participant_action', participant_id=participant.id, action='reject') }}" method="POST">
-                            <button type="submit" class="btn btn-sm" style="background:#ef4444;color:#fff;"><i class="bi bi-x-lg"></i></button>
+                            <button type="submit" class="btn btn-sm btn-secondary"><i class="bi bi-x-lg"></i> Rejeitar</button>
                         </form>
                     </div>
                 </div>
