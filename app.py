@@ -259,38 +259,25 @@ def wait_for_db():
     return True
 
 # Inicializa o banco de dados e cria dados necessários
-def init_db():
-    """Inicializa o banco de dados e cria usuário admin se necessário."""
+def init_db(create_schema=False):
+    """Semeia dados iniciais (admin + spots) e, opcionalmente, cria o schema.
+
+    Em produção o schema é criado/atualizado pelas MIGRAÇÕES (Alembic via
+    flask_migrate.upgrade(), ver migrate_db.py) — por isso create_schema=False
+    por padrão. O create_all() só é usado no desenvolvimento local (SQLite),
+    onde normalmente não se roda migração.
+    """
     with app.app_context():
         try:
-            # Verifica se as tabelas já existem
-            inspector = db.inspect(db.engine)
-            tables_exist = inspector.get_table_names()
-            
             # Importa aqui para evitar importação circular
             from models import User, SurfSpot, SurfTrip, TripParticipant, Spot, SpotPhotoNew, PhotoSession, SessionPhoto, PhotoPurchase, SpotReport
-            
-            # Cria todas as tabelas se não existirem
-            if not tables_exist or 'surf_trip' not in tables_exist:
-                print("Criando ou atualizando tabelas no banco de dados...")
+
+            # Cria o schema a partir dos models APENAS quando solicitado (dev local).
+            if create_schema:
+                print("Criando schema a partir dos models (dev)...")
                 db.create_all()
-                print("Tabelas criadas ou atualizadas com sucesso!")
-            else:
-                print(f"Tabelas já existem no banco de dados: {', '.join(tables_exist)}")
-            
-            # Verifica se tabelas específicas existem e cria individualmente se necessário
-            if 'surf_spot' not in tables_exist:
-                print("Criando tabela surf_spot...")
-                db.metadata.tables['surf_spot'].create(db.engine, checkfirst=True)
-            
-            if 'surf_trip' not in tables_exist:
-                print("Criando tabela surf_trip...")
-                db.metadata.tables['surf_trip'].create(db.engine, checkfirst=True)
-                
-            if 'trip_participant' not in tables_exist:
-                print("Criando tabela trip_participant...")
-                db.metadata.tables['trip_participant'].create(db.engine, checkfirst=True)
-            
+                print("Schema criado/atualizado.")
+
             # Cria um usuário admin se não existir nenhum usuário
             try:
                 user_count = User.query.count()
@@ -360,9 +347,11 @@ def register_blueprints():
 register_blueprints()
 
 if __name__ == '__main__':
+    # Desenvolvimento local: cria o schema (SQLite) e semeia dados.
     if wait_for_db():
-        init_db()
+        init_db(create_schema=True)
         app.run(debug=True, host='0.0.0.0')
-else:
-    wait_for_db()
-    init_db()
+# Em produção (gunicorn), o schema e a semeadura são aplicados pelo entrypoint
+# via migrate_db.py (migrações + seed) ANTES do servidor subir — por isso não
+# há mais init_db() no import do módulo (evita create_all competindo com o
+# Alembic e execuções repetidas por worker).
