@@ -36,6 +36,8 @@ ENV/
 # Diretórios de uploads (apenas para desenvolvimento)
 static/uploads/posts/*
 static/uploads/profile_pics/*
+static/uploads/profiles/*
+static/uploads/spots/*
 !static/uploads/posts/.gitkeep
 !static/uploads/profile_pics/.gitkeep
 !static/uploads/default_profile.jpg
@@ -47,6 +49,7 @@ static/uploads/profile_pics/*
 # Logs
 logs/
 *.log
+migration_error.txt
 
 # Outros
 .DS_Store
