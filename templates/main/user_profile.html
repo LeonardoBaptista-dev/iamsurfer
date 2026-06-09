@@ -13,6 +13,7 @@
         <div class="ig-profile-info">
             <div class="ig-profile-toprow">
                 <h1 class="ig-profile-username">{{ user.username }}</h1>
+                <span class="patente-badge lg" title="{{ user.patente.points }} XP">{{ user.patente.icon }} {{ user.patente.name }}</span>
 
                 {% if current_user.is_authenticated and current_user.id != user.id %}
                     {% if is_following %}
@@ -40,6 +41,16 @@
                 <a href="{{ url_for('main.following', username=user.username) }}" class="ig-profile-stat text-decoration-none">
                     <strong>{{ user.followed.count() }}</strong> seguindo
                 </a>
+            </div>
+
+            <div class="mb-3" style="max-width:340px;">
+                <div class="d-flex justify-content-between mb-1" style="font-size:.72rem;color:var(--text-muted);font-weight:600;">
+                    <span>{{ user.patente.points }} XP</span>
+                    {% if user.patente.next_name %}
+                    <span>faltam {{ user.patente.to_next }} p/ {{ user.patente.next_icon }} {{ user.patente.next_name }}</span>
+                    {% else %}<span>nível máximo 👑</span>{% endif %}
+                </div>
+                <div class="patente-progress"><span style="width: {{ user.patente.progress }}%;"></span></div>
             </div>
 
             <div class="ig-profile-bio">

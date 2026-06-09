@@ -134,11 +134,14 @@ def new_post():
             return redirect(url_for('posts.new_post'))
         
         db.session.add(post)
+        # Gamificação: relato (post com pico) vale mais que post comum
+        from gamification import award
+        award(current_user, 'report' if post.spot_id else 'post')
         db.session.commit()
-        
+
         flash('Post criado com sucesso!', 'success')
         return redirect(url_for('main.index'))
-    
+
     from models import Spot
     spots = Spot.query.filter_by(status='approved', is_active=True).order_by(Spot.name).all()
     return render_template('posts/create_post.html', spots=spots)
@@ -206,8 +209,14 @@ def add_comment(post_id):
     
     comment = Comment(content=content, user_id=current_user.id, post_id=post_id)
     db.session.add(comment)
+
+    # Gamificação: XP para quem comenta e para o autor do post
+    from gamification import award
+    award(current_user, 'comment')
+    if current_user.id != post.user_id:
+        award(post.author, 'comment_received')
     db.session.commit()
-    
+
     # Cria notificação de comentário (se não for próprio post)
     if current_user.id != post.user_id:
         Notification.create_comment_notification(current_user, post, content)
@@ -254,8 +263,13 @@ def like_post(post_id):
         # Se não, adiciona uma curtida
         like = Like(user_id=current_user.id, post_id=post_id)
         db.session.add(like)
+
+        # Gamificação: XP para o autor do post curtido (se não for o próprio)
+        if current_user.id != post.user_id:
+            from gamification import award
+            award(post.author, 'like_received')
         db.session.commit()
-        
+
         # Cria notificação de like (se não for próprio post)
         if current_user.id != post.user_id:
             Notification.create_like_notification(current_user, post)

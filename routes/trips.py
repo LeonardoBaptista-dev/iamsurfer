@@ -68,8 +68,11 @@ def create_trip():
         )
         
         db.session.add(trip)
+        # Gamificação: XP por oferecer uma carona
+        from gamification import award
+        award(current_user, 'trip_create')
         db.session.commit()
-        
+
         flash('Sua viagem de surf foi criada com sucesso!', 'success')
         return redirect(url_for('trips.view_trip', trip_id=trip.id))
     
@@ -189,6 +192,9 @@ def participant_action(participant_id, action):
         
         participant.status = 'Confirmed'
         participant.confirmation_time = datetime.utcnow()
+        # Gamificação: XP para quem foi confirmado na carona
+        from gamification import award
+        award(participant.user, 'trip_join')
         db.session.commit()
         flash(f'Participação de {participant.user.username} aprovada com sucesso!', 'success')
     

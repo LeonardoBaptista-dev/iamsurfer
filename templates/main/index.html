@@ -20,6 +20,7 @@
                         class="d-block fw-700 text-dark" style="font-weight:700;font-size:.95rem;">
                         {{ current_user.username }}
                     </a>
+                    <span class="patente-badge" title="{{ current_user.patente.points }} XP">{{ current_user.patente.icon }} {{ current_user.patente.name }}</span>
                     {% if current_user.location %}
                     <span style="font-size:.78rem;color:var(--text-muted);">
                         <i class="bi bi-geo-alt-fill"></i> {{ current_user.location }}

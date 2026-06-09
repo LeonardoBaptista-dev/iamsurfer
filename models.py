@@ -16,6 +16,7 @@ class User(UserMixin, db.Model):
     is_admin = db.Column(db.Boolean, default=False)
     is_public = db.Column(db.Boolean, default=True)  # Perfis públicos por padrão
     joined_at = db.Column(db.DateTime, default=datetime.utcnow)
+    points = db.Column(db.Integer, default=0, nullable=False, server_default='0')  # XP da gamificação
     
     # Relacionamentos
     posts = db.relationship('Post', backref='author', lazy='dynamic', cascade='all, delete-orphan')
@@ -52,6 +53,12 @@ class User(UserMixin, db.Model):
     
     def __repr__(self):
         return f'<User {self.username}>'
+
+    @property
+    def patente(self):
+        """Patente/nível atual da gamificação (calculada a partir de points)."""
+        from gamification import patente
+        return patente(self.points)
     
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)

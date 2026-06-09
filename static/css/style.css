@@ -1066,6 +1066,42 @@ main h1.h2 {
     color: var(--brand-light);
 }
 
+/* ─── Gamificação (patente) ──────────────────────── */
+.patente-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--brand-faint);
+    color: var(--brand);
+    font-weight: 700;
+    font-size: .7rem;
+    padding: 2px 9px;
+    border-radius: var(--radius-pill);
+    line-height: 1.5;
+    white-space: nowrap;
+}
+
+.patente-badge.lg {
+    font-size: .8rem;
+    padding: 4px 12px;
+}
+
+.patente-progress {
+    height: 7px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-pill);
+    overflow: hidden;
+}
+
+.patente-progress > span {
+    display: block;
+    height: 100%;
+    background: var(--gradient);
+    border-radius: var(--radius-pill);
+    transition: width .4s ease;
+}
+
 /* ─── Forecast (previsão de surf) ────────────────── */
 .fc-card {
     border: 1px solid var(--border);

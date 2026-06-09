@@ -183,9 +183,14 @@ def approve_spot(spot_id):
     spot.status = 'approved'
     spot.approved_by = current_user.id
     spot.approved_at = datetime.utcnow()
-    
+
+    # Gamificação: XP para quem criou o pico, ao ser aprovado
+    from gamification import award
+    if spot.creator:
+        award(spot.creator, 'spot')
+
     db.session.commit()
-    
+
     flash(f'Spot "{spot.name}" foi aprovado com sucesso!', 'success')
     return redirect(url_for('admin.spots'))
 

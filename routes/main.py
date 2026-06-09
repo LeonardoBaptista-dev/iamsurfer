@@ -182,6 +182,9 @@ def follow(username):
         flash('Você não pode seguir a si mesmo!', 'danger')
         return redirect(url_for('main.user_profile', username=username))
     current_user.follow(user)
+    # Gamificação: quem ganhou um seguidor recebe XP
+    from gamification import award
+    award(user, 'follower')
     db.session.commit()
     Notification.create_follow_notification(current_user, user)
     flash(f'Você começou a seguir {username}!', 'success')
