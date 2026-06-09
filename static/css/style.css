@@ -1066,6 +1066,86 @@ main h1.h2 {
     color: var(--brand-light);
 }
 
+/* ─── Lightbox de imagem (image-system.js) ───────── */
+.image-modal {
+    display: none;                 /* escondido por padrão — só abre via JS */
+    position: fixed;
+    inset: 0;
+    z-index: 2000;                 /* acima da navbar (sticky-top = 1020) */
+    background: rgba(0, 0, 0, .9);
+    overflow: auto;
+}
+
+.image-modal .modal-content {
+    position: relative;
+    background: transparent;
+    border: none;
+    width: auto;
+    max-width: 94vw;
+    margin: 0 auto;
+    top: 50%;
+    transform: translateY(-50%);
+    box-shadow: none;
+}
+
+.image-modal .modal-image {
+    display: block;
+    margin: 0 auto;
+    max-width: 94vw;
+    max-height: 86vh;
+    object-fit: contain;
+    border-radius: 10px;
+}
+
+.image-modal .close {
+    position: absolute;
+    top: -44px;
+    right: 0;
+    color: #fff;
+    font-size: 2rem;
+    line-height: 1;
+    cursor: pointer;
+    opacity: .9;
+}
+
+.image-modal .close:hover {
+    opacity: 1;
+}
+
+.image-modal .image-navigation {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 14px;
+}
+
+.image-modal .nav-btn {
+    background: rgba(255, 255, 255, .15);
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 42px;
+    height: 42px;
+    font-size: 1.1rem;
+    cursor: pointer;
+}
+
+.image-modal .nav-btn:hover {
+    background: rgba(255, 255, 255, .3);
+}
+
+.image-modal .image-counter {
+    color: #fff;
+    font-size: .85rem;
+}
+
+.image-modal .image-info {
+    color: #fff;
+    text-align: center;
+    margin-top: 8px;
+}
+
 /* ─── Gamificação (patente) ──────────────────────── */
 .patente-badge {
     display: inline-flex;
@@ -1213,6 +1293,43 @@ main h1.h2 {
     font-size: .72rem;
     color: var(--text-secondary);
     margin-top: 3px;
+}
+
+/* Seta de direção (swell / vento) */
+.fc-arrow {
+    display: inline-block;
+    line-height: 1;
+    color: var(--brand-light);
+    transition: transform .2s;
+}
+
+.fc-arrow.wind {
+    color: var(--text-secondary);
+}
+
+/* Rating de tamanho (0-5) */
+.fc-rating {
+    display: inline-flex;
+    gap: 3px;
+    align-items: center;
+}
+
+.fc-rating .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--border);
+}
+
+.fc-rating .dot.on {
+    background: var(--brand);
+}
+
+/* Gráfico horário */
+.fc-chart {
+    position: relative;
+    height: 190px;
+    margin: 6px 18px 4px;
 }
 
 /* ─── Direct Messages ────────────────────────────── */

@@ -23,7 +23,8 @@ class ImageViewer {
     createModal() {
         // Cria modal para visualização em tela cheia com navegação
         this.modal = document.createElement('div');
-        this.modal.className = 'image-modal fade';
+        this.modal.className = 'image-modal';
+        this.modal.style.display = 'none';   // começa escondido (não interfere no layout/cliques)
         this.modal.innerHTML = `
             <div class="modal-content">
                 <span class="close btn-close">&times;</span>
