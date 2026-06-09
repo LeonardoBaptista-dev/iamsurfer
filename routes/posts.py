@@ -209,7 +209,7 @@ def add_comment(post_id):
     db.session.commit()
     
     # Cria notificação de comentário (se não for próprio post)
-    if current_user.id != post.author_id:
+    if current_user.id != post.user_id:
         Notification.create_comment_notification(current_user, post, content)
     
     flash('Comentário adicionado com sucesso!', 'success')
@@ -257,7 +257,7 @@ def like_post(post_id):
         db.session.commit()
         
         # Cria notificação de like (se não for próprio post)
-        if current_user.id != post.author_id:
+        if current_user.id != post.user_id:
             Notification.create_like_notification(current_user, post)
             
         flash('Post curtido!', 'success')
