@@ -1332,6 +1332,38 @@ main h1.h2 {
     margin: 6px 18px 4px;
 }
 
+/* Condição do vento */
+.fc-cond {
+    display: inline-block;
+    font-size: .62rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .3px;
+    padding: 1px 6px;
+    border-radius: var(--radius-pill);
+    margin-top: 4px;
+}
+.fc-cond.offshore { background: #dcfce7; color: #15803d; }
+.fc-cond.glassy   { background: var(--brand-faint); color: var(--brand); }
+.fc-cond.cross    { background: #fef3c7; color: #b45309; }
+.fc-cond.onshore  { background: #fee2e2; color: #b91c1c; }
+
+/* Dia clicável + detalhe horário */
+.fc-day.clickable { cursor: pointer; transition: border-color .15s, background .15s; }
+.fc-day.clickable:hover { border-color: var(--brand-light); }
+.fc-day.active { border-color: var(--brand); background: var(--brand-faint); }
+
+.fc-detail {
+    margin: 0 18px 16px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+}
+.fc-detail table { width: 100%; font-size: .8rem; margin: 0; }
+.fc-detail th, .fc-detail td { padding: 7px 10px; text-align: center; border-bottom: 1px solid var(--border); }
+.fc-detail thead th { background: var(--bg); font-size: .68rem; text-transform: uppercase; letter-spacing: .4px; color: var(--text-muted); }
+.fc-detail tr:last-child td { border-bottom: none; }
+
 /* ─── Direct Messages ────────────────────────────── */
 .dm-list {
     background: var(--surface);

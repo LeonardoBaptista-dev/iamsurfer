@@ -387,6 +387,44 @@
 
         <!-- Sidebar -->
         <div class="col-lg-4">
+            <!-- Mini-previsão -->
+            {% if forecast and forecast.current %}
+            {% set cur = forecast.current %}
+            <div class="card mb-3" style="overflow:hidden;">
+                <div class="d-flex justify-content-between align-items-center px-3 pt-3">
+                    <h6 class="mb-0" style="font-weight:700;"><i class="bi bi-water me-1" style="color:var(--brand);"></i> Previsão agora</h6>
+                    <span class="fc-rating">{% for i in range(5) %}<span class="dot {% if i < cur.quality %}on{% endif %}"></span>{% endfor %}</span>
+                </div>
+                <div class="fc-current" style="margin-top:10px;">
+                    <div class="fc-metric">
+                        <span class="val">{{ '%.1f'|format(cur.wave_height) if cur.wave_height is not none else '–' }}<small> m</small></span>
+                        <span class="lbl">Onda{% if cur.wave_deg is not none %} <i class="bi bi-arrow-up fc-arrow" style="transform:rotate({{ (cur.wave_deg+180)%360 }}deg)"></i>{% endif %} {{ cur.wave_dir or '' }}</span>
+                    </div>
+                    <div class="fc-metric">
+                        <span class="val">{{ cur.wave_period|round|int if cur.wave_period is not none else '–' }}<small> s</small></span>
+                        <span class="lbl">Período</span>
+                    </div>
+                    <div class="fc-metric">
+                        <span class="val">{{ cur.wind_speed|round|int if cur.wind_speed is not none else '–' }}<small> km/h</small></span>
+                        <span class="lbl">Vento{% if cur.wind_deg is not none %} <i class="bi bi-arrow-up fc-arrow wind" style="transform:rotate({{ (cur.wind_deg+180)%360 }}deg)"></i>{% endif %} {{ cur.wind_dir or '' }}{% if cur.cond %} <span class="fc-cond {{ cur.cond }}">{{ cur.cond }}</span>{% endif %}</span>
+                    </div>
+                </div>
+                {% if forecast.days %}
+                <div class="d-flex gap-2 px-3 pb-3" style="overflow-x:auto;">
+                    {% for d in forecast.days[:4] %}
+                    <div class="text-center flex-fill" style="min-width:56px;">
+                        <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;color:var(--text-muted);">{{ d.label }}</div>
+                        <div style="font-weight:800;font-size:.95rem;">{{ '%.1f'|format(d.wave_height) if d.wave_height is not none else '–' }}<span style="font-size:.62rem;font-weight:600;">m</span></div>
+                        <span class="fc-rating" style="justify-content:center;">{% for i in range(5) %}<span class="dot {% if i < d.quality %}on{% endif %}" style="width:4px;height:4px;"></span>{% endfor %}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                <a href="{{ url_for('spots.forecast') }}" class="d-block text-center py-2 text-decoration-none"
+                    style="border-top:1px solid var(--border);font-size:.8rem;font-weight:600;color:var(--brand);">Ver previsão completa</a>
+            </div>
+            {% endif %}
+
             <!-- Info Card -->
             <div class="card">
                 <div class="card-body">

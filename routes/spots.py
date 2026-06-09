@@ -58,13 +58,19 @@ def spots_map():
     from models import Post
     approved_spots = Spot.query.filter_by(status='approved', is_active=True).all()
     spots_data = []
-    
+
+    # Previsão atual de todos os picos (cacheada por 1h)
+    from surf_forecast import get_forecast
+    forecasts = get_forecast(approved_spots)
+
     for spot in approved_spots:
         cover_photo = SpotPhotoNew.query.filter_by(spot_id=spot.id, is_cover=True).first()
-        
+
         # Buscar a última interação (relato/post mais recente desse pico)
         last_post = Post.query.filter_by(spot_id=spot.id).order_by(Post.created_at.desc()).first()
         last_interaction = last_post.created_at.isoformat() if last_post else "2000-01-01T00:00:00"
+
+        fc = (forecasts.get(spot.id) or {}).get('current') if forecasts else None
 
         spots_data.append({
             'id': spot.id,
@@ -78,7 +84,11 @@ def spots_map():
             'description': spot.description[:100] + '...' if spot.description and len(spot.description) > 100 else spot.description,
             'cover_photo': cover_photo.filename if cover_photo else None,
             'difficulty': spot.difficulty,
-            'wave_type': spot.wave_type
+            'wave_type': spot.wave_type,
+            'wave': fc.get('wave_height') if fc else None,
+            'wind': fc.get('wind_speed') if fc else None,
+            'wave_dir': fc.get('wave_dir') if fc else None,
+            'quality': fc.get('quality') if fc else None,
         })
     
     # Usa mapa GRATUITO (OpenStreetMap + Leaflet) por padrão
@@ -181,8 +191,13 @@ def new_spot_detail(spot_id):
     from models import Post
     recent_reports = Post.query.filter_by(spot_id=spot_id).order_by(Post.created_at.desc()).limit(15).all()
 
+    # Mini-previsão do pico (cacheada por 1h)
+    from surf_forecast import get_forecast
+    forecast = get_forecast([spot]).get(spot.id)
+
     return render_template('spots/new_detail.html', spot=spot, photos=photos,
-                           sessions=sessions, businesses=businesses, reports=recent_reports)
+                           sessions=sessions, businesses=businesses, reports=recent_reports,
+                           forecast=forecast)
 
 
 @spots.route('/spots/<int:spot_id>/sessions/new', methods=['POST'])

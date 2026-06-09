@@ -2,7 +2,6 @@
 
 {% block title %}Previsão de Surf - IAmSurfer{% endblock %}
 
-{# seta de direção: aponta para onde a onda/vento VAI (origem + 180°) #}
 {% macro arrow(deg, cls='') %}
 {% if deg is not none %}<i class="bi bi-arrow-up fc-arrow {{ cls }}" style="transform: rotate({{ (deg + 180) % 360 }}deg);"></i>{% endif %}
 {% endmacro %}
@@ -10,6 +9,8 @@
 {% macro rating(r) %}
 <span class="fc-rating">{% for i in range(5) %}<span class="dot {% if i < r %}on{% endif %}"></span>{% endfor %}</span>
 {% endmacro %}
+
+{% macro cond(c) %}{% if c %}<span class="fc-cond {{ c }}">{{ c }}</span>{% endif %}{% endmacro %}
 
 {% block content %}
 <div class="col-lg-9 mx-auto">
@@ -20,13 +21,14 @@
         </h4>
         <span style="font-size:.75rem;color:var(--text-muted);">Fonte: Open-Meteo · atualizado a cada hora</span>
     </div>
-    <p class="text-muted mb-4" style="font-size:.9rem;">Ondas e vento dos próximos dias. <i class="bi bi-arrow-up fc-arrow"></i> indica a direção (pra onde vai).</p>
+    <p class="text-muted mb-4" style="font-size:.9rem;">
+        ● = qualidade (tamanho + vento). <i class="bi bi-arrow-up fc-arrow"></i> = direção (pra onde vai). Clique num dia para ver hora a hora.
+    </p>
 
     {% if not spots %}
     <div class="card text-center py-5 px-4">
         <i class="bi bi-water display-4 text-muted mb-2"></i>
         <h5 style="font-weight:700;">Nenhum pico aprovado ainda</h5>
-        <p style="color:var(--text-muted);font-size:.9rem;">Cadastre picos no mapa para ver a previsão aqui.</p>
         <div class="d-flex justify-content-center mt-2">
             <a href="{{ url_for('spots.spots_map') }}" class="btn btn-primary"><i class="bi bi-geo-alt me-1"></i> Abrir mapa</a>
         </div>
@@ -35,14 +37,12 @@
     <div class="card text-center py-5 px-4">
         <i class="bi bi-cloud-slash display-4 text-muted mb-2"></i>
         <h5 style="font-weight:700;">Previsão indisponível no momento</h5>
-        <p style="color:var(--text-muted);font-size:.9rem;">Não foi possível obter os dados agora. Tente novamente em instantes.</p>
     </div>
     {% else %}
 
     {% for spot in spots %}
     {% set fc = forecasts.get(spot.id) %}
     <div class="fc-card">
-        <!-- Header -->
         <div class="fc-head">
             <div>
                 <a href="{{ url_for('spots.new_spot_detail', spot_id=spot.id) }}" class="text-decoration-none"
@@ -51,11 +51,10 @@
                     <i class="bi bi-geo-alt"></i> {{ spot.city }}{% if spot.city and spot.state %}, {% endif %}{{ spot.state }}
                 </div>
             </div>
-            {% if fc and fc.current %}{{ rating(fc.current.rating) }}{% endif %}
+            {% if fc and fc.current %}<div class="text-end">{{ rating(fc.current.quality) }} {{ cond(fc.current.cond) }}</div>{% endif %}
         </div>
 
         {% if fc and fc.current %}
-        <!-- Condições atuais -->
         <div class="fc-current">
             <div class="fc-metric">
                 <span class="val">{{ '%.1f'|format(fc.current.wave_height) if fc.current.wave_height is not none else '–' }}<small> m</small></span>
@@ -71,25 +70,25 @@
             </div>
         </div>
 
-        <!-- Gráfico horário (onda + vento) -->
         {% if fc.hourly and fc.hourly.labels %}
         <div class="fc-chart"><canvas id="chart-{{ spot.id }}"></canvas></div>
-        <script type="application/json" id="fcdata-{{ spot.id }}">{{ fc.hourly|tojson }}</script>
         {% endif %}
+        <script type="application/json" id="fcdata-{{ spot.id }}">{{ {'hourly': fc.hourly, 'days': fc.days}|tojson }}</script>
 
-        <!-- Próximos dias -->
         {% if fc.days %}
         <div class="fc-days">
             {% for d in fc.days %}
-            <div class="fc-day">
+            <div class="fc-day clickable" data-spot="{{ spot.id }}" data-idx="{{ loop.index0 }}">
                 <div class="d">{{ d.label }}</div>
                 <div class="wv">{{ '%.1f'|format(d.wave_height) if d.wave_height is not none else '–' }}<span style="font-size:.7rem;font-weight:600;"> m</span></div>
-                <div class="mt-1">{{ rating(d.rating) }}</div>
+                <div class="mt-1">{{ rating(d.quality) }}</div>
+                {{ cond(d.cond) }}
                 <div class="sub">{{ arrow(d.wave_deg) }} {{ d.wave_dir or '' }} · {{ d.wave_period|round|int if d.wave_period is not none else '–' }}s</div>
                 <div class="sub"><i class="bi bi-wind"></i> {{ d.wind_speed|round|int if d.wind_speed is not none else '–' }} {{ arrow(d.wind_deg, 'wind') }}</div>
             </div>
             {% endfor %}
         </div>
+        <div class="fc-detail" id="fcdetail-{{ spot.id }}" style="display:none;"></div>
         {% endif %}
 
         {% else %}
@@ -108,37 +107,72 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    if (typeof Chart === 'undefined') return;
+    var store = {};
+
+    function arrowHtml(deg, cls) {
+        if (deg === null || deg === undefined) return '';
+        return '<i class="bi bi-arrow-up fc-arrow ' + (cls || '') + '" style="transform:rotate(' + ((deg + 180) % 360) + 'deg)"></i>';
+    }
+    function dots(q) {
+        var s = '';
+        for (var i = 0; i < 5; i++) s += '<span class="dot' + (i < q ? ' on' : '') + '"></span>';
+        return '<span class="fc-rating">' + s + '</span>';
+    }
+    function renderHours(hours, label) {
+        if (!hours || !hours.length) return '<div class="p-3 text-muted" style="font-size:.85rem">Sem dados horários para ' + label + '.</div>';
+        var rows = hours.map(function (h) {
+            return '<tr><td><strong>' + h.h + '</strong></td>' +
+                '<td>' + (h.wave != null ? h.wave + ' m' : '–') + ' ' + arrowHtml(h.wave_deg) + ' <span style="color:var(--text-muted)">' + (h.wave_dir || '') + '</span></td>' +
+                '<td>' + (h.wind != null ? h.wind + ' km/h' : '–') + ' ' + arrowHtml(h.wind_deg, 'wind') + (h.cond ? ' <span class="fc-cond ' + h.cond + '">' + h.cond + '</span>' : '') + '</td>' +
+                '<td>' + dots(h.quality) + '</td></tr>';
+        }).join('');
+        return '<table><thead><tr><th>Hora</th><th>Onda</th><th>Vento</th><th>Qualidade</th></tr></thead><tbody>' + rows + '</tbody></table>';
+    }
+
     document.querySelectorAll('script[id^="fcdata-"]').forEach(function (el) {
         var id = el.id.replace('fcdata-', '');
+        try { store[id] = JSON.parse(el.textContent); } catch (e) { return; }
+        var d = store[id].hourly;
         var canvas = document.getElementById('chart-' + id);
-        if (!canvas) return;
-        var d;
-        try { d = JSON.parse(el.textContent); } catch (e) { return; }
-        if (!d.labels || !d.labels.length) return;
-        new Chart(canvas, {
-            type: 'line',
-            data: {
-                labels: d.labels,
-                datasets: [
-                    { label: 'Onda (m)', data: d.wave, borderColor: '#3730a3',
-                      backgroundColor: 'rgba(55,48,163,.12)', fill: true, tension: .35,
-                      yAxisID: 'y', pointRadius: 0, borderWidth: 2 },
-                    { label: 'Vento (km/h)', data: d.wind, borderColor: '#9ca3af',
-                      borderDash: [4, 3], fill: false, tension: .35,
-                      yAxisID: 'y1', pointRadius: 0, borderWidth: 1.5 }
-                ]
-            },
-            options: {
-                responsive: true, maintainAspectRatio: false,
-                interaction: { mode: 'index', intersect: false },
-                plugins: { legend: { labels: { boxWidth: 12, font: { size: 11 } } } },
-                scales: {
-                    x: { grid: { display: false }, ticks: { maxTicksLimit: 8, font: { size: 10 } } },
-                    y: { position: 'left', beginAtZero: true, title: { display: true, text: 'm' }, ticks: { font: { size: 10 } } },
-                    y1: { position: 'right', beginAtZero: true, grid: { display: false }, title: { display: true, text: 'km/h' }, ticks: { font: { size: 10 } } }
+        if (canvas && typeof Chart !== 'undefined' && d && d.labels && d.labels.length) {
+            new Chart(canvas, {
+                type: 'line',
+                data: {
+                    labels: d.labels,
+                    datasets: [
+                        { label: 'Onda (m)', data: d.wave, borderColor: '#3730a3', backgroundColor: 'rgba(55,48,163,.12)', fill: true, tension: .35, yAxisID: 'y', pointRadius: 0, borderWidth: 2 },
+                        { label: 'Vento (km/h)', data: d.wind, borderColor: '#9ca3af', borderDash: [4, 3], fill: false, tension: .35, yAxisID: 'y1', pointRadius: 0, borderWidth: 1.5 },
+                        { label: 'Maré (m)', data: d.tide, borderColor: '#0891b2', backgroundColor: 'rgba(8,145,178,.06)', fill: true, tension: .4, yAxisID: 'y2', pointRadius: 0, borderWidth: 1, borderDash: [2, 2] }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: { legend: { labels: { boxWidth: 12, font: { size: 11 } } } },
+                    scales: {
+                        x: { grid: { display: false }, ticks: { maxTicksLimit: 8, font: { size: 10 } } },
+                        y: { position: 'left', beginAtZero: true, title: { display: true, text: 'm' }, ticks: { font: { size: 10 } } },
+                        y1: { position: 'right', beginAtZero: true, grid: { display: false }, title: { display: true, text: 'km/h' }, ticks: { font: { size: 10 } } },
+                        y2: { display: false }
+                    }
                 }
-            }
+            });
+        }
+    });
+
+    document.querySelectorAll('.fc-day.clickable').forEach(function (day) {
+        day.addEventListener('click', function () {
+            var sid = this.dataset.spot, idx = +this.dataset.idx;
+            var data = store[sid];
+            if (!data) return;
+            var detail = document.getElementById('fcdetail-' + sid);
+            var wasActive = this.classList.contains('active');
+            this.parentElement.querySelectorAll('.fc-day').forEach(function (s) { s.classList.remove('active'); });
+            if (wasActive) { detail.style.display = 'none'; return; }
+            this.classList.add('active');
+            var dd = (data.days || [])[idx] || {};
+            detail.innerHTML = renderHours(dd.hours, dd.label || '');
+            detail.style.display = 'block';
         });
     });
 });

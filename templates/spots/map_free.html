@@ -443,11 +443,19 @@
             `<img src="${spot.cover_photo}" alt="${spot.name}" onerror="this.style.display='none'">` :
             '';
 
+        const hasFc = (spot.wave !== null && spot.wave !== undefined) || (spot.wind !== null && spot.wind !== undefined);
+        const forecast = hasFc ? `
+                <div style="display:flex;gap:16px;justify-content:center;align-items:center;font-size:.82rem;margin:8px 0;color:#374151;background:#eef2ff;border-radius:8px;padding:6px 8px;">
+                    <span><i class="bi bi-water" style="color:#3730a3"></i> ${spot.wave != null ? spot.wave.toFixed(1) + ' m' : '–'} ${spot.wave_dir || ''}</span>
+                    <span><i class="bi bi-wind" style="color:#6b7280"></i> ${spot.wind != null ? Math.round(spot.wind) + ' km/h' : '–'}</span>
+                </div>` : '';
+
         return `
             <div class="spot-popup">
                 ${coverPhoto}
                 <h6>${spot.name}</h6>
                 <p>${spot.description || 'Spot de surf incrível!'}</p>
+                ${forecast}
                 <div class="badges">
                     <span class="badge bg-primary">${spot.difficulty || 'N/A'}</span>
                     <span class="badge bg-secondary">${spot.wave_type || 'N/A'}</span>
