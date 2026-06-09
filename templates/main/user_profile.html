@@ -14,6 +14,7 @@
             <div class="ig-profile-toprow">
                 <h1 class="ig-profile-username">{{ user.username }}</h1>
                 <span class="patente-badge lg" title="{{ user.patente.points }} XP">{{ user.patente.icon }} {{ user.patente.name }}</span>
+                {% for r in user.active_roles %}<span class="role-badge lg" title="{{ BADGES[r].desc }}">{{ BADGES[r].icon }} {{ BADGES[r].label }}</span>{% endfor %}
 
                 {% if current_user.is_authenticated and current_user.id != user.id %}
                     {% if is_following %}

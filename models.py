@@ -59,7 +59,17 @@ class User(UserMixin, db.Model):
         """Patente/nível atual da gamificação (calculada a partir de points)."""
         from gamification import patente
         return patente(self.points)
-    
+
+    @property
+    def active_roles(self):
+        """Lista de tipos de selo ativos do usuário (fotografo, empresario, ...)."""
+        now = datetime.utcnow()
+        return [b.type for b in self.badges
+                if b.status == 'active' and (b.expires_at is None or b.expires_at >= now)]
+
+    def has_role(self, role_type):
+        return role_type in self.active_roles
+
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
     
@@ -642,3 +652,59 @@ class Notification(db.Model):
         db.session.add(notification)
         db.session.commit()
         return notification
+
+class UserBadge(db.Model):
+    """Selo de papel (pago/verificado) concedido a um usuário.
+
+    Tipos: fotografo, empresario, atleta, influencer. A aquisição no v1 é por
+    concessão do admin (sem pagamento). status: active | expired.
+    """
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    type = db.Column(db.String(30), nullable=False)
+    status = db.Column(db.String(20), default='active')
+    granted_by = db.Column(db.Integer, db.ForeignKey('user.id'))
+    granted_at = db.Column(db.DateTime, default=datetime.utcnow)
+    expires_at = db.Column(db.DateTime, nullable=True)
+
+    user = db.relationship('User', foreign_keys=[user_id], backref='badges')
+
+    __table_args__ = (db.UniqueConstraint('user_id', 'type', name='uq_user_badge'),)
+
+    def __repr__(self):
+        return f'<UserBadge {self.type} u{self.user_id}>'
+
+
+class Business(db.Model):
+    """Ficha de negócio local vinculada a um pico (privilégio do selo empresário)."""
+    id = db.Column(db.Integer, primary_key=True)
+    owner_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    spot_id = db.Column(db.Integer, db.ForeignKey('spot.id'), nullable=False)
+    name = db.Column(db.String(120), nullable=False)
+    category = db.Column(db.String(50))      # escola, pousada, loja, restaurante...
+    description = db.Column(db.Text)
+    phone = db.Column(db.String(40))
+    instagram = db.Column(db.String(80))
+    address = db.Column(db.String(200))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    owner = db.relationship('User', backref='businesses')
+    spot = db.relationship('Spot', backref=db.backref('businesses', lazy='dynamic', cascade='all, delete-orphan'))
+    coupons = db.relationship('Coupon', backref='business', lazy='dynamic', cascade='all, delete-orphan')
+
+    def __repr__(self):
+        return f'<Business {self.name}>'
+
+
+class Coupon(db.Model):
+    """Cupom de desconto de um negócio."""
+    id = db.Column(db.Integer, primary_key=True)
+    business_id = db.Column(db.Integer, db.ForeignKey('business.id'), nullable=False)
+    code = db.Column(db.String(40), nullable=False)
+    description = db.Column(db.String(200))
+    discount = db.Column(db.String(40))      # ex: "10%", "R$ 20 OFF"
+    valid_until = db.Column(db.Date, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def __repr__(self):
+        return f'<Coupon {self.code}>'

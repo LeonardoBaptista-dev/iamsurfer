@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, current_app
 from flask_login import login_required, current_user
-from models import State, City, SurfSpot, Photographer, SpotPhoto, Spot, SpotPhotoNew, PhotoSession, SessionPhoto, PhotoPurchase, SpotReport
+from models import State, City, SurfSpot, Photographer, SpotPhoto, Spot, SpotPhotoNew, PhotoSession, SessionPhoto, PhotoPurchase, SpotReport, Business, Coupon
 from extensions import db
 from werkzeug.utils import secure_filename
 import os
@@ -175,12 +175,105 @@ def new_spot_detail(spot_id):
     
     photos = SpotPhotoNew.query.filter_by(spot_id=spot_id).all()
     sessions = PhotoSession.query.filter_by(spot_id=spot_id, is_active=True).all()
-    
+    businesses = Business.query.filter_by(spot_id=spot_id).all()
+
     # Fetch posts related to this spot instead of structured spot reports
     from models import Post
     recent_reports = Post.query.filter_by(spot_id=spot_id).order_by(Post.created_at.desc()).limit(15).all()
-    
-    return render_template('spots/new_detail.html', spot=spot, photos=photos, sessions=sessions, reports=recent_reports)
+
+    return render_template('spots/new_detail.html', spot=spot, photos=photos,
+                           sessions=sessions, businesses=businesses, reports=recent_reports)
+
+
+@spots.route('/spots/<int:spot_id>/sessions/new', methods=['POST'])
+@login_required
+def new_photo_session(spot_id):
+    """Fotógrafo cria uma sessão de fotos à venda num pico."""
+    if not current_user.has_role('fotografo'):
+        flash('Apenas fotógrafos podem criar sessões de fotos.', 'danger')
+        return redirect(url_for('spots.new_spot_detail', spot_id=spot_id))
+    Spot.query.get_or_404(spot_id)
+    title = request.form.get('title') or 'Sessão de fotos'
+    date_str = request.form.get('session_date')
+    try:
+        session_date = datetime.strptime(date_str, '%Y-%m-%d').date() if date_str else datetime.utcnow().date()
+    except ValueError:
+        session_date = datetime.utcnow().date()
+    try:
+        price = float(request.form.get('price_per_photo') or 0)
+    except ValueError:
+        price = 0.0
+
+    sess = PhotoSession(spot_id=spot_id, title=title, description=request.form.get('description'),
+                        session_date=session_date, photographer_id=current_user.id, price_per_photo=price)
+    db.session.add(sess)
+    db.session.flush()
+
+    upload_path = os.path.join(current_app.config['UPLOAD_FOLDER'], 'sessions')
+    os.makedirs(upload_path, exist_ok=True)
+    count = 0
+    for f in request.files.getlist('photos'):
+        if f and f.filename:
+            fn = f"sess_{sess.id}_{count}_{secure_filename(f.filename)}"
+            f.save(os.path.join(upload_path, fn))
+            db.session.add(SessionPhoto(session_id=sess.id, filename=fn, price=price))
+            count += 1
+    db.session.commit()
+    flash(f'Sessão "{title}" criada com {count} foto(s)!', 'success')
+    return redirect(url_for('spots.new_spot_detail', spot_id=spot_id))
+
+
+@spots.route('/photos/<int:photo_id>/buy', methods=['POST'])
+@login_required
+def buy_photo(photo_id):
+    """Reserva de foto (pagamento real será habilitado depois)."""
+    photo = SessionPhoto.query.get_or_404(photo_id)
+    existing = PhotoPurchase.query.filter_by(photo_id=photo_id, user_id=current_user.id).first()
+    if not existing:
+        db.session.add(PhotoPurchase(photo_id=photo_id, user_id=current_user.id,
+                                     amount_paid=photo.price or 0, status='reserved'))
+        db.session.commit()
+    flash('Foto reservada! O pagamento online será habilitado em breve.', 'success')
+    return redirect(request.referrer or url_for('spots.spots_map'))
+
+
+@spots.route('/spots/<int:spot_id>/business/new', methods=['POST'])
+@login_required
+def new_business(spot_id):
+    """Empresário cadastra um negócio dentro do pico."""
+    if not current_user.has_role('empresario'):
+        flash('Apenas o selo Negócio permite cadastrar empresas.', 'danger')
+        return redirect(url_for('spots.new_spot_detail', spot_id=spot_id))
+    Spot.query.get_or_404(spot_id)
+    b = Business(owner_id=current_user.id, spot_id=spot_id,
+                 name=request.form.get('name'), category=request.form.get('category'),
+                 description=request.form.get('description'), phone=request.form.get('phone'),
+                 instagram=request.form.get('instagram'), address=request.form.get('address'))
+    db.session.add(b)
+    db.session.commit()
+    flash('Negócio cadastrado no pico!', 'success')
+    return redirect(url_for('spots.new_spot_detail', spot_id=spot_id))
+
+
+@spots.route('/business/<int:business_id>/coupon/new', methods=['POST'])
+@login_required
+def new_coupon(business_id):
+    """Dono do negócio cria um cupom de desconto."""
+    b = Business.query.get_or_404(business_id)
+    if b.owner_id != current_user.id:
+        flash('Você só pode adicionar cupons ao seu próprio negócio.', 'danger')
+        return redirect(url_for('spots.new_spot_detail', spot_id=b.spot_id))
+    vu = request.form.get('valid_until')
+    try:
+        valid = datetime.strptime(vu, '%Y-%m-%d').date() if vu else None
+    except ValueError:
+        valid = None
+    db.session.add(Coupon(business_id=business_id, code=request.form.get('code'),
+                          description=request.form.get('description'),
+                          discount=request.form.get('discount'), valid_until=valid))
+    db.session.commit()
+    flash('Cupom criado!', 'success')
+    return redirect(url_for('spots.new_spot_detail', spot_id=b.spot_id))
 
 @spots.route('/spots/<int:spot_id>/report', methods=['GET', 'POST'])
 @login_required

@@ -199,6 +199,12 @@ from extensions import db
 # Inicializa o SQLAlchemy
 db.init_app(app)
 
+# Expõe os metadados dos selos de papel para todos os templates
+@app.context_processor
+def inject_badges():
+    from badges import BADGES
+    return {'BADGES': BADGES}
+
 # Rota de health check para monitoramento do Render
 @app.route('/healthz')
 def health_check():

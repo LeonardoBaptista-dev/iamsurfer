@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, abort, jsonify
 from flask_login import login_required, current_user
-from models import User, Post, Comment, Message, Spot
+from models import User, Post, Comment, Message, Spot, UserBadge
 from extensions import db
 from functools import wraps
 from sqlalchemy import func
@@ -168,6 +168,54 @@ def spots():
     }
     
     return render_template('admin/spots.html', spots=spots, stats=stats, status_filter=status_filter)
+
+@admin.route('/badges')
+@login_required
+@admin_required
+def badges():
+    """Painel de selos de papel: conceder/remover por usuário."""
+    from badges import BADGES, ORDER
+    users = User.query.order_by(User.username).all()
+    user_badges = {}
+    for ub in UserBadge.query.filter_by(status='active').all():
+        user_badges.setdefault(ub.user_id, []).append(ub)
+    return render_template('admin/badges.html', users=users,
+                           user_badges=user_badges, BADGES=BADGES, ORDER=ORDER)
+
+
+@admin.route('/badges/grant', methods=['POST'])
+@login_required
+@admin_required
+def grant_badge():
+    from badges import BADGES
+    uid = request.form.get('user_id', type=int)
+    btype = request.form.get('type')
+    if btype not in BADGES or not uid:
+        flash('Dados inválidos para conceder o selo.', 'danger')
+        return redirect(url_for('admin.badges'))
+    existing = UserBadge.query.filter_by(user_id=uid, type=btype).first()
+    if existing:
+        existing.status = 'active'
+        existing.granted_by = current_user.id
+        existing.granted_at = datetime.utcnow()
+    else:
+        db.session.add(UserBadge(user_id=uid, type=btype, status='active',
+                                 granted_by=current_user.id))
+    db.session.commit()
+    flash('Selo concedido com sucesso!', 'success')
+    return redirect(url_for('admin.badges'))
+
+
+@admin.route('/badges/<int:badge_id>/revoke', methods=['POST'])
+@login_required
+@admin_required
+def revoke_badge(badge_id):
+    ub = UserBadge.query.get_or_404(badge_id)
+    db.session.delete(ub)
+    db.session.commit()
+    flash('Selo removido.', 'info')
+    return redirect(url_for('admin.badges'))
+
 
 @admin.route('/spots/<int:spot_id>/approve', methods=['POST'])
 @login_required

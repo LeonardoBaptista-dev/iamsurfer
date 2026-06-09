@@ -1102,6 +1102,26 @@ main h1.h2 {
     transition: width .4s ease;
 }
 
+/* Selo de papel (fotógrafo, negócio, atleta, influencer) — pílula preenchida */
+.role-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--brand);
+    color: #fff;
+    font-weight: 700;
+    font-size: .68rem;
+    padding: 2px 8px;
+    border-radius: var(--radius-pill);
+    line-height: 1.5;
+    white-space: nowrap;
+}
+
+.role-badge.lg {
+    font-size: .78rem;
+    padding: 4px 12px;
+}
+
 /* ─── Forecast (previsão de surf) ────────────────── */
 .fc-card {
     border: 1px solid var(--border);

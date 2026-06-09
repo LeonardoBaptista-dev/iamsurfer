@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title %}Selos - Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-3 col-lg-2 d-md-block bg-light sidebar">
+            <div class="position-sticky">
+                <ul class="nav flex-column">
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('admin.index') }}"><i class="bi bi-speedometer2 me-2"></i> Dashboard</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('admin.users') }}"><i class="bi bi-people me-2"></i> Usuários</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('admin.posts') }}"><i class="bi bi-images me-2"></i> Posts</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('admin.spots') }}"><i class="bi bi-geo-alt me-2"></i> Spots de Surf</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="{{ url_for('admin.badges') }}"><i class="bi bi-patch-check me-2"></i> Selos</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('admin.messages') }}"><i class="bi bi-envelope me-2"></i> Mensagens</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('admin.comments') }}"><i class="bi bi-chat-dots me-2"></i> Comentários</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('admin.reports') }}"><i class="bi bi-bar-chart me-2"></i> Relatórios</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Conteúdo -->
+        <div class="col-md-9 ms-sm-auto col-lg-10 px-md-4 admin-content">
+            <div class="d-flex justify-content-between align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">Selos de papel</h1>
+                <a href="{{ url_for('main.index') }}" class="btn btn-sm btn-outline-secondary">Voltar ao site</a>
+            </div>
+
+            <!-- Conceder selo -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h6 style="font-weight:700;margin-bottom:14px;">Conceder selo</h6>
+                    <form action="{{ url_for('admin.grant_badge') }}" method="POST" class="row g-2 align-items-end">
+                        <div class="col-md-5">
+                            <label class="form-label">Usuário</label>
+                            <select name="user_id" class="form-select" required>
+                                {% for u in users %}<option value="{{ u.id }}">{{ u.username }}</option>{% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Selo</label>
+                            <select name="type" class="form-select" required>
+                                {% for key in ORDER %}<option value="{{ key }}">{{ BADGES[key].icon }} {{ BADGES[key].label }}</option>{% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3 d-grid">
+                            <button type="submit" class="btn btn-primary"><i class="bi bi-patch-check me-1"></i> Conceder</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Usuários e seus selos -->
+            <div class="card">
+                <div class="card-body p-0">
+                    <table class="table table-hover mb-0">
+                        <thead><tr><th class="ps-3">Usuário</th><th>Selos ativos</th><th></th></tr></thead>
+                        <tbody>
+                            {% for u in users %}
+                            <tr>
+                                <td class="ps-3" style="font-weight:600;">{{ u.username }}</td>
+                                <td>
+                                    {% for b in user_badges.get(u.id, []) %}
+                                    <span class="role-badge me-1">{{ BADGES[b.type].icon }} {{ BADGES[b.type].label }}</span>
+                                    {% else %}
+                                    <span class="text-muted" style="font-size:.85rem;">—</span>
+                                    {% endfor %}
+                                </td>
+                                <td class="text-end pe-3">
+                                    {% for b in user_badges.get(u.id, []) %}
+                                    <form action="{{ url_for('admin.revoke_badge', badge_id=b.id) }}" method="POST" class="d-inline">
+                                        <button type="submit" class="btn btn-sm btn-outline-secondary mb-1"
+                                            onclick="return confirm('Remover selo {{ BADGES[b.type].label }} de {{ u.username }}?')">
+                                            <i class="bi bi-x"></i> {{ BADGES[b.type].label }}
+                                        </button>
+                                    </form>
+                                    {% endfor %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
