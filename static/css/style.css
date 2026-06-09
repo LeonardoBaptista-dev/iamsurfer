@@ -1706,11 +1706,33 @@ footer.bg-light {
 }
 
 /* ─── Responsive ─────────────────────────────────── */
-@media (max-width: 768px) {
+
+/* Navbar recolhida (abaixo de lg): busca e menus ocupam o espaço direito */
+@media (max-width: 991.98px) {
     .navbar .form-control {
-        width: 140px;
+        width: 100%;
     }
 
+    .navbar form.d-flex {
+        width: 100%;
+    }
+
+    /* menus dropdown abertos dentro do menu recolhido não estouram a tela */
+    .navbar .dropdown-menu {
+        width: auto !important;
+        max-width: calc(100vw - 32px);
+        box-shadow: none;
+        border: 1px solid var(--border);
+    }
+
+    /* itens do menu recolhido alinhados à esquerda (não centralizados) */
+    .navbar .nav-item {
+        align-items: stretch;
+    }
+}
+
+/* Tablet e abaixo */
+@media (max-width: 768px) {
     .profile-stats {
         gap: 16px;
     }
@@ -1720,4 +1742,118 @@ footer.bg-light {
         grid-template-columns: repeat(3, 1fr);
         gap: 2px;
     }
+
+    /* Tabelas rolam na horizontal em vez de estourar o layout */
+    .table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .fc-chart {
+        height: 170px;
+    }
+
+    .card-body {
+        padding: 16px;
+    }
+
+    /* Tabs do detalhe do pico rolam se não couberem */
+    .nav-tabs {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .nav-tabs .nav-link {
+        white-space: nowrap;
+    }
 }
+
+/* Celular */
+@media (max-width: 576px) {
+    body {
+        font-size: 14.5px;
+    }
+
+    /* Perfil estilo Instagram: empilha e centraliza */
+    .ig-profile {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 16px;
+        padding-bottom: 20px;
+    }
+
+    .ig-profile-avatar {
+        width: 104px;
+        height: 104px;
+    }
+
+    .ig-profile-info {
+        min-width: 0;
+        width: 100%;
+    }
+
+    .ig-profile-toprow {
+        justify-content: center;
+        gap: 12px;
+    }
+
+    .ig-profile-username {
+        font-size: 1.3rem;
+    }
+
+    .ig-profile-stats {
+        justify-content: center;
+        gap: 24px;
+    }
+
+    .ig-profile-bio {
+        margin: 0 auto;
+    }
+
+    .ig-tabs {
+        gap: 24px;
+    }
+
+    .ig-grid {
+        gap: 3px;
+    }
+
+    /* Previsão mais compacta */
+    .fc-current {
+        gap: 16px;
+        padding: 14px;
+    }
+
+    .fc-metric .val {
+        font-size: 1.18rem;
+    }
+
+    .fc-chart {
+        height: 155px;
+        margin: 6px 12px 4px;
+    }
+
+    .fc-head,
+    .fc-current {
+        padding-left: 14px;
+        padding-right: 14px;
+    }
+
+    /* Caronas: hero e cards com menos respiro */
+    .trip-card {
+        padding: 14px;
+    }
+
+    /* Comentários / DM um pouco mais justos */
+    .comment-row {
+        padding: 12px 0;
+    }
+}
+
+/* Telas grandes: o conteúdo já é limitado pelo .container (máx. 1320px no
+   xxl) e pelas colunas centralizadas (mx-auto), então fica centrado e legível
+   sem esticar demais. */
