@@ -1066,6 +1066,99 @@ main h1.h2 {
     color: var(--brand-light);
 }
 
+/* ─── Forecast (previsão de surf) ────────────────── */
+.fc-card {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+    margin-bottom: 18px;
+}
+
+.fc-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 16px 18px;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+}
+
+.fc-current {
+    display: flex;
+    gap: 28px;
+    flex-wrap: wrap;
+    padding: 16px 18px;
+    background: var(--brand-faint);
+}
+
+.fc-metric {
+    display: flex;
+    flex-direction: column;
+}
+
+.fc-metric .val {
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: var(--brand);
+    letter-spacing: -.5px;
+    line-height: 1.1;
+}
+
+.fc-metric .val small {
+    font-size: .8rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.fc-metric .lbl {
+    font-size: .68rem;
+    text-transform: uppercase;
+    letter-spacing: .6px;
+    color: var(--text-muted);
+    font-weight: 700;
+    margin-top: 2px;
+}
+
+.fc-days {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 14px 18px;
+}
+
+.fc-day {
+    flex: 1 0 88px;
+    min-width: 88px;
+    text-align: center;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px 6px;
+}
+
+.fc-day .d {
+    font-size: .72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+}
+
+.fc-day .wv {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: var(--text-primary);
+}
+
+.fc-day .sub {
+    font-size: .72rem;
+    color: var(--text-secondary);
+    margin-top: 3px;
+}
+
 /* ─── Direct Messages ────────────────────────────── */
 .dm-list {
     background: var(--surface);

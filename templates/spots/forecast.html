@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block title %}Previsão de Surf - IAmSurfer{% endblock %}
+
+{% block content %}
+<div class="col-lg-9 mx-auto">
+
+    <div class="d-flex justify-content-between align-items-end flex-wrap gap-2 mb-1">
+        <h4 class="mb-0" style="font-weight:700;letter-spacing:-.3px;">
+            <i class="bi bi-water me-1" style="color:var(--brand);"></i> Previsão de surf
+        </h4>
+        <span style="font-size:.75rem;color:var(--text-muted);">
+            Fonte: Open-Meteo · atualizado a cada hora
+        </span>
+    </div>
+    <p class="text-muted mb-4" style="font-size:.9rem;">Ondas e vento previstos para todos os picos.</p>
+
+    {% if not spots %}
+    <div class="card text-center py-5 px-4">
+        <i class="bi bi-water display-4 text-muted mb-2"></i>
+        <h5 style="font-weight:700;">Nenhum pico aprovado ainda</h5>
+        <p style="color:var(--text-muted);font-size:.9rem;">Cadastre picos no mapa para ver a previsão aqui.</p>
+        <div class="d-flex justify-content-center mt-2">
+            <a href="{{ url_for('spots.spots_map') }}" class="btn btn-primary"><i class="bi bi-geo-alt me-1"></i> Abrir mapa</a>
+        </div>
+    </div>
+    {% elif not forecasts %}
+    <div class="card text-center py-5 px-4">
+        <i class="bi bi-cloud-slash display-4 text-muted mb-2"></i>
+        <h5 style="font-weight:700;">Previsão indisponível no momento</h5>
+        <p style="color:var(--text-muted);font-size:.9rem;">Não foi possível obter os dados de previsão agora. Tente novamente em instantes.</p>
+    </div>
+    {% else %}
+
+    {% for spot in spots %}
+    {% set fc = forecasts.get(spot.id) %}
+    <div class="fc-card">
+        <!-- Header -->
+        <div class="fc-head">
+            <div>
+                <a href="{{ url_for('spots.new_spot_detail', spot_id=spot.id) }}"
+                    class="text-decoration-none" style="font-weight:700;font-size:1.05rem;color:var(--text-primary);">
+                    {{ spot.name }}
+                </a>
+                <div style="font-size:.8rem;color:var(--text-muted);">
+                    <i class="bi bi-geo-alt"></i>
+                    {{ spot.city }}{% if spot.city and spot.state %}, {% endif %}{{ spot.state }}
+                </div>
+            </div>
+            {% if spot.difficulty %}
+            <span class="badge" style="background:var(--brand-faint);color:var(--brand);font-weight:700;">
+                {{ spot.difficulty|capitalize }}
+            </span>
+            {% endif %}
+        </div>
+
+        {% if fc and fc.current %}
+        <!-- Condições atuais -->
+        <div class="fc-current">
+            <div class="fc-metric">
+                <span class="val">{{ '%.1f'|format(fc.current.wave_height) if fc.current.wave_height is not none else '–' }}<small> m</small></span>
+                <span class="lbl">Onda</span>
+            </div>
+            <div class="fc-metric">
+                <span class="val">{{ fc.current.wave_period|round|int if fc.current.wave_period is not none else '–' }}<small> s</small></span>
+                <span class="lbl">Período</span>
+            </div>
+            <div class="fc-metric">
+                <span class="val">{{ fc.current.wave_dir or '–' }}</span>
+                <span class="lbl">Dir. onda</span>
+            </div>
+            <div class="fc-metric">
+                <span class="val">{{ fc.current.wind_speed|round|int if fc.current.wind_speed is not none else '–' }}<small> km/h {{ fc.current.wind_dir or '' }}</small></span>
+                <span class="lbl">Vento</span>
+            </div>
+        </div>
+
+        <!-- Próximos dias -->
+        {% if fc.days %}
+        <div class="fc-days">
+            {% for d in fc.days %}
+            <div class="fc-day">
+                <div class="d">{{ d.label }}</div>
+                <div class="wv">{{ '%.1f'|format(d.wave_height) if d.wave_height is not none else '–' }}<span style="font-size:.7rem;font-weight:600;"> m</span></div>
+                <div class="sub"><i class="bi bi-wind"></i> {{ d.wind_speed|round|int if d.wind_speed is not none else '–' }} {{ d.wind_dir or '' }}</div>
+                <div class="sub">{{ d.wave_period|round|int if d.wave_period is not none else '–' }}s {{ d.wave_dir or '' }}</div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% else %}
+        <div class="px-3 py-4 text-center" style="color:var(--text-muted);font-size:.85rem;">
+            <i class="bi bi-cloud-slash me-1"></i> Previsão indisponível para este pico.
+        </div>
+        {% endif %}
+    </div>
+    {% endfor %}
+
+    {% endif %}
+
+</div>
+{% endblock %}

@@ -84,6 +84,14 @@ def spots_map():
     # Usa mapa GRATUITO (OpenStreetMap + Leaflet) por padrão
     return render_template('spots/map_free.html', spots=json.dumps(spots_data))
 
+@spots.route('/forecast')
+def forecast():
+    """Previsão de surf (ondas + vento) de todos os picos aprovados."""
+    from surf_forecast import get_forecast
+    approved = Spot.query.filter_by(status='approved', is_active=True).order_by(Spot.name).all()
+    forecasts = get_forecast(approved)
+    return render_template('spots/forecast.html', spots=approved, forecasts=forecasts)
+
 @spots.route('/spots/add', methods=['GET', 'POST'])
 @login_required
 def add_spot():
