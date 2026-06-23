@@ -3,6 +3,15 @@
 {% block title %}{{ trip.title }} - Carona - IAmSurfer{% endblock %}
 
 {% block styles %}
+<style>
+    /* Linhas de detalhe: rótulo + valor lado a lado no desktop, empilhados no mobile */
+    .tv-row { display: flex; gap: .75rem; padding: .5rem 0; border-bottom: 1px solid var(--border); }
+    .tv-label { width: 160px; flex-shrink: 0; color: var(--text-muted); font-size: .85rem; }
+    @media (max-width: 575.98px) {
+        .tv-row { flex-direction: column; gap: .15rem; }
+        .tv-label { width: auto; }
+    }
+</style>
 {% if trip.departure_lat and trip.destination_lat %}
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
     integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
@@ -63,36 +72,36 @@
                         ('bi-calendar-event', 'Saída', trip.departure_time.strftime('%d/%m/%Y às %H:%M')),
                     ] %}
                     {% for icon, label, value in rows %}
-                    <div class="d-flex gap-3 py-2" style="border-bottom:1px solid var(--border);">
-                        <div style="width:160px;color:var(--text-muted);font-size:.85rem;"><i class="bi {{ icon }} me-1"></i> {{ label }}</div>
+                    <div class="tv-row">
+                        <div class="tv-label"><i class="bi {{ icon }} me-1"></i> {{ label }}</div>
                         <div style="font-size:.9rem;font-weight:500;">{{ value }}</div>
                     </div>
                     {% endfor %}
                     {% if trip.return_time %}
-                    <div class="d-flex gap-3 py-2" style="border-bottom:1px solid var(--border);">
-                        <div style="width:160px;color:var(--text-muted);font-size:.85rem;"><i class="bi bi-calendar-check me-1"></i> Retorno</div>
+                    <div class="tv-row">
+                        <div class="tv-label"><i class="bi bi-calendar-check me-1"></i> Retorno</div>
                         <div style="font-size:.9rem;font-weight:500;">{{ trip.return_time.strftime('%d/%m/%Y às %H:%M') }}</div>
                     </div>
                     {% endif %}
-                    <div class="d-flex gap-3 py-2" style="border-bottom:1px solid var(--border);">
-                        <div style="width:160px;color:var(--text-muted);font-size:.85rem;"><i class="bi bi-people me-1"></i> Vagas</div>
+                    <div class="tv-row">
+                        <div class="tv-label"><i class="bi bi-people me-1"></i> Vagas</div>
                         <div style="font-size:.9rem;font-weight:500;">{{ trip.get_available_seats() }} de {{ trip.available_seats }} disponíveis</div>
                     </div>
                     {% if trip.contribution %}
-                    <div class="d-flex gap-3 py-2" style="border-bottom:1px solid var(--border);">
-                        <div style="width:160px;color:var(--text-muted);font-size:.85rem;"><i class="bi bi-cash-coin me-1"></i> Contribuição</div>
+                    <div class="tv-row">
+                        <div class="tv-label"><i class="bi bi-cash-coin me-1"></i> Contribuição</div>
                         <div style="font-size:.9rem;font-weight:500;">R$ {{ trip.contribution|round(2) }}</div>
                     </div>
                     {% endif %}
                     {% if trip.vehicle_info %}
-                    <div class="d-flex gap-3 py-2" style="border-bottom:1px solid var(--border);">
-                        <div style="width:160px;color:var(--text-muted);font-size:.85rem;"><i class="bi bi-car-front me-1"></i> Veículo</div>
+                    <div class="tv-row">
+                        <div class="tv-label"><i class="bi bi-car-front me-1"></i> Veículo</div>
                         <div style="font-size:.9rem;font-weight:500;">{{ trip.vehicle_info }}</div>
                     </div>
                     {% endif %}
                     {% if trip.intermediate_stops %}
-                    <div class="d-flex gap-3 py-2" style="border-bottom:1px solid var(--border);">
-                        <div style="width:160px;color:var(--text-muted);font-size:.85rem;"><i class="bi bi-signpost-2 me-1"></i> Paradas</div>
+                    <div class="tv-row">
+                        <div class="tv-label"><i class="bi bi-signpost-2 me-1"></i> Paradas</div>
                         <div style="font-size:.9rem;">{{ trip.intermediate_stops|nl2br }}</div>
                     </div>
                     {% endif %}

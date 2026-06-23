@@ -48,7 +48,7 @@
                         </ol>
                     </nav>
 
-                    <div class="d-flex justify-content-between align-items-start">
+                    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start gap-2 gap-sm-3">
                         <div>
                             <h2>{{ spot.name }}</h2>
                             <p class="text-muted mb-2">
@@ -62,7 +62,7 @@
                             </p>
                             {% endif %}
                         </div>
-                        <div class="text-end">
+                        <div class="text-start text-sm-end">
                             <span
                                 class="badge {% if spot.difficulty == 'iniciante' %}bg-success{% elif spot.difficulty == 'intermediário' %}bg-info{% else %}bg-warning{% endif %} fs-6">
                                 {{ spot.difficulty.title() if spot.difficulty else 'N/A' }}
@@ -372,7 +372,7 @@
                     </div>
                 </div>
                 <div class="tab-pane fade" id="reports" role="tabpanel">
-                    <div class="d-flex justify-content-between align-items-center mt-3 mb-4">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-3 mb-4">
                         <h4 class="mb-0">Relatos de Surf</h4>
                         {% if current_user.is_authenticated %}
                         <a href="{{ url_for('posts.new_post') }}?spot_id={{ spot.id }}" class="btn btn-primary btn-sm rounded-pill shadow-sm">
