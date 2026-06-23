@@ -40,17 +40,20 @@ class ImageProcessor:
     MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
     
     @staticmethod
-    def validate_image(file: FileStorage) -> Tuple[bool, str, Optional[Image.Image]]:
+    def validate_image(file: FileStorage, check_size: bool = True) -> Tuple[bool, str, Optional[Image.Image]]:
         """
         Valida se o arquivo é uma imagem válida
-        
+
+        check_size=False pula o limite de tamanho (ex.: foto de perfil) — o
+        compressor reduz a imagem, então o usuário pode enviar qualquer tamanho.
+
         Returns:
             Tuple[bool, str, Optional[Image.Image]]: (is_valid, error_message, image_object)
         """
         if not file:
             return False, "Nenhum arquivo enviado", None
-        
-        if file.content_length and file.content_length > ImageProcessor.MAX_FILE_SIZE:
+
+        if check_size and file.content_length and file.content_length > ImageProcessor.MAX_FILE_SIZE:
             return False, "Arquivo muito grande (máximo 10MB)", None
         
         try:
@@ -343,7 +346,8 @@ class ImageProcessor:
     @staticmethod
     def process_and_save_profile(file: FileStorage) -> Tuple[bool, str, Optional[Dict[str, str]]]:
         """Processa o avatar em vários tamanhos e sobe pro Cloudinary."""
-        is_valid, error_msg, img = ImageProcessor.validate_image(file)
+        # Sem limite de tamanho: o compressor reduz a imagem
+        is_valid, error_msg, img = ImageProcessor.validate_image(file, check_size=False)
         if not is_valid:
             return False, error_msg, None
         try:

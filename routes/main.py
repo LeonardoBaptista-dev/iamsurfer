@@ -87,12 +87,18 @@ def build_feed_items(following_ids, page=1, per_page=20):
 def index():
     if not current_user.is_authenticated:
         # Visitante: landing page pública que apresenta e "vende" a rede
+        from models import Coupon, Business
         stats = {
             'surfers': User.query.count(),
             'spots': Spot.query.filter_by(status='approved', is_active=True).count(),
             'posts': Post.query.count(),
         }
-        return render_template('main/landing.html', stats=stats)
+        # Cupons/benefícios dos empreendimentos cadastrados nos picos (vitrine)
+        today = datetime.utcnow().date()
+        coupons = (Coupon.query.join(Business)
+                   .filter((Coupon.valid_until.is_(None)) | (Coupon.valid_until >= today))
+                   .order_by(Coupon.created_at.desc()).limit(6).all())
+        return render_template('main/landing.html', stats=stats, coupons=coupons)
     if current_user.is_admin:
         return redirect(url_for('admin.index'))
 

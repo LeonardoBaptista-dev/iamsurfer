@@ -59,24 +59,28 @@ class LocalImageProcessor:
     MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
     
     @staticmethod
-    def validate_image(file: FileStorage) -> Tuple[bool, str, Optional[Image.Image]]:
+    def validate_image(file: FileStorage, check_size: bool = True) -> Tuple[bool, str, Optional[Image.Image]]:
         """
         Valida se o arquivo é uma imagem válida
-        
+
+        check_size=False pula o limite de tamanho (ex.: foto de perfil) — o
+        compressor do app reduz a imagem, então o usuário pode enviar qualquer
+        tamanho.
+
         Returns:
             Tuple[bool, str, Optional[Image.Image]]: (is_valid, error_message, image_object)
         """
         if not file:
             return False, "Nenhum arquivo fornecido", None
-            
+
         # Verifica o tamanho do arquivo
         file.seek(0, os.SEEK_END)
         file_size = file.tell()
         file.seek(0)
-        
-        if file_size > LocalImageProcessor.MAX_FILE_SIZE:
+
+        if check_size and file_size > LocalImageProcessor.MAX_FILE_SIZE:
             return False, f"Arquivo muito grande. Máximo: {LocalImageProcessor.MAX_FILE_SIZE // (1024*1024)}MB", None
-        
+
         if file_size == 0:
             return False, "Arquivo vazio", None
         
@@ -320,18 +324,18 @@ class LocalImageProcessor:
         Returns:
             Tuple[bool, str, Optional[Dict[str, str]]]: (success, message, urls_dict)
         """
-        # Validação
-        is_valid, error_msg, img = LocalImageProcessor.validate_image(file)
+        # Validação (sem limite de tamanho: o compressor reduz a imagem)
+        is_valid, error_msg, img = LocalImageProcessor.validate_image(file, check_size=False)
         if not is_valid:
             return False, error_msg, None
-        
+
         try:
             # Gera hash do arquivo original
             file.seek(0)
             file_content = file.read()
             file_hash = hashlib.md5(file_content).hexdigest()
             file.seek(0)
-            
+
             # Cria crop quadrado (essencial para avatares)
             img_square = LocalImageProcessor.create_square_crop(img)
             
