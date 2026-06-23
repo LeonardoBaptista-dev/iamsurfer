@@ -106,16 +106,62 @@ UF_REGION = {
 REGION_ORDER = ['Norte', 'Nordeste', 'Centro-Oeste', 'Sudeste', 'Sul']
 
 
+SORT_OPTIONS = {'quality': 'Melhor qualidade', 'wave': 'Maior onda', 'name': 'Nome (A-Z)'}
+
+
+def _fc_best_quality(fc):
+    """Melhor qualidade prevista do pico (max entre os dias e a atual)."""
+    if not fc:
+        return -1
+    days = fc.get('days') or []
+    dq = max((d.get('quality') or 0 for d in days), default=0)
+    cq = (fc.get('current') or {}).get('quality') or 0
+    return max(dq, cq)
+
+
+def _fc_best_wave(fc):
+    if not fc:
+        return -1
+    days = fc.get('days') or []
+    dw = max((d.get('wave_height') or 0 for d in days), default=0)
+    cw = (fc.get('current') or {}).get('wave_height') or 0
+    return max(dw, cw)
+
+
 @spots.route('/forecast')
 def forecast():
     """Previsão de surf (ondas + vento) dos picos aprovados, com filtro por
-    região/estado/nome. Filtra ANTES de buscar a previsão para não consultar a
-    API de todos os picos quando o usuário só quer uma região."""
+    região/estado/nome, ordenação e memória do último filtro (cookie). Filtra
+    ANTES de buscar a previsão para não consultar a API de todos os picos."""
+    import json
+    from flask import make_response
     from surf_forecast import get_forecast
 
-    region = (request.args.get('region') or '').strip()
-    state = (request.args.get('state') or '').strip().upper()
-    q = (request.args.get('q') or '').strip()
+    args = request.args
+    clearing = bool(args.get('clear'))
+    explicit = any(k in args for k in ('region', 'state', 'q', 'sort'))
+
+    if clearing:
+        region = state = q = ''
+        sort = 'quality'
+    elif explicit:
+        region = (args.get('region') or '').strip()
+        state = (args.get('state') or '').strip().upper()
+        q = (args.get('q') or '').strip()
+        sort = (args.get('sort') or 'quality').strip()
+    else:
+        # Visita "limpa": restaura o último filtro salvo no cookie
+        try:
+            saved = json.loads(request.cookies.get('fc_filter') or '{}')
+        except (ValueError, TypeError):
+            saved = {}
+        region = (saved.get('region') or '').strip()
+        state = (saved.get('state') or '').strip().upper()
+        q = (saved.get('q') or '').strip()
+        sort = (saved.get('sort') or 'quality').strip()
+
+    if sort not in SORT_OPTIONS:
+        sort = 'quality'
 
     base = Spot.query.filter_by(status='approved', is_active=True)
     total_count = base.count()
@@ -137,10 +183,28 @@ def forecast():
     filtered = query.order_by(Spot.name).all()
     forecasts = get_forecast(filtered)
 
-    return render_template('spots/forecast.html', spots=filtered, forecasts=forecasts,
-                           regions=regions_present, states_meta=states_meta,
-                           sel_region=region, sel_state=state, sel_q=q,
-                           total_count=total_count)
+    # Ordenação (a query já vem por nome; reordena por qualidade/onda quando pedido)
+    if sort == 'wave':
+        filtered.sort(key=lambda s: (-_fc_best_wave(forecasts.get(s.id)),
+                                     -_fc_best_quality(forecasts.get(s.id)), s.name.lower()))
+    elif sort == 'quality':
+        filtered.sort(key=lambda s: (-_fc_best_quality(forecasts.get(s.id)),
+                                     -_fc_best_wave(forecasts.get(s.id)), s.name.lower()))
+
+    resp = make_response(render_template(
+        'spots/forecast.html', spots=filtered, forecasts=forecasts,
+        regions=regions_present, states_meta=states_meta, sort_options=SORT_OPTIONS,
+        sel_region=region, sel_state=state, sel_q=q, sel_sort=sort,
+        total_count=total_count))
+
+    # Memória do filtro: salva quando o usuário age; apaga ao limpar
+    if clearing:
+        resp.delete_cookie('fc_filter')
+    elif explicit:
+        resp.set_cookie('fc_filter',
+                        json.dumps({'region': region, 'state': state, 'q': q, 'sort': sort}),
+                        max_age=60 * 60 * 24 * 30, samesite='Lax')
+    return resp
 
 @spots.route('/spots/add', methods=['GET', 'POST'])
 @login_required

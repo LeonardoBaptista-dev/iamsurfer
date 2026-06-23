@@ -25,6 +25,21 @@
         .fc-filters .fc-search { flex: 1 1 100%; }
         .fc-filters .fc-count { margin-left: 0; width: 100%; }
     }
+    /* Melhor dia do pico em destaque */
+    .fc-day.best {
+        position: relative;
+        border: 1.5px solid var(--brand);
+        background: var(--brand-faint);
+    }
+    .fc-best-tag {
+        position: absolute;
+        top: -9px; left: 50%; transform: translateX(-50%);
+        background: var(--brand); color: #fff;
+        font-size: .6rem; font-weight: 700; text-transform: uppercase;
+        letter-spacing: .3px; padding: 1px 6px; border-radius: 999px;
+        white-space: nowrap;
+    }
+    .fc-best-tag .bi { font-size: .6rem; }
 </style>
 {% endblock %}
 
@@ -66,10 +81,15 @@
             <option value="{{ s.uf }}" data-region="{{ s.region }}" {% if sel_state == s.uf %}selected{% endif %}>{{ s.uf }}</option>
             {% endfor %}
         </select>
+        <select name="sort" class="form-select fc-sel" aria-label="Ordenar" onchange="this.form.submit()">
+            {% for val, lbl in sort_options.items() %}
+            <option value="{{ val }}" {% if sel_sort == val %}selected{% endif %}>{{ lbl }}</option>
+            {% endfor %}
+        </select>
         <input type="search" name="q" class="form-control fc-search" placeholder="Buscar pico pelo nome..." value="{{ sel_q }}" aria-label="Buscar pico">
         <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-search"></i></button>
         {% if sel_region or sel_state or sel_q %}
-        <a href="{{ url_for('spots.forecast') }}" class="btn btn-outline-secondary btn-sm" title="Limpar filtros"><i class="bi bi-x-lg"></i></a>
+        <a href="{{ url_for('spots.forecast', clear=1) }}" class="btn btn-outline-secondary btn-sm" title="Limpar filtros"><i class="bi bi-x-lg"></i></a>
         {% endif %}
         <span class="fc-count">{{ spots|length }} de {{ total_count }} picos</span>
     </form>
@@ -89,7 +109,7 @@
         <h5 style="font-weight:700;">Nenhum pico encontrado</h5>
         <p class="text-muted mb-3" style="font-size:.9rem;">Nenhum pico bate com esse filtro.</p>
         <div class="d-flex justify-content-center">
-            <a href="{{ url_for('spots.forecast') }}" class="btn btn-outline-primary"><i class="bi bi-x-lg me-1"></i> Limpar filtros</a>
+            <a href="{{ url_for('spots.forecast', clear=1) }}" class="btn btn-outline-primary"><i class="bi bi-x-lg me-1"></i> Limpar filtros</a>
         </div>
     </div>
     {% elif not forecasts %}
@@ -135,9 +155,11 @@
         <script type="application/json" id="fcdata-{{ spot.id }}">{{ {'hourly': fc.hourly, 'days': fc.days}|tojson }}</script>
 
         {% if fc.days %}
+        {% set best_q = fc.days|map(attribute='quality')|max %}
         <div class="fc-days">
             {% for d in fc.days %}
-            <div class="fc-day clickable" data-spot="{{ spot.id }}" data-idx="{{ loop.index0 }}">
+            <div class="fc-day clickable{% if best_q and best_q > 0 and d.quality == best_q %} best{% endif %}" data-spot="{{ spot.id }}" data-idx="{{ loop.index0 }}">
+                {% if best_q and best_q > 0 and d.quality == best_q %}<span class="fc-best-tag"><i class="bi bi-star-fill"></i> melhor</span>{% endif %}
                 <div class="d">{{ d.label }}</div>
                 <div class="wv">{{ '%.1f'|format(d.wave_height) if d.wave_height is not none else '–' }}<span style="font-size:.7rem;font-weight:600;"> m</span></div>
                 <div class="mt-1">{{ rating(d.quality) }}</div>
