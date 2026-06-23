@@ -115,18 +115,55 @@ def _parse_session_form(form):
     return data, None
 
 
+_MES = ['', 'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
+
+
 def _diary_stats(sessions):
-    """Estatísticas agregadas para o cabeçalho do diário."""
+    """Estatísticas agregadas + série mensal + conquistas para o diário."""
+    from collections import Counter
+
     total = len(sessions)
     total_min = sum(s.duration_min or 0 for s in sessions)
     rated = [s.rating for s in sessions if s.rating]
     avg_rating = round(sum(rated) / len(rated), 1) if rated else 0
-    spots = len({(s.spot_id or s.spot_name.lower()) for s in sessions})
+
+    spot_counter = Counter(s.spot_name for s in sessions if s.spot_name)
+    distinct_spots = len({(s.spot_id or (s.spot_name or '').lower()) for s in sessions})
+    fav_spot = spot_counter.most_common(1)[0][0] if spot_counter else None
+    best = max((s.rating or 0 for s in sessions), default=0)
+
+    # Série dos últimos 6 meses (rótulos + contagem)
+    today = datetime.utcnow().date()
+    seq = []
+    for i in range(5, -1, -1):
+        mm, yy = today.month - i, today.year
+        while mm <= 0:
+            mm += 12
+            yy -= 1
+        seq.append((yy, mm))
+    counts = Counter((s.session_date.year, s.session_date.month)
+                     for s in sessions if s.session_date)
+    monthly = {'labels': [_MES[mm] for (_, mm) in seq],
+               'data': [counts.get(key, 0) for key in seq]}
+
+    achievements = [
+        {'label': 'Primeira sessão', 'icon': 'bi-droplet-fill', 'done': total >= 1},
+        {'label': '10 sessões', 'icon': 'bi-collection-fill', 'done': total >= 10},
+        {'label': '50 sessões', 'icon': 'bi-trophy-fill', 'done': total >= 50},
+        {'label': '5 picos diferentes', 'icon': 'bi-geo-alt-fill', 'done': distinct_spots >= 5},
+        {'label': "24h n'água", 'icon': 'bi-stopwatch-fill', 'done': total_min >= 24 * 60},
+        {'label': 'Sessão nota 5', 'icon': 'bi-star-fill', 'done': best >= 5},
+    ]
+
     return {
         'total': total,
         'hours': round(total_min / 60, 1) if total_min else 0,
         'avg_rating': avg_rating,
-        'spots': spots,
+        'spots': distinct_spots,
+        'fav_spot': fav_spot,
+        'best': best,
+        'monthly': monthly,
+        'achievements': achievements,
     }
 
 
@@ -178,13 +215,42 @@ def new_session():
         db.session.add(session)
         from gamification import award
         award(current_user, 'session_log')
+
+        # Cross-post opcional: publica a sessão também no feed
+        if request.form.get('cross_post'):
+            _make_cross_post(session)
+            award(current_user, 'post')
+
         db.session.commit()
 
-        flash('Sessão registrada no seu diário! 🤙', 'success')
+        flash('Sessão registrada no seu diário!', 'success')
         return redirect(url_for('diary.view_session', session_id=session.id))
 
+    # GET: pré-preenche o pico quando vem do detalhe de um pico (?spot_id&spot_name)
     return render_template('diary/form.html', spots=_spots_for_select(),
-                           session=None, form_data=None)
+                           session=None, form_data=(request.args or None))
+
+
+def _make_cross_post(session):
+    """Cria um Post no feed a partir de uma sessão do diário."""
+    from models import Post
+
+    head = f"Sessão em {session.spot_name} — nota {session.rating}/5"
+    if session.conditions:
+        head += f" · {session.conditions_label}"
+    parts = [head]
+    if session.duration_label:
+        parts.append(f"Duração: {session.duration_label}")
+    if session.notes:
+        parts.append(session.notes)
+
+    post = Post(content="\n".join(parts), user_id=session.user_id,
+                spot_id=session.spot_id, post_type='regular')
+    if session.photo_urls:
+        post.image_urls = session.photo_urls
+        post.image_url = session.photo_url
+    db.session.add(post)
+    return post
 
 
 @diary.route('/diary/<int:session_id>')
