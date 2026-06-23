@@ -179,8 +179,9 @@ class ImageProcessor:
         Returns:
             Dict com URLs de todos os tamanhos ou erro
         """
-        # Valida a imagem
-        is_valid, message = cls.validate_image(file)
+        # Valida a imagem (validate_image retorna 3 valores; sem limite de
+        # tamanho — o processamento abaixo já reduz/otimiza)
+        is_valid, message, _img = cls.validate_image(file, check_size=False)
         if not is_valid:
             return {'error': message}
         

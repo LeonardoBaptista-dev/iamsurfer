@@ -73,7 +73,7 @@ def new_post():
                             post.image_hash = file_hash
                             # Mantém compatibilidade com campo antigo
                             post.image_url = urls.get('medium', urls.get('small', ''))
-                            print(f"✅ Imagem processada com sucesso: {len(urls)} tamanhos")
+                            print(f"[img] processada: {len(urls)} tamanhos")
                         else:
                             flash(f"Erro no processamento da imagem: {message}", 'error')
                             db.session.rollback()
@@ -89,7 +89,7 @@ def new_post():
                             post.image_hash = result['hash']
                             # Mantém compatibilidade com campo antigo
                             post.image_url = result['urls'].get('medium', result['urls'].get('small', ''))
-                            print(f"✅ Imagem processada com sucesso: {len(result['urls'])} tamanhos")
+                            print(f"[img] processada (cloud): {len(result['urls'])} tamanhos")
                         else:
                             flash(f"Erro no processamento da imagem: {result.get('error')}", 'error')
                             db.session.rollback()
