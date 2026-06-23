@@ -276,6 +276,11 @@
                     </div>
                     <div class="card-body px-4 pb-4 pt-3">
                         <div class="mb-3">
+                            <select class="form-select border-0 bg-light rounded-3 py-2" id="regionFilter" onchange="onRegionChange()" style="font-size: 0.9rem; color: var(--text-secondary); box-shadow: none;">
+                                <option value="">Todas as Regiões</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
                             <select class="form-select border-0 bg-light rounded-3 py-2" id="countryFilter" onchange="updateStateDropdown(); applyFilters();" style="font-size: 0.9rem; color: var(--text-secondary); box-shadow: none;">
                                 <option value="">Todos os Países</option>
                             </select>
@@ -847,14 +852,53 @@
         }
     });
 
+    // UF -> região (Brasil), para o filtro por região
+    const UF_REGION = {
+        AC: 'Norte', AP: 'Norte', AM: 'Norte', PA: 'Norte', RO: 'Norte', RR: 'Norte', TO: 'Norte',
+        AL: 'Nordeste', BA: 'Nordeste', CE: 'Nordeste', MA: 'Nordeste', PB: 'Nordeste',
+        PE: 'Nordeste', PI: 'Nordeste', RN: 'Nordeste', SE: 'Nordeste',
+        DF: 'Centro-Oeste', GO: 'Centro-Oeste', MT: 'Centro-Oeste', MS: 'Centro-Oeste',
+        ES: 'Sudeste', MG: 'Sudeste', RJ: 'Sudeste', SP: 'Sudeste',
+        PR: 'Sul', RS: 'Sul', SC: 'Sul'
+    };
+    const REGION_ORDER = ['Norte', 'Nordeste', 'Centro-Oeste', 'Sudeste', 'Sul'];
+    function regionOf(uf) { return UF_REGION[(uf || '').toUpperCase()] || ''; }
+
     // Filtros Geográficos e Ordenação
     function initLocationFilters() {
         const countries = [...new Set(spotsData.map(s => s.country).filter(Boolean))].sort();
         const countrySelect = document.getElementById('countryFilter');
-        countrySelect.innerHTML = '<option value="">Todos os Países</option>' + 
+        countrySelect.innerHTML = '<option value="">Todos os Países</option>' +
             countries.map(c => `<option value="${c}">${c}</option>`).join('');
-            
+
+        const regions = [...new Set(spotsData.map(s => regionOf(s.state)).filter(Boolean))]
+            .sort((a, b) => REGION_ORDER.indexOf(a) - REGION_ORDER.indexOf(b));
+        const regionSelect = document.getElementById('regionFilter');
+        if (regionSelect) {
+            regionSelect.innerHTML = '<option value="">Todas as Regiões</option>' +
+                regions.map(r => `<option value="${r}">${r}</option>`).join('');
+        }
+
         renderActiveSpots(spotsData);
+    }
+
+    // Região escolhida: estreita os estados àquela região e refiltra
+    function onRegionChange() {
+        const region = document.getElementById('regionFilter').value;
+        const stateSelect = document.getElementById('stateFilter');
+        const citySelect = document.getElementById('cityFilter');
+        citySelect.innerHTML = '<option value="">Selecione o Estado Primeiro</option>';
+        citySelect.disabled = true;
+        if (region) {
+            const states = [...new Set(spotsData.filter(s => regionOf(s.state) === region)
+                .map(s => s.state).filter(Boolean))].sort();
+            stateSelect.innerHTML = '<option value="">Todos os Estados</option>' +
+                states.map(s => `<option value="${s}">${s}</option>`).join('');
+            stateSelect.disabled = false;
+        } else {
+            updateStateDropdown();
+        }
+        applyFilters();
     }
 
     function updateStateDropdown() {
@@ -931,6 +975,8 @@
     function applyFilters() {
         const difficultyFilter = document.getElementById('difficultyFilter').value;
         const waveTypeFilter = document.getElementById('waveTypeFilter').value;
+        const regionEl = document.getElementById('regionFilter');
+        const regionFilter = regionEl ? regionEl.value : '';
         const countryFilter = document.getElementById('countryFilter').value;
         const stateFilter = document.getElementById('stateFilter').value;
         const cityFilter = document.getElementById('cityFilter').value;
@@ -945,6 +991,7 @@
             if (difficultyFilter && spot.difficulty !== difficultyFilter) show = false;
             if (waveTypeFilter && spot.wave_type !== waveTypeFilter) show = false;
             
+            if (regionFilter && regionOf(spot.state) !== regionFilter) show = false;
             if (countryFilter && spot.country !== countryFilter) show = false;
             if (stateFilter && spot.state !== stateFilter) show = false;
             if (cityFilter && spot.city !== cityFilter) show = false;
@@ -983,7 +1030,9 @@
     function clearFilters() {
         document.getElementById('difficultyFilter').value = '';
         document.getElementById('waveTypeFilter').value = '';
-        
+
+        const regionEl = document.getElementById('regionFilter');
+        if (regionEl) regionEl.value = '';
         document.getElementById('countryFilter').value = '';
         document.getElementById('stateFilter').innerHTML = '<option value="">Selecione o País Primeiro</option>';
         document.getElementById('stateFilter').disabled = true;
