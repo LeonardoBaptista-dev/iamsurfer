@@ -2,16 +2,30 @@
 
 {% block title %}Explorar - IAmSurfer{% endblock %}
 
+{% block styles %}
+<style>
+    .explore-header h2 { font-size: 1.75rem; }
+    .explore-header .ic { font-size: 2rem; }
+    .explore-header .sub { font-size: 1.05rem; }
+    @media (max-width: 575.98px) {
+        .explore-header { margin-bottom: 1.5rem !important; }
+        .explore-header h2 { font-size: 1.35rem; }
+        .explore-header .ic { font-size: 1.4rem; margin-right: .75rem !important; }
+        .explore-header .sub { font-size: .9rem; }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container py-4">
     <!-- Header banner -->
-    <div class="row mb-5">
+    <div class="row mb-5 explore-header">
         <div class="col-12">
             <div class="d-flex align-items-center mb-2">
-                <i class="bi bi-compass-fill me-3" style="font-size: 2rem; color: var(--brand);"></i>
+                <i class="bi bi-compass-fill me-3 ic" style="color: var(--brand);"></i>
                 <h2 class="fw-bolder mb-0" style="color: var(--text-primary); letter-spacing: -0.5px;">Explorar</h2>
             </div>
-            <p class="text-muted ms-1" style="font-size: 1.05rem;">Descubra os posts mais recentes da comunidade surfista</p>
+            <p class="text-muted ms-1 sub">Descubra os posts mais recentes da comunidade surfista</p>
         </div>
     </div>
     
