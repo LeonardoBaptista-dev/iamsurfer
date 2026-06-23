@@ -1,0 +1,263 @@
+{# Barra de Stories + visualizador full-screen (estilo Instagram). Incluído no feed. #}
+<style>
+    .stories-bar { border-radius: 16px; }
+    .stories-scroll {
+        display: flex; gap: 14px; padding: 14px 16px; overflow-x: auto;
+        scrollbar-width: none;
+    }
+    .stories-scroll::-webkit-scrollbar { display: none; }
+    .story-item { flex: 0 0 auto; width: 70px; text-align: center; }
+    .story-ring {
+        position: relative; width: 64px; height: 64px; border-radius: 50%;
+        padding: 3px; margin: 0 auto; cursor: pointer; background: var(--border);
+        display: block; border: none;
+    }
+    .story-ring.unseen { background: linear-gradient(45deg, #f59e0b, #ef4444, #8b5cf6, #6366f1); }
+    .story-ring.seen { background: #cbd5e1; }
+    .story-ring img {
+        width: 100%; height: 100%; border-radius: 50%; object-fit: cover;
+        border: 2.5px solid #fff; background: #fff;
+    }
+    .story-ring .add-badge {
+        position: absolute; right: -2px; bottom: -2px; width: 22px; height: 22px;
+        background: var(--brand); color: #fff; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        border: 2px solid #fff; font-size: .8rem; text-decoration: none;
+    }
+    .story-name {
+        display: block; margin-top: 5px; font-size: .72rem; color: var(--text-secondary);
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+
+    /* Visualizador */
+    .story-viewer {
+        position: fixed; inset: 0; z-index: 1080; background: #000;
+        display: none; flex-direction: column; align-items: center; justify-content: center;
+    }
+    .story-viewer.open { display: flex; }
+    .sv-stage { position: relative; width: 100%; max-width: 460px; height: 100%; background: #000; }
+    .sv-progress { position: absolute; top: 10px; left: 10px; right: 10px; display: flex; gap: 4px; z-index: 5; }
+    .sv-seg { flex: 1; height: 3px; background: rgba(255,255,255,.35); border-radius: 3px; overflow: hidden; }
+    .sv-seg > i { display: block; height: 100%; width: 0; background: #fff; }
+    .sv-header {
+        position: absolute; top: 22px; left: 10px; right: 10px; z-index: 5;
+        display: flex; align-items: center; gap: 9px; color: #fff;
+    }
+    .sv-header img { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; border: 2px solid #fff; }
+    .sv-username { font-weight: 700; font-size: .9rem; }
+    .sv-when { font-size: .75rem; opacity: .8; }
+    .sv-btn { background: none; border: none; color: #fff; font-size: 1.15rem; cursor: pointer; padding: 4px 8px; }
+    .sv-media { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+    .sv-media img, .sv-media video { width: 100%; height: 100%; object-fit: contain; }
+    .sv-nav { position: absolute; top: 0; bottom: 0; width: 35%; z-index: 4; cursor: pointer; }
+    .sv-prev { left: 0; }
+    .sv-next { right: 0; }
+</style>
+
+<div class="stories-bar card mb-4">
+    <div class="stories-scroll">
+        {% set self_entry = (story_bar | selectattr('is_self') | list | first) %}
+        <div class="story-item">
+            <div class="story-ring {{ 'unseen' if self_entry and self_entry.has_unseen else '' }}"
+                {% if self_entry %}data-user-id="{{ self_entry.user_id }}"{% endif %}>
+                <img src="{{ current_user.profile_image_urls|profile_avatar_url if current_user.profile_image_urls else current_user.profile_image|img_url }}"
+                    alt="Seu story">
+                <a href="{{ url_for('stories.new_story') }}" class="add-badge" title="Adicionar story"
+                    onclick="event.stopPropagation();"><i class="bi bi-plus-lg"></i></a>
+            </div>
+            <span class="story-name">Seu story</span>
+        </div>
+
+        {% for entry in story_bar if not entry.is_self %}
+        <div class="story-item">
+            <div class="story-ring {{ 'unseen' if entry.has_unseen else 'seen' }}" data-user-id="{{ entry.user_id }}">
+                <img src="{{ entry.avatar }}" alt="{{ entry.username }}">
+            </div>
+            <span class="story-name">{{ entry.username }}</span>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+{# Dados dos stories para o visualizador #}
+<script id="stories-data" type="application/json">{{ story_bar|tojson }}</script>
+
+{# Visualizador full-screen #}
+<div class="story-viewer" id="story-viewer" aria-hidden="true">
+    <div class="sv-stage">
+        <div class="sv-progress" id="sv-progress"></div>
+        <div class="sv-header">
+            <img id="sv-avatar" src="" alt="">
+            <span class="sv-username" id="sv-username"></span>
+            <span class="sv-when" id="sv-when"></span>
+            <button class="sv-btn ms-auto" id="sv-mute" title="Som"><i class="bi bi-volume-up-fill"></i></button>
+            <form id="sv-delete-form" method="POST" class="d-none">
+                <button type="submit" class="sv-btn" title="Excluir story"
+                    onclick="return confirm('Excluir este story?');"><i class="bi bi-trash"></i></button>
+            </form>
+            <button class="sv-btn" id="sv-close" title="Fechar"><i class="bi bi-x-lg"></i></button>
+        </div>
+        <div class="sv-media" id="sv-media"></div>
+        <div class="sv-nav sv-prev" id="sv-prev"></div>
+        <div class="sv-nav sv-next" id="sv-next"></div>
+    </div>
+</div>
+
+<script>
+(function () {
+    const dataEl = document.getElementById('stories-data');
+    let groups = [];
+    try { groups = JSON.parse(dataEl.textContent) || []; } catch (e) { groups = []; }
+
+    const viewer = document.getElementById('story-viewer');
+    const elProgress = document.getElementById('sv-progress');
+    const elMedia = document.getElementById('sv-media');
+    const elAvatar = document.getElementById('sv-avatar');
+    const elUsername = document.getElementById('sv-username');
+    const elWhen = document.getElementById('sv-when');
+    const elDeleteForm = document.getElementById('sv-delete-form');
+    const elMute = document.getElementById('sv-mute');
+
+    const IMG_MS = 5000;
+    let gi = 0, si = 0;        // índice do grupo (usuário) e do story
+    let timer = null;
+    let muted = false;
+
+    function groupIndexByUser(userId) {
+        return groups.findIndex(g => String(g.user_id) === String(userId));
+    }
+
+    function clearTimer() {
+        if (timer) { clearTimeout(timer); timer = null; }
+        const v = elMedia.querySelector('video');
+        if (v) { v.pause(); }
+        elMedia.innerHTML = '';
+    }
+
+    function buildSegments(n, active) {
+        elProgress.innerHTML = '';
+        for (let i = 0; i < n; i++) {
+            const seg = document.createElement('div');
+            seg.className = 'sv-seg';
+            const fill = document.createElement('i');
+            if (i < active) fill.style.width = '100%';
+            seg.appendChild(fill);
+            elProgress.appendChild(seg);
+        }
+    }
+
+    function animateSegment(durationMs) {
+        const fills = elProgress.querySelectorAll('.sv-seg > i');
+        const fill = fills[si];
+        if (!fill) return;
+        fill.style.transition = 'none';
+        fill.style.width = '0';
+        // força reflow e anima
+        void fill.offsetWidth;
+        fill.style.transition = `width ${durationMs}ms linear`;
+        fill.style.width = '100%';
+    }
+
+    function markSeen(storyId) {
+        fetch('/story/' + storyId + '/seen', {
+            method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        }).catch(() => {});
+    }
+
+    function render() {
+        clearTimer();
+        const group = groups[gi];
+        if (!group) { close(); return; }
+        const story = group.stories[si];
+        if (!story) { close(); return; }
+
+        buildSegments(group.stories.length, si);
+        elAvatar.src = group.avatar;
+        elUsername.textContent = group.username;
+        elWhen.textContent = story.when;
+
+        if (story.can_delete) {
+            elDeleteForm.action = '/story/' + story.id + '/delete';
+            elDeleteForm.classList.remove('d-none');
+        } else {
+            elDeleteForm.classList.add('d-none');
+        }
+
+        if (story.type === 'video') {
+            const v = document.createElement('video');
+            v.src = story.url;
+            v.playsInline = true;
+            v.muted = muted;
+            v.autoplay = true;
+            v.addEventListener('loadedmetadata', () => animateSegment((v.duration || 8) * 1000));
+            v.addEventListener('ended', next);
+            elMedia.appendChild(v);
+            v.play().catch(() => { v.muted = true; muted = true; updateMuteIcon(); v.play().catch(() => {}); });
+        } else {
+            const img = document.createElement('img');
+            img.src = story.url;
+            elMedia.appendChild(img);
+            animateSegment(IMG_MS);
+            timer = setTimeout(next, IMG_MS);
+        }
+
+        markSeen(story.id);
+    }
+
+    function next() {
+        const group = groups[gi];
+        if (group && si < group.stories.length - 1) { si++; render(); return; }
+        if (gi < groups.length - 1) { gi++; si = 0; render(); return; }
+        close();
+    }
+
+    function prev() {
+        if (si > 0) { si--; render(); return; }
+        if (gi > 0) { gi--; si = groups[gi].stories.length - 1; render(); return; }
+        render();
+    }
+
+    function open(userId) {
+        const idx = groupIndexByUser(userId);
+        if (idx < 0 || !groups[idx] || !groups[idx].stories.length) return;
+        gi = idx; si = 0;
+        viewer.classList.add('open');
+        viewer.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+        render();
+    }
+
+    function close() {
+        clearTimer();
+        viewer.classList.remove('open');
+        viewer.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
+    }
+
+    function updateMuteIcon() {
+        elMute.innerHTML = muted ? '<i class="bi bi-volume-mute-fill"></i>' : '<i class="bi bi-volume-up-fill"></i>';
+    }
+
+    // Abrir ao clicar nos anéis (que têm data-user-id)
+    document.querySelectorAll('.story-ring[data-user-id]').forEach(ring => {
+        ring.addEventListener('click', () => open(ring.dataset.userId));
+    });
+
+    document.getElementById('sv-next').addEventListener('click', next);
+    document.getElementById('sv-prev').addEventListener('click', prev);
+    document.getElementById('sv-close').addEventListener('click', close);
+    elMute.addEventListener('click', (e) => {
+        e.stopPropagation();
+        muted = !muted;
+        const v = elMedia.querySelector('video');
+        if (v) v.muted = muted;
+        updateMuteIcon();
+    });
+    document.addEventListener('keydown', (e) => {
+        if (!viewer.classList.contains('open')) return;
+        if (e.key === 'Escape') close();
+        else if (e.key === 'ArrowRight') next();
+        else if (e.key === 'ArrowLeft') prev();
+    });
+})();
+</script>

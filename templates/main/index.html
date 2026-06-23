@@ -133,6 +133,11 @@
         </div>
         {% endif %}
 
+        <!-- Stories Bar -->
+        {% if current_user.is_authenticated and story_bar is defined %}
+            {% include 'main/story_bar.html' %}
+        {% endif %}
+
         <!-- Feed Items -->
         {% if feed_items %}
         <div id="feed-container">

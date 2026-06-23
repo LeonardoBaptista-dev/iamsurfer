@@ -230,37 +230,74 @@ class ImageProcessor:
             return {'error': f'Erro no processamento: {str(e)}'}
 
     @classmethod
-    def process_and_upload_video(cls, file: FileStorage, post_id: int) -> Dict[str, str]:
+    def process_and_upload_video(cls, file: FileStorage, post_id: int, is_reel: bool = False) -> Dict[str, str]:
         """
-        Faz upload do vídeo enviando parâmetros de otimização nativos para o Cloudinary
-        (Ex: converter para MP4, reduzir para no máximo 720p para economizar dados)
+        Comprime o vídeo localmente (FFmpeg, ~8MB no máximo) ANTES de subir e só
+        então envia o arquivo já reduzido ao Cloudinary. Isso evita que o
+        Cloudinary guarde o arquivo original gigante do celular e estoure a cota.
+
+        Se o FFmpeg não estiver disponível, faz fallback subindo o original com
+        um limite de resolução do próprio Cloudinary.
         """
+        import os
         import uuid
-        
+        import tempfile
+        from video_utils import compress_video, ffmpeg_available
+
+        unique_id = f"video_post_{post_id}_{uuid.uuid4().hex[:8]}"
+        tmp_dir = tempfile.mkdtemp(prefix="iamsurfer_vid_")
+        raw_ext = (file.filename.rsplit('.', 1)[-1].lower() if '.' in (file.filename or '') else 'mp4')
+        raw_path = os.path.join(tmp_dir, f"raw_{unique_id}.{raw_ext}")
+        out_path = os.path.join(tmp_dir, f"out_{unique_id}.mp4")
+
+        def _cleanup():
+            for p in (raw_path, out_path):
+                if os.path.exists(p):
+                    try:
+                        os.remove(p)
+                    except OSError:
+                        pass
+            try:
+                os.rmdir(tmp_dir)
+            except OSError:
+                pass
+
         try:
-            # ID único para o vídeo
-            unique_id = f"video_post_{post_id}_{uuid.uuid4().hex[:8]}"
-            
-            # Parametros para tratar o video (otimizando auto formato e limite 720p)
+            file.seek(0)
+            file.save(raw_path)
+
+            upload_path = raw_path
+            extra = {}
+
+            if ffmpeg_available():
+                ok, msg = compress_video(raw_path, out_path, target_mb=8, is_reel=is_reel)
+                print(f"[video] {msg}")
+                if ok and os.path.exists(out_path):
+                    upload_path = out_path
+                else:
+                    # Compressão falhou: deixa o Cloudinary ao menos limitar a resolução
+                    extra = {"eager": [{"width": 1280, "crop": "limit"}], "eager_async": True}
+            else:
+                print("[video] FFmpeg indisponível — subindo original com limite do Cloudinary")
+                extra = {"eager": [{"width": 1280, "crop": "limit"}], "eager_async": True}
+
             result = cloudinary.uploader.upload(
-                file,
+                upload_path,
                 resource_type="video",
                 public_id=unique_id,
                 folder="iamsurfer/posts/videos",
-                eager=[
-                    {"width": 720, "crop": "limit"}
-                ],
-                eager_async=True
+                **extra,
             )
-            
+
             url = result.get('secure_url')
             if url:
                 return {'success': True, 'url': url}
-            else:
-                return {'error': 'Falha na resposta ao enviar vídeo para Cloudinary'}
-                
+            return {'error': 'Falha na resposta ao enviar vídeo para Cloudinary'}
+
         except Exception as e:
             return {'error': f'Erro no processamento de vídeo: {str(e)}'}
+        finally:
+            _cleanup()
 
 class ResponsiveImageHelper:
     """

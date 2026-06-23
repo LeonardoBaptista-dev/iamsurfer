@@ -2,6 +2,15 @@
 
 {% block title %}Participar de Carona - IAmSurfer{% endblock %}
 
+{% block styles %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+<style>
+    #meet-map { height: 320px; border-radius: 14px; z-index: 1; }
+    .map-pin { font-size: 1.6rem; line-height: 1; text-align: center; filter: drop-shadow(0 1px 2px rgba(0,0,0,.4)); }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="col-lg-8 mx-auto">
 
@@ -22,28 +31,31 @@
                 <span><i class="bi bi-people me-1"></i>{{ trip.get_available_seats() }} vagas</span>
                 {% if trip.contribution %}<span><i class="bi bi-cash-coin me-1"></i>R$ {{ trip.contribution|round(2) }}</span>{% endif %}
             </div>
-            <hr style="border-color:var(--border);">
-            <a href="{{ url_for('main.user_profile', username=trip.creator.username) }}" class="dm-row p-0 text-decoration-none" style="border:none;">
-                <img src="{{ trip.creator.profile_image_urls|profile_thumbnail_url if trip.creator.profile_image_urls else trip.creator.profile_image|img_url }}" class="dm-avatar" style="width:42px;height:42px;">
-                <div>
-                    <div class="dm-name" style="font-size:.88rem;">Organizado por {{ trip.creator.username }}</div>
-                    <span class="dm-preview">{{ trip.creator.location or 'Brasil' }}</span>
-                </div>
-            </a>
         </div>
     </div>
 
     <div class="card mb-5">
         <div class="card-body p-4">
-            <h6 style="font-weight:700;margin-bottom:14px;">Solicitar participação</h6>
-            <form method="POST">
+            <h6 style="font-weight:700;margin-bottom:6px;">Onde você quer ser pego(a)?</h6>
+            <p class="text-muted small">Marque no mapa seu ponto de encontro. O organizador vê sua localização para aprovar.</p>
+
+            <form method="POST" id="join-form">
+                <div class="d-flex justify-content-end mb-2">
+                    <button type="button" class="btn btn-sm btn-light" id="btn-geo"><i class="bi bi-crosshair"></i> Minha localização</button>
+                </div>
+                <div id="meet-map" class="mb-2"></div>
+                <input type="text" class="form-control form-control-sm mb-3" id="meeting_label" name="meeting_label"
+                    placeholder="Seu ponto de encontro (clique no mapa)" readonly>
+                <input type="hidden" id="meeting_lat" name="meeting_lat">
+                <input type="hidden" id="meeting_lng" name="meeting_lng">
+
                 <div class="mb-3">
                     <label for="message" class="form-label">Mensagem para o organizador (opcional)</label>
                     <textarea name="message" id="message" class="form-control" rows="3"
                         placeholder="Ex: levo minha prancha, posso ajudar no combustível..."></textarea>
                 </div>
                 <div class="alert alert-info" style="font-size:.85rem;">
-                    <i class="bi bi-info-circle me-1"></i> Sua solicitação será enviada ao organizador. Você será notificado quando for aprovada.
+                    <i class="bi bi-info-circle me-1"></i> Sua solicitação (com o ponto de encontro) será enviada ao organizador.
                 </div>
                 <div class="d-flex justify-content-end gap-2">
                     <a href="{{ url_for('trips.view_trip', trip_id=trip.id) }}" class="btn btn-secondary">Voltar</a>
@@ -54,4 +66,70 @@
     </div>
 
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const depLat = {{ trip.departure_lat or 'null' }};
+    const depLng = {{ trip.departure_lng or 'null' }};
+    const destLat = {{ trip.destination_lat or 'null' }};
+    const destLng = {{ trip.destination_lng or 'null' }};
+
+    const center = (depLat !== null && depLng !== null) ? [depLat, depLng] : [-27.6, -48.55];
+    const map = L.map('meet-map').setView(center, 12);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' }).addTo(map);
+
+    const pin = (emoji) => L.divIcon({ className: '', html: `<div class="map-pin">${emoji}</div>`, iconSize: [28, 28], iconAnchor: [14, 26] });
+
+    // Contexto: partida e destino da carona
+    if (depLat !== null) L.marker([depLat, depLng], { icon: pin('🚗') }).addTo(map).bindPopup('Partida da carona');
+    if (destLat !== null) L.marker([destLat, destLng], { icon: pin('🏄') }).addTo(map).bindPopup('Destino');
+
+    const latEl = document.getElementById('meeting_lat');
+    const lngEl = document.getElementById('meeting_lng');
+    const labelEl = document.getElementById('meeting_label');
+    let marker = null;
+
+    async function reverseGeocode(lat, lng) {
+        labelEl.value = `Carregando... (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
+        try {
+            const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=16`, { headers: { 'Accept': 'application/json' } });
+            const d = await r.json();
+            labelEl.value = d.display_name ? d.display_name.split(',').slice(0, 3).join(', ') : `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+        } catch (e) { labelEl.value = `${lat.toFixed(5)}, ${lng.toFixed(5)}`; }
+    }
+
+    function place(lat, lng) {
+        latEl.value = lat; lngEl.value = lng;
+        if (marker) marker.setLatLng([lat, lng]);
+        else {
+            marker = L.marker([lat, lng], { icon: pin('📍'), draggable: true }).addTo(map);
+            marker.on('dragend', (e) => { const p = e.target.getLatLng(); latEl.value = p.lat; lngEl.value = p.lng; reverseGeocode(p.lat, p.lng); });
+        }
+        reverseGeocode(lat, lng);
+    }
+
+    map.on('click', (e) => place(e.latlng.lat, e.latlng.lng));
+
+    document.getElementById('btn-geo').addEventListener('click', () => {
+        if (!navigator.geolocation) return alert('Geolocalização não suportada.');
+        navigator.geolocation.getCurrentPosition((pos) => {
+            map.setView([pos.coords.latitude, pos.coords.longitude], 15);
+            place(pos.coords.latitude, pos.coords.longitude);
+        }, () => alert('Não foi possível obter sua localização.'));
+    });
+
+    document.getElementById('join-form').addEventListener('submit', (e) => {
+        if (!latEl.value || !lngEl.value) {
+            e.preventDefault();
+            alert('Marque no mapa onde você quer ser pego(a).');
+        }
+    });
+
+    setTimeout(() => map.invalidateSize(), 200);
+});
+</script>
 {% endblock %}

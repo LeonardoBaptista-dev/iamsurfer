@@ -184,7 +184,7 @@ class Post(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     # Spot tagging: post pode ser vinculado a um pico de surf (opcional)
     spot_id = db.Column(db.Integer, db.ForeignKey('spot.id'), nullable=True)
-    post_type = db.Column(db.String(20), default='regular')  # regular, spot_report, spot_photo
+    post_type = db.Column(db.String(20), default='regular')  # regular, spot_photo, reel
     
     __table_args__ = (
         db.Index('idx_post_user_time', 'user_id', 'created_at'),
@@ -198,7 +198,12 @@ class Post(db.Model):
     @property
     def date_posted(self):
         return self.created_at
-    
+
+    @property
+    def is_reel(self):
+        """True se for um Reel (vídeo vertical em feed dedicado)."""
+        return self.post_type == 'reel' and bool(self.video_url)
+
     @property
     def has_multiple_images(self):
         """Verifica se o post tem o novo sistema de múltiplas imagens"""
@@ -316,12 +321,19 @@ class SurfTrip(db.Model):
     
     # Informações de origem e destino
     departure_location = db.Column(db.String(100), nullable=False)
-    
-    # Manter o relacionamento existente
-    destination_id = db.Column(db.Integer, db.ForeignKey('surf_spot.id'), nullable=False)
+
+    # Coordenadas escolhidas no mapa (partida e destino)
+    departure_lat = db.Column(db.Float, nullable=True)
+    departure_lng = db.Column(db.Float, nullable=True)
+    destination_lat = db.Column(db.Float, nullable=True)
+    destination_lng = db.Column(db.Float, nullable=True)
+
+    # destination_id mantido por compatibilidade; agora o destino vem do mapa
+    # (destination_text + destination_lat/lng). Pode ser nulo em bancos novos.
+    destination_id = db.Column(db.Integer, db.ForeignKey('surf_spot.id'), nullable=True)
     destination = db.relationship('SurfSpot', backref='trips')
-    
-    # Adicionar o campo de texto para destino livre
+
+    # Texto do destino (rótulo do ponto escolhido no mapa)
     destination_text = db.Column(db.String(100), nullable=True)
     
     # Informações de horários
@@ -385,7 +397,12 @@ class TripParticipant(db.Model):
     
     # Mensagem opcional do participante
     message = db.Column(db.Text)
-    
+
+    # Ponto de encontro marcado pelo passageiro no mapa (para o criador aprovar)
+    meeting_lat = db.Column(db.Float, nullable=True)
+    meeting_lng = db.Column(db.Float, nullable=True)
+    meeting_label = db.Column(db.String(200), nullable=True)
+
     __table_args__ = (db.UniqueConstraint('trip_id', 'user_id', name='_trip_user_uc'),)
     
     def __repr__(self):
@@ -708,3 +725,48 @@ class Coupon(db.Model):
 
     def __repr__(self):
         return f'<Coupon {self.code}>'
+
+
+class Story(db.Model):
+    """Story efêmero estilo Instagram: imagem ou vídeo que expira em 24h."""
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    media_url = db.Column(db.String(500), nullable=False)
+    media_type = db.Column(db.String(10), nullable=False, default='image')  # image | video
+    # public_id do Cloudinary (para apagar a mídia quando o story expira e não estourar a cota)
+    cloud_public_id = db.Column(db.String(255), nullable=True)
+    cloud_resource_type = db.Column(db.String(10), nullable=True)  # image | video
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    expires_at = db.Column(db.DateTime, nullable=False)
+
+    author = db.relationship('User', backref=db.backref('stories', lazy='dynamic', cascade='all, delete-orphan'))
+    views = db.relationship('StoryView', backref='story', lazy='dynamic', cascade='all, delete-orphan')
+
+    @property
+    def is_active(self):
+        return self.expires_at > datetime.utcnow()
+
+    @property
+    def display_media_url(self):
+        """URL pronta para exibição (Cloudinary = absoluta; local = via /static)."""
+        u = self.media_url or ''
+        if u.startswith('http://') or u.startswith('https://') or 'cloudinary.com' in u:
+            return u
+        from flask import url_for
+        return url_for('static', filename=u)
+
+    def __repr__(self):
+        return f'<Story {self.id} u{self.user_id} {self.media_type}>'
+
+
+class StoryView(db.Model):
+    """Registro de que um usuário visualizou um story (para o anel visto/não-visto)."""
+    id = db.Column(db.Integer, primary_key=True)
+    story_id = db.Column(db.Integer, db.ForeignKey('story.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    viewed_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    __table_args__ = (db.UniqueConstraint('story_id', 'user_id', name='uq_story_view'),)
+
+    def __repr__(self):
+        return f'<StoryView s{self.story_id} u{self.user_id}>'

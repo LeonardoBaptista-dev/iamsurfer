@@ -2,6 +2,18 @@
 
 {% block title %}Criar Carona - IAmSurfer{% endblock %}
 
+{% block styles %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+<style>
+    #trip-map { height: 360px; border-radius: 14px; z-index: 1; }
+    .map-pin { font-size: 1.6rem; line-height: 1; text-align: center; filter: drop-shadow(0 1px 2px rgba(0,0,0,.4)); }
+    .point-toggle .btn { font-weight: 600; }
+    .point-row { display: flex; align-items: center; gap: 8px; font-size: .85rem; }
+    .point-row .dot { width: 10px; height: 10px; border-radius: 50%; flex: 0 0 auto; }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container">
     <div class="row justify-content-center">
@@ -9,11 +21,11 @@
             <h4 class="mb-1" style="font-weight:700;letter-spacing:-.3px;">
                 <i class="bi bi-car-front-fill me-1" style="color:var(--brand);"></i> Criar carona para surf
             </h4>
-            <p class="text-muted mb-4" style="font-size:.9rem;">Ofereça uma carona para outros surfistas.</p>
+            <p class="text-muted mb-4" style="font-size:.9rem;">Marque a <strong>partida</strong> e o <strong>destino</strong> direto no mapa.</p>
 
             <div class="card mb-4">
                 <div class="card-body p-4">
-                    <form method="POST">
+                    <form method="POST" id="trip-form">
                         {{ form.csrf_token }}
 
                         <div class="mb-3">
@@ -22,25 +34,39 @@
                             {% for error in form.title.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
                         </div>
 
-                        <div class="row g-3 mb-3">
-                            <div class="col-md-6">
-                                <label for="departure_location" class="form-label">Local de saída</label>
-                                {{ form.departure_location(class="form-control", placeholder="Ex: Centro da cidade") }}
-                                {% for error in form.departure_location.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
-                            </div>
-                            <div class="col-md-6">
-                                <label for="destination_id" class="form-label">Destino (pico registrado)</label>
-                                {{ form.destination_id(class="form-select") }}
-                                {% for error in form.destination_id.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
-                            </div>
+                        <!-- Seletor de ponto no mapa -->
+                        <label class="form-label">Trajeto no mapa</label>
+                        <div class="btn-group point-toggle w-100 mb-2" role="group">
+                            <button type="button" class="btn btn-success" id="btn-departure" data-mode="departure">
+                                <i class="bi bi-geo-alt-fill"></i> Marcar partida
+                            </button>
+                            <button type="button" class="btn btn-outline-danger" id="btn-destination" data-mode="destination">
+                                <i class="bi bi-flag-fill"></i> Marcar destino
+                            </button>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <small class="text-muted" id="map-hint">Clique no mapa para marcar a <strong>partida</strong>.</small>
+                            <button type="button" class="btn btn-sm btn-light" id="btn-geo"><i class="bi bi-crosshair"></i> Minha localização</button>
                         </div>
 
-                        <div class="mb-3">
-                            <label for="destination_text" class="form-label">Ou digite um destino personalizado</label>
-                            {{ form.destination_text(class="form-control", placeholder="Ex: Praia do Campeche") }}
-                            <div class="form-text">Se preenchido, será exibido no lugar do pico registrado.</div>
-                            {% for error in form.destination_text.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+                        <div id="trip-map" class="mb-2"></div>
+
+                        <div class="point-row mb-1">
+                            <span class="dot" style="background:#198754;"></span>
+                            {{ form.departure_location(class="form-control form-control-sm", id="departure_location", placeholder="Partida (clique no mapa)", readonly=true) }}
                         </div>
+                        <div class="point-row mb-3">
+                            <span class="dot" style="background:#dc3545;"></span>
+                            {{ form.destination_text(class="form-control form-control-sm", id="destination_text", placeholder="Destino (clique no mapa)", readonly=true) }}
+                        </div>
+                        {% for f in [form.departure_location, form.destination_text, form.departure_lat, form.departure_lng, form.destination_lat, form.destination_lng] %}
+                            {% for error in f.errors %}<div class="text-danger small mb-2">{{ f.label.text }}: {{ error }}</div>{% endfor %}
+                        {% endfor %}
+
+                        {{ form.departure_lat(type="hidden", id="departure_lat") }}
+                        {{ form.departure_lng(type="hidden", id="departure_lng") }}
+                        {{ form.destination_lat(type="hidden", id="destination_lat") }}
+                        {{ form.destination_lng(type="hidden", id="destination_lng") }}
 
                         <div class="row g-3 mb-3">
                             <div class="col-md-6">
@@ -64,12 +90,10 @@
                             <div class="col-md-4">
                                 <label for="contribution" class="form-label">Contribuição (R$)</label>
                                 {{ form.contribution(class="form-control", placeholder="Ex: 25.00") }}
-                                {% for error in form.contribution.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
                             </div>
                             <div class="col-md-4">
                                 <label for="vehicle_info" class="form-label">Veículo</label>
                                 {{ form.vehicle_info(class="form-control", placeholder="Ex: Gol Prata") }}
-                                {% for error in form.vehicle_info.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
                             </div>
                         </div>
 
@@ -90,19 +114,95 @@
                     </form>
                 </div>
             </div>
-
-            <div class="card mb-5" style="background:var(--brand-faint);border-color:var(--brand-faint);">
-                <div class="card-body p-3">
-                    <h6 style="font-weight:700;color:var(--brand);margin-bottom:10px;"><i class="bi bi-lightbulb me-1"></i> Dicas</h6>
-                    <ul class="list-unstyled mb-0" style="font-size:.85rem;color:var(--text-secondary);">
-                        <li class="mb-1"><i class="bi bi-check-circle-fill me-2" style="color:var(--brand-light);"></i> Seja claro sobre o ponto de encontro</li>
-                        <li class="mb-1"><i class="bi bi-check-circle-fill me-2" style="color:var(--brand-light);"></i> Defina um valor justo de contribuição</li>
-                        <li class="mb-1"><i class="bi bi-check-circle-fill me-2" style="color:var(--brand-light);"></i> Diga se há espaço para pranchas</li>
-                        <li><i class="bi bi-check-circle-fill me-2" style="color:var(--brand-light);"></i> Informe se a carona inclui retorno</li>
-                    </ul>
-                </div>
-            </div>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const map = L.map('trip-map').setView([-27.6, -48.55], 11); // Floripa por padrão
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19, attribution: '© OpenStreetMap'
+    }).addTo(map);
+
+    const icon = (emoji) => L.divIcon({ className: '', html: `<div class="map-pin">${emoji}</div>`, iconSize: [28, 28], iconAnchor: [14, 26] });
+    const ICONS = { departure: icon('🚗'), destination: icon('🏄') };
+
+    const F = {
+        departure: { lat: document.getElementById('departure_lat'), lng: document.getElementById('departure_lng'), label: document.getElementById('departure_location') },
+        destination: { lat: document.getElementById('destination_lat'), lng: document.getElementById('destination_lng'), label: document.getElementById('destination_text') },
+    };
+    const markers = { departure: null, destination: null };
+    let mode = 'departure';
+
+    const hint = document.getElementById('map-hint');
+    const btnDep = document.getElementById('btn-departure');
+    const btnDest = document.getElementById('btn-destination');
+
+    function setMode(m) {
+        mode = m;
+        btnDep.className = 'btn ' + (m === 'departure' ? 'btn-success' : 'btn-outline-success');
+        btnDest.className = 'btn ' + (m === 'destination' ? 'btn-danger' : 'btn-outline-danger');
+        hint.innerHTML = `Clique no mapa para marcar ${m === 'departure' ? 'a <strong>partida</strong>' : 'o <strong>destino</strong>'}.`;
+    }
+    btnDep.addEventListener('click', () => setMode('departure'));
+    btnDest.addEventListener('click', () => setMode('destination'));
+
+    async function reverseGeocode(lat, lng, labelEl) {
+        labelEl.value = `Carregando... (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
+        try {
+            const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=16&addressdetails=1`, {
+                headers: { 'Accept': 'application/json' }
+            });
+            const data = await r.json();
+            labelEl.value = data.display_name ? data.display_name.split(',').slice(0, 3).join(', ') : `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+        } catch (e) {
+            labelEl.value = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+        }
+    }
+
+    function place(m, lat, lng, geocode = true) {
+        F[m].lat.value = lat;
+        F[m].lng.value = lng;
+        if (markers[m]) {
+            markers[m].setLatLng([lat, lng]);
+        } else {
+            markers[m] = L.marker([lat, lng], { icon: ICONS[m], draggable: true }).addTo(map);
+            markers[m].on('dragend', (e) => { const p = e.target.getLatLng(); F[m].lat.value = p.lat; F[m].lng.value = p.lng; reverseGeocode(p.lat, p.lng, F[m].label); });
+        }
+        if (geocode) reverseGeocode(lat, lng, F[m].label);
+    }
+
+    map.on('click', (e) => {
+        place(mode, e.latlng.lat, e.latlng.lng);
+        // Após marcar a partida, já sugere marcar o destino
+        if (mode === 'departure') setMode('destination');
+    });
+
+    document.getElementById('btn-geo').addEventListener('click', () => {
+        if (!navigator.geolocation) return alert('Geolocalização não suportada.');
+        navigator.geolocation.getCurrentPosition((pos) => {
+            const { latitude, longitude } = pos.coords;
+            map.setView([latitude, longitude], 14);
+            place('departure', latitude, longitude);
+            setMode('destination');
+        }, () => alert('Não foi possível obter sua localização.'));
+    });
+
+    // Restaura marcadores se o form voltou com erro
+    ['departure', 'destination'].forEach(m => {
+        const lat = parseFloat(F[m].lat.value), lng = parseFloat(F[m].lng.value);
+        if (!isNaN(lat) && !isNaN(lng)) place(m, lat, lng, false);
+    });
+
+    setMode('departure');
+
+    // Garante que o mapa renderize corretamente dentro do card
+    setTimeout(() => map.invalidateSize(), 200);
+});
+</script>
 {% endblock %}

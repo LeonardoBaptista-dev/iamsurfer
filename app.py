@@ -26,8 +26,12 @@ app.config['SQLALCHEMY_DATABASE_URI'] = database_url or 'sqlite:///iamsurfer.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = os.path.join(app.root_path, 'static/uploads')
 
-# Aumenta o limite máximo de upload para 16MB
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
+# Limite máximo do request. Vídeos de celular chegam grandes (serão comprimidos
+# no servidor antes de subir ao Cloudinary), então deixamos folga aqui.
+# Imagens continuam validadas separadamente a 10MB nos processadores.
+app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100MB
+# Tamanho máximo aceito de um vídeo enviado (antes da compressão).
+app.config['MAX_VIDEO_UPLOAD_SIZE'] = 100 * 1024 * 1024  # 100MB
 
 # Verificar se está em ambiente de produção (Render)
 is_production = os.environ.get('RENDER', False) or os.environ.get('FLASK_ENV') == 'production'
@@ -336,6 +340,7 @@ def register_blueprints():
     from routes.messages import messages
     from routes.trips import trips
     from routes.spots import spots
+    from routes.stories import stories
     app.register_blueprint(auth)
     app.register_blueprint(main)
     app.register_blueprint(posts)
@@ -343,6 +348,7 @@ def register_blueprints():
     app.register_blueprint(messages)
     app.register_blueprint(trips)
     app.register_blueprint(spots)
+    app.register_blueprint(stories)
 
 register_blueprints()
 

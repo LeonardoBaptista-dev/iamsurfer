@@ -106,10 +106,14 @@ def index():
     # Lista de picos para o formulário de novo post (spot tagging)
     spots = Spot.query.filter_by(status='approved', is_active=True).order_by(Spot.name).all()
 
+    from routes.stories import build_story_bar
+    story_bar = build_story_bar(current_user)
+
     return render_template('main/index.html',
                            feed_items=feed_items,
                            suggested_users=suggested_users,
-                           spots=spots)
+                           spots=spots,
+                           story_bar=story_bar)
 
 @main.route('/home')
 @login_required
@@ -125,10 +129,13 @@ def home():
     users_not_following = User.query.filter(~User.id.in_(following_ids), User.id != current_user.id).all()
     suggested_users = random.sample(users_not_following, min(5, len(users_not_following))) if users_not_following else []
     spots = Spot.query.filter_by(status='approved', is_active=True).order_by(Spot.name).all()
+    from routes.stories import build_story_bar
+    story_bar = build_story_bar(current_user)
     return render_template('main/index.html',
                            feed_items=feed_items,
                            suggested_users=suggested_users,
-                           spots=spots)
+                           spots=spots,
+                           story_bar=story_bar)
 
 @main.route('/api/feed')
 @login_required
@@ -154,6 +161,16 @@ def api_feed():
 def explore():
     posts = Post.query.order_by(desc(Post.created_at)).limit(50).all()
     return render_template('main/explore.html', posts=posts)
+
+@main.route('/reels')
+@login_required
+def reels():
+    """Feed vertical dedicado de Reels (vídeos 9:16), estilo Instagram/TikTok."""
+    reel_posts = Post.query.filter(
+        Post.post_type == 'reel',
+        Post.video_url.isnot(None),
+    ).order_by(desc(Post.created_at)).all()
+    return render_template('main/reels.html', reels=reel_posts)
 
 @main.route('/user/<username>')
 def user_profile(username):

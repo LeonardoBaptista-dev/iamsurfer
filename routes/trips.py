@@ -12,14 +12,17 @@ trips = Blueprint('trips', __name__)
 
 class SurfTripForm(FlaskForm):
     title = StringField('Título', validators=[DataRequired()])
+
+    # Rótulos (preenchidos pelo mapa via reverse-geocode ou coordenadas)
     departure_location = StringField('Local de Partida', validators=[DataRequired()])
-    
-    # Manter o campo SelectField para compatibilidade
-    destination_id = SelectField('Destino (Spot registrado)', coerce=int, validators=[DataRequired()])
-    
-    # Adicionar campo de texto para destino personalizado
-    destination_text = StringField('Ou digite um destino personalizado', validators=[Optional()])
-    
+    destination_text = StringField('Destino', validators=[DataRequired()])
+
+    # Coordenadas escolhidas no mapa (obrigatórias — partida e destino)
+    departure_lat = FloatField('Lat partida', validators=[DataRequired()])
+    departure_lng = FloatField('Lng partida', validators=[DataRequired()])
+    destination_lat = FloatField('Lat destino', validators=[DataRequired()])
+    destination_lng = FloatField('Lng destino', validators=[DataRequired()])
+
     departure_time = DateTimeField('Hora de Saída', format='%Y-%m-%dT%H:%M', validators=[DataRequired()])
     return_time = DateTimeField('Hora de Retorno (opcional)', format='%Y-%m-%dT%H:%M', validators=[Optional()])
     description = TextAreaField('Descrição', validators=[Optional()])
@@ -43,21 +46,22 @@ def list_trips():
 @login_required
 def create_trip():
     form = SurfTripForm()
-    
-    # Carregar os destinos para o select field (manter para compatibilidade)
-    form.destination_id.choices = [(spot.id, f"{spot.name} - {spot.location}") 
-                                  for spot in SurfSpot.query.order_by(SurfSpot.name).all()]
-    
+
     if form.validate_on_submit():
-        # Obter o primeiro spot como padrão (ou outro spot de sua escolha)
-        default_spot = SurfSpot.query.first()
-        
+        # Compatibilidade: a coluna destination_id pode ser NOT NULL em bancos
+        # antigos. O destino real agora vem do mapa (lat/lng + texto); usamos um
+        # spot de fallback só para satisfazer a constraint legada.
+        fallback_spot = SurfSpot.query.first()
         trip = SurfTrip(
             title=form.title.data,
             creator_id=current_user.id,
             departure_location=form.departure_location.data,
-            destination_id=form.destination_id.data,  # Manter o campo destination_id
-            destination_text=form.destination_text.data,  # Adicionar o campo destination_text
+            departure_lat=form.departure_lat.data,
+            departure_lng=form.departure_lng.data,
+            destination_lat=form.destination_lat.data,
+            destination_lng=form.destination_lng.data,
+            destination_id=fallback_spot.id if fallback_spot else None,
+            destination_text=form.destination_text.data,
             departure_time=form.departure_time.data,
             return_time=form.return_time.data,
             description=form.description.data,
@@ -66,7 +70,7 @@ def create_trip():
             vehicle_info=form.vehicle_info.data,
             intermediate_stops=form.intermediate_stops.data
         )
-        
+
         db.session.add(trip)
         # Gamificação: XP por oferecer uma carona
         from gamification import award
@@ -134,17 +138,35 @@ def join_trip(trip_id):
     
     if request.method == 'POST':
         message = request.form.get('message', '')
-        
+
+        # Ponto de encontro marcado no mapa pelo passageiro
+        def _to_float(v):
+            try:
+                return float(v) if v not in (None, '') else None
+            except (TypeError, ValueError):
+                return None
+
+        meeting_lat = _to_float(request.form.get('meeting_lat'))
+        meeting_lng = _to_float(request.form.get('meeting_lng'))
+        meeting_label = (request.form.get('meeting_label') or '').strip() or None
+
+        if meeting_lat is None or meeting_lng is None:
+            flash('Marque no mapa onde você quer ser pego(a).', 'danger')
+            return redirect(url_for('trips.join_trip', trip_id=trip.id))
+
         participant = TripParticipant(
             trip_id=trip.id,
             user_id=current_user.id,
             message=message,
+            meeting_lat=meeting_lat,
+            meeting_lng=meeting_lng,
+            meeting_label=meeting_label,
             status='Pending'  # Aguarda confirmação do criador
         )
-        
+
         db.session.add(participant)
         db.session.commit()
-        
+
         flash('Sua solicitação foi enviada e aguarda aprovação do organizador!', 'success')
         return redirect(url_for('trips.view_trip', trip_id=trip.id))
     

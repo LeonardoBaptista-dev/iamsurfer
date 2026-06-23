@@ -266,69 +266,50 @@ class LocalImageProcessor:
             print(f"Erro ao deletar arquivos: {e}")
             
     @staticmethod
-    def process_and_save_video(file: FileStorage) -> Tuple[bool, str, Optional[str]]:
+    def process_and_save_video(file: FileStorage, is_reel: bool = False) -> Tuple[bool, str, Optional[str]]:
         """
-        Processa vídeo localmente.
-        Tenta comprimir via FFmpeg reduzindo resolução (máx 720p) e bitrate.
-        Caso o FFmpeg não esteja disponível na máquina local, salva o arquivo bruto (fallback).
+        Processa vídeo localmente, comprimindo via FFmpeg (alvo ~8MB) usando o
+        utilitário compartilhado video_utils. Se o FFmpeg não estiver disponível
+        na máquina de dev, salva o arquivo bruto (fallback).
         """
-        import subprocess
         from werkzeug.utils import secure_filename
-        
+        from video_utils import compress_video
+
         if not file:
             return False, "Nenhum arquivo fornecido", None
-            
+
         try:
-            # Garante que as pastas existam
             video_folder = os.path.join(current_app.root_path, 'static', 'uploads', 'videos')
             os.makedirs(video_folder, exist_ok=True)
-            
-            # Gera nome seguro com UUID
-            filename = secure_filename(file.filename)
-            unique_name = f"{uuid.uuid4().hex}_{filename}"
+
+            # Nome final sempre .mp4 (a compressão normaliza o container)
+            base = secure_filename(os.path.splitext(file.filename)[0]) or 'video'
+            unique_name = f"{uuid.uuid4().hex}_{base}.mp4"
             final_path = os.path.join(video_folder, unique_name)
-            
-            # Caminho temporário para o FFmpeg processar
-            temp_path = os.path.join(video_folder, f"temp_{unique_name}")
+            relative_path = f"uploads/videos/{unique_name}"
+
+            # Salva o arquivo bruto num temporário
+            temp_path = os.path.join(video_folder, f"temp_{uuid.uuid4().hex}")
             file.seek(0)
             file.save(temp_path)
-            
-            relative_path = f"uploads/videos/{unique_name}"
-            
-            # Tenta compressão via FFmpeg
+
             try:
-                # Comando FFmpeg: resolução para 720p máx (mantendo o aspect ratio), codec h264, bitrate de áudio comprimido
-                cmd = [
-                    'ffmpeg', '-y', '-i', temp_path,
-                    '-vf', 'scale=trunc(iw/2)*2:trunc(ih/2)*2,scale=\'min(1280,iw)\':-2',
-                    '-c:v', 'libx264', '-crf', '28', '-preset', 'fast',
-                    '-c:a', 'aac', '-b:a', '128k',
-                    final_path
-                ]
-                
-                # Roda FFmpeg silenciando a saída. Se o FFmpeg não existir, levanta FileNotFoundError
-                subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
-                
-                # O vídeo comprimido foi gerado. Apaga o temporário bruto.
-                if os.path.exists(temp_path):
-                    os.remove(temp_path)
-                    
-                return True, "Vídeo processado e comprimido localmente", relative_path
-                
-            except (subprocess.SubprocessError, FileNotFoundError):
-                # Fallback: Se o PC de Dev não tem FFmpeg ou deu erro no processamento
+                ok, msg = compress_video(temp_path, final_path, target_mb=8, is_reel=is_reel)
+                if ok and os.path.exists(final_path):
+                    return True, msg, relative_path
+                # Fallback: FFmpeg indisponível/falhou -> mantém o original
                 if os.path.exists(final_path):
-                    os.remove(final_path)  # Cleanup the partial file if it crashed
-                
-                # Usa o arquivo original como versão final
+                    os.remove(final_path)
                 os.rename(temp_path, final_path)
-                
-                return True, "Aviso: FFmpeg não disponível ou falhou. Vídeo salvo localmente sem compressão extra.", relative_path
-                
+                return True, f"Aviso: {msg}. Vídeo salvo sem compressão.", relative_path
+            finally:
+                if os.path.exists(temp_path):
+                    try:
+                        os.remove(temp_path)
+                    except OSError:
+                        pass
+
         except Exception as e:
-            # Em caso de erro fatal
-            if 'temp_path' in locals() and os.path.exists(temp_path):
-                os.remove(temp_path)
             return False, f"Erro ao processar vídeo: {str(e)}", None
 
     @staticmethod

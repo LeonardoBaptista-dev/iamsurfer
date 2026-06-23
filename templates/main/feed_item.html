@@ -54,8 +54,19 @@
             {% endif %}
 
             {% if post.video_url %}
-            <video src="{{ post.video_url|img_url }}" class="w-100" controls
-                style="max-height:480px;object-fit:cover;"></video>
+                {% if post.is_reel %}
+                <div style="position:relative;background:#000;display:flex;justify-content:center;">
+                    <video src="{{ post.video_url|img_url }}" controls playsinline
+                        style="max-height:560px;width:auto;max-width:100%;object-fit:contain;"></video>
+                    <a href="{{ url_for('main.reels') }}"
+                        style="position:absolute;top:10px;left:10px;background:rgba(0,0,0,.6);color:#fff;font-size:.72rem;font-weight:600;padding:3px 8px;border-radius:20px;text-decoration:none;">
+                        <i class="bi bi-camera-reels"></i> Reel
+                    </a>
+                </div>
+                {% else %}
+                <video src="{{ post.video_url|img_url }}" class="w-100" controls
+                    style="max-height:480px;object-fit:cover;"></video>
+                {% endif %}
             {% endif %}
 
             <!-- Actions -->

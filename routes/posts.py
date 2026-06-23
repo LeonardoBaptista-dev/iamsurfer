@@ -32,12 +32,13 @@ def new_post():
         content = request.form.get('content')
         spot_id = request.form.get('spot_id')
         post_type = request.form.get('post_type', 'regular')
-        
+        is_reel = post_type == 'reel'
+
         if spot_id == "": spot_id = None
 
         # Cria post inicialmente sem mídia
         post = Post(content=content, user_id=current_user.id, spot_id=spot_id, post_type=post_type)
-        
+
         # Salva o post para ter um ID
         db.session.add(post)
         db.session.flush()  # Flush para ter o ID sem commit completo
@@ -95,12 +96,23 @@ def new_post():
                             return redirect(url_for('posts.new_post'))
                 
                 elif is_video:
+                    # Guarda de tamanho no servidor (a validação do navegador é burlável).
+                    # Aceitamos vídeos grandes do celular; eles são comprimidos antes do upload.
+                    max_video = app.config.get('MAX_VIDEO_UPLOAD_SIZE', 100 * 1024 * 1024)
+                    file.seek(0, os.SEEK_END)
+                    video_size = file.tell()
+                    file.seek(0)
+                    if video_size > max_video:
+                        flash(f"Vídeo muito grande (máx {max_video // (1024*1024)}MB). Reduza antes de enviar.", 'danger')
+                        db.session.rollback()
+                        return redirect(url_for('posts.new_post'))
+
                     # Usa o sistema de processamento que abstrai Nuvem/Local
                     processor = get_image_processor()
-                    
+
                     if hasattr(processor, 'process_and_save_video'):
                         # Ambiente de Dev Local
-                        success, message, url_path = processor.process_and_save_video(file)
+                        success, message, url_path = processor.process_and_save_video(file, is_reel=is_reel)
                         if success:
                             post.video_url = url_for('static', filename=url_path)
                             print(message)  # Ex: Aviso dizendo se usou FFmpeg
@@ -108,10 +120,10 @@ def new_post():
                             flash(f"Erro local: {message}", 'danger')
                             db.session.rollback()
                             return redirect(url_for('posts.new_post'))
-                            
+
                     elif hasattr(processor, 'process_and_upload_video'):
                         # Ambiente Produtivo Cloudinary
-                        result = processor.process_and_upload_video(file, post.id)
+                        result = processor.process_and_upload_video(file, post.id, is_reel=is_reel)
                         if result.get('success'):
                             post.video_url = result['url']
                         else:
@@ -128,6 +140,12 @@ def new_post():
                 flash('Formato de arquivo não permitido.', 'danger')
                 return redirect(url_for('posts.new_post'))
         
+        # Um Reel precisa obrigatoriamente de vídeo
+        if is_reel and not post.video_url:
+            flash('Um Reel precisa de um vídeo.', 'danger')
+            db.session.rollback()
+            return redirect(url_for('posts.new_post'))
+
         # Verifica se há conteúdo para postar
         if not content and not post.image_url and not post.video_url:
             flash('O post deve ter texto, imagem ou vídeo.', 'danger')

@@ -28,9 +28,17 @@
 
                             <input type="radio" class="btn-check" name="post_type" id="type_spot" value="spot_photo">
                             <label class="btn btn-outline-brand py-2" for="type_spot">
-                                <i class="bi bi-geo-alt me-2"></i>Check-in no Pico
+                                <i class="bi bi-geo-alt me-2"></i>Pico
+                            </label>
+
+                            <input type="radio" class="btn-check" name="post_type" id="type_reel" value="reel">
+                            <label class="btn btn-outline-brand py-2" for="type_reel">
+                                <i class="bi bi-camera-reels me-2"></i>Reel
                             </label>
                         </div>
+                        <p class="text-muted small mb-0 mt-2 d-none" id="reel-hint" style="font-size:.72rem;">
+                            <i class="bi bi-info-circle me-1"></i>Reel exige um <strong>vídeo</strong> (de preferência vertical 9:16). Será comprimido automaticamente.
+                        </p>
                     </div>
 
                     <!-- Content -->
@@ -75,7 +83,7 @@
                             <div id="upload-placeholder">
                                 <i class="bi bi-cloud-arrow-up text-brand fs-4 mb-1"></i>
                                 <p class="mb-0 fw-700" style="font-size: 0.85rem;">Clique para fazer upload ou arraste</p>
-                                <p class="text-muted small mb-0" style="font-size: 0.70rem;">JPEG, PNG, GIF ou MP4 (Máx. 10MB)</p>
+                                <p class="text-muted small mb-0" style="font-size: 0.70rem;">Imagem (máx. 10MB) ou vídeo (máx. 100MB, comprimido automaticamente)</p>
                             </div>
                         </div>
                     </div>
@@ -120,11 +128,14 @@
 
         // Handle post type change
         const spotContainer = document.getElementById('spot_selection_container');
+        const reelHint = document.getElementById('reel-hint');
         document.querySelectorAll('input[name="post_type"]').forEach(radio => {
             radio.addEventListener('change', () => {
                 if (radio.value === 'spot_photo') {
                     spotContainer.classList.add('animate-highlight');
                 }
+                // Mostra a dica de Reel só quando o tipo Reel está selecionado
+                reelHint.classList.toggle('d-none', radio.value !== 'reel');
             });
         });
 
@@ -167,13 +178,19 @@
         function handleFiles(file) {
             if (!file) return;
 
-            if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
+            const isImage = file.type.startsWith('image/');
+            const isVideo = file.type.startsWith('video/');
+            if (!isImage && !isVideo) {
                 alert('Apenas imagens e vídeos são permitidos.');
                 return;
             }
 
-            if (file.size > 10 * 1024 * 1024) {
-                alert('Arquivo muito grande (Máx 10MB).');
+            // Imagem: máx 10MB. Vídeo: aceitamos até 100MB (será comprimido no servidor).
+            const maxBytes = isVideo ? 100 * 1024 * 1024 : 10 * 1024 * 1024;
+            if (file.size > maxBytes) {
+                alert(isVideo
+                    ? 'Vídeo muito grande (Máx 100MB).'
+                    : 'Imagem muito grande (Máx 10MB).');
                 return;
             }
 

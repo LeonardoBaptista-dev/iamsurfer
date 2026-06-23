@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+
+{% block title %}Reels - IAmSurfer{% endblock %}
+
+{% block styles %}
+<style>
+    /* Feed full-bleed: quebra o container do Bootstrap */
+    .reels-viewport {
+        width: 100vw;
+        margin-left: calc(-50vw + 50%);
+        height: calc(100vh - 60px);
+        overflow-y: scroll;
+        scroll-snap-type: y mandatory;
+        background: #000;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+        border-radius: 16px;
+    }
+    .reels-viewport::-webkit-scrollbar { display: none; }
+
+    .reel-slide {
+        position: relative;
+        height: 100%;
+        scroll-snap-align: start;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+    }
+
+    .reel-video {
+        height: 100%;
+        width: 100%;
+        max-width: 460px;
+        object-fit: contain;
+        background: #000;
+        cursor: pointer;
+    }
+
+    .reel-overlay {
+        position: absolute;
+        left: 0; right: 0; bottom: 0;
+        padding: 20px 18px 26px;
+        background: linear-gradient(to top, rgba(0,0,0,.72), rgba(0,0,0,0));
+        color: #fff;
+        pointer-events: none;
+        max-width: 460px;
+        margin: 0 auto;
+    }
+    .reel-overlay a, .reel-overlay form { pointer-events: auto; }
+
+    .reel-author { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+    .reel-author img { width: 38px; height: 38px; border-radius: 50%; object-fit: cover; border: 2px solid #fff; }
+    .reel-author .uname { font-weight: 700; color: #fff; text-decoration: none; font-size: .95rem; }
+    .reel-caption { font-size: .88rem; line-height: 1.35; opacity: .95; }
+    .reel-spot { font-size: .78rem; opacity: .85; }
+
+    /* Coluna de ações (curtir / comentar) */
+    .reel-actions {
+        position: absolute;
+        right: 12px; bottom: 90px;
+        display: flex; flex-direction: column; align-items: center; gap: 18px;
+        z-index: 3;
+    }
+    .reel-actions .act-btn {
+        background: none; border: none; color: #fff; cursor: pointer;
+        display: flex; flex-direction: column; align-items: center; gap: 3px;
+        font-size: .72rem; font-weight: 600;
+    }
+    .reel-actions .act-btn i { font-size: 1.7rem; }
+    .reel-actions .act-btn.liked i { color: #ff3b5c; }
+
+    .reel-muted-badge {
+        position: absolute; top: 16px; right: 16px;
+        background: rgba(0,0,0,.55); color: #fff;
+        width: 38px; height: 38px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1rem; z-index: 3; pointer-events: none;
+        opacity: 0; transition: opacity .2s;
+    }
+    .reel-slide.show-mute .reel-muted-badge { opacity: 1; }
+
+    .reels-empty {
+        height: calc(100vh - 120px);
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        text-align: center; color: var(--text-muted);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+{% if reels %}
+<div class="reels-viewport" id="reelsViewport">
+    {% for post in reels %}
+    <div class="reel-slide" data-post-id="{{ post.id }}">
+        <video class="reel-video" src="{{ post.video_url|img_url }}"
+               loop muted playsinline preload="metadata"></video>
+
+        <div class="reel-muted-badge"><i class="bi bi-volume-mute-fill"></i></div>
+
+        <!-- Ações -->
+        <div class="reel-actions">
+            {% set liked = current_user.is_authenticated and current_user.likes.filter_by(post_id=post.id).first() %}
+            <button type="button" class="act-btn like-btn {% if liked %}liked{% endif %}"
+                    data-like-url="{{ url_for('posts.like_post', post_id=post.id) }}">
+                <i class="bi bi-heart{% if liked %}-fill{% endif %}"></i>
+                <span class="like-count">{{ post.likes|length }}</span>
+            </button>
+            <a href="{{ url_for('posts.view_post', post_id=post.id) }}" class="act-btn">
+                <i class="bi bi-chat-bubble"></i>
+                <span>{{ post.comments|length }}</span>
+            </a>
+        </div>
+
+        <!-- Info do autor -->
+        <div class="reel-overlay">
+            <div class="reel-author">
+                <a href="{{ url_for('main.user_profile', username=post.author.username) }}">
+                    <img src="{{ post.author.profile_image_urls|profile_thumbnail_url if post.author.profile_image_urls else post.author.profile_image|img_url }}"
+                         alt="{{ post.author.username }}">
+                </a>
+                <a href="{{ url_for('main.user_profile', username=post.author.username) }}" class="uname">
+                    {{ post.author.username }}
+                </a>
+                {% if post.spot %}
+                <span class="reel-spot"><i class="bi bi-geo-alt-fill"></i> {{ post.spot.name }}</span>
+                {% endif %}
+            </div>
+            {% if post.content %}
+            <div class="reel-caption">{{ post.content }}</div>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="reels-empty">
+    <i class="bi bi-camera-reels" style="font-size:3rem;color:var(--brand);"></i>
+    <h5 class="mt-3" style="font-weight:700;">Ainda não há Reels</h5>
+    <p class="mb-3">Seja o primeiro a postar um vídeo vertical da sua sessão.</p>
+    <a href="{{ url_for('posts.new_post') }}" class="btn btn-follow px-4" style="font-weight:700;">
+        <i class="bi bi-plus-lg me-1"></i> Criar Reel
+    </a>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const slides = document.querySelectorAll('.reel-slide');
+    if (!slides.length) return;
+
+    // Autoplay no slide visível, pausa os outros
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            const video = entry.target.querySelector('.reel-video');
+            if (!video) return;
+            if (entry.isIntersecting && entry.intersectionRatio >= 0.6) {
+                video.play().catch(() => {}); // autoplay exige muted (já está)
+            } else {
+                video.pause();
+            }
+        });
+    }, { threshold: [0, 0.6, 1] });
+
+    slides.forEach(slide => {
+        observer.observe(slide);
+        const video = slide.querySelector('.reel-video');
+
+        // Tap no vídeo: alterna mudo
+        video.addEventListener('click', () => {
+            video.muted = !video.muted;
+            slide.classList.toggle('show-mute', video.muted);
+            if (video.muted) {
+                setTimeout(() => slide.classList.remove('show-mute'), 800);
+            }
+        });
+    });
+
+    // Curtir via fetch (sem recarregar a página)
+    document.querySelectorAll('.like-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const icon = btn.querySelector('i');
+            const countEl = btn.querySelector('.like-count');
+            const wasLiked = btn.classList.contains('liked');
+            // Atualização otimista da UI
+            btn.classList.toggle('liked');
+            icon.className = 'bi bi-heart' + (wasLiked ? '' : '-fill');
+            countEl.textContent = parseInt(countEl.textContent || '0') + (wasLiked ? -1 : 1);
+            try {
+                await fetch(btn.dataset.likeUrl, {
+                    method: 'POST',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                });
+            } catch (e) { /* mantém a UI otimista */ }
+        });
+    });
+});
+</script>
+{% endblock %}
