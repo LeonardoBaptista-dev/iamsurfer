@@ -299,6 +299,76 @@ class ImageProcessor:
         finally:
             _cleanup()
 
+    # ── Perfil (avatares) ───────────────────────────────────────────────
+    # Espelha os tamanhos do processador local, mas sobe pro Cloudinary para
+    # PERSISTIR (o disco do container é efêmero). Mesma assinatura de retorno
+    # do LocalImageProcessor.process_and_save_profile: (ok, msg, urls).
+
+    PROFILE_SIZES = {
+        'thumbnail': (64, 64),
+        'small': (150, 150),
+        'medium': (300, 300),
+        'large': (600, 600),
+    }
+    PROFILE_QUALITY = {
+        'thumbnail': 90, 'small': 92, 'medium': 94, 'large': 96,
+    }
+
+    @staticmethod
+    def _optimized_square_bytes(img: Image.Image, size: Tuple[int, int], quality: int) -> bytes:
+        cropped = ImageProcessor.create_square_crop(img, size)
+        if cropped.mode != 'RGB':
+            cropped = cropped.convert('RGB')
+        out = io.BytesIO()
+        cropped.save(out, format='JPEG', quality=quality, optimize=True, progressive=True)
+        out.seek(0)
+        return out.getvalue()
+
+    @staticmethod
+    def upload_profile_to_cloudinary(image_data: bytes, public_id: str, size_name: str) -> Optional[str]:
+        try:
+            result = cloudinary.uploader.upload(
+                image_data,
+                public_id=f"{public_id}_{size_name}",
+                folder="iamsurfer/profiles",
+                format="jpg",
+                quality="auto:good",
+                fetch_format="auto",
+            )
+            return result.get('secure_url')
+        except Exception as e:
+            print(f"Erro no upload de perfil para Cloudinary: {e}")
+            return None
+
+    @staticmethod
+    def process_and_save_profile(file: FileStorage) -> Tuple[bool, str, Optional[Dict[str, str]]]:
+        """Processa o avatar em vários tamanhos e sobe pro Cloudinary."""
+        is_valid, error_msg, img = ImageProcessor.validate_image(file)
+        if not is_valid:
+            return False, error_msg, None
+        try:
+            img = ImageProcessor.fix_image_orientation(img)
+            file.seek(0)
+            file_hash = hashlib.md5(file.read()).hexdigest()
+            file.seek(0)
+            unique_id = f"profile_{file_hash[:10]}"
+
+            urls = {}
+            for size_name, size in ImageProcessor.PROFILE_SIZES.items():
+                data = ImageProcessor._optimized_square_bytes(
+                    img, size, ImageProcessor.PROFILE_QUALITY[size_name]
+                )
+                url = ImageProcessor.upload_profile_to_cloudinary(data, unique_id, size_name)
+                if url:
+                    urls[size_name] = url
+
+            if not urls:
+                return False, "Falha no upload da imagem de perfil", None
+            return True, "Imagem de perfil processada com sucesso", urls
+        except Exception as e:
+            return False, f"Erro ao processar imagem de perfil: {str(e)}", None
+
+
 class ResponsiveImageHelper:
     """
     Helper para gerar tags de imagem responsivas nos templates
@@ -352,3 +422,55 @@ class ResponsiveImageHelper:
         if is_mobile:
             return urls.get('small', urls.get('medium', ''))
         return urls.get('medium', urls.get('large', ''))
+
+    # ── Perfil (avatares) ───────────────────────────────────────────────
+    # Em produção os avatares ficam no Cloudinary (URLs http absolutas). Dados
+    # legados podem ter caminhos LOCAIS (de uploads antigos para o disco efêmero,
+    # já perdidos): nesse caso caímos no avatar padrão em vez de quebrar/404.
+
+    DEFAULT_PROFILE = "/static/uploads/default_profile.jpg"
+
+    @staticmethod
+    def _profile_or_default(value: str) -> str:
+        if value and value.startswith('http'):
+            return value
+        return ResponsiveImageHelper.DEFAULT_PROFILE
+
+    @staticmethod
+    def get_profile_thumbnail_url(urls: Dict[str, str]) -> str:
+        if not urls:
+            return ResponsiveImageHelper.DEFAULT_PROFILE
+        return ResponsiveImageHelper._profile_or_default(urls.get('thumbnail', urls.get('small', '')))
+
+    @staticmethod
+    def get_profile_avatar_url(urls: Dict[str, str]) -> str:
+        if not urls:
+            return ResponsiveImageHelper.DEFAULT_PROFILE
+        return ResponsiveImageHelper._profile_or_default(urls.get('small', urls.get('thumbnail', '')))
+
+    @staticmethod
+    def get_profile_medium_url(urls: Dict[str, str]) -> str:
+        if not urls:
+            return ResponsiveImageHelper.DEFAULT_PROFILE
+        return ResponsiveImageHelper._profile_or_default(urls.get('medium', urls.get('small', '')))
+
+    @staticmethod
+    def get_profile_large_url(urls: Dict[str, str]) -> str:
+        if not urls:
+            return ResponsiveImageHelper.DEFAULT_PROFILE
+        return ResponsiveImageHelper._profile_or_default(urls.get('large', urls.get('medium', '')))
+
+    @staticmethod
+    def get_profile_avatar_tag(urls: Dict[str, str], alt: str = "", css_class: str = "rounded-circle", size: str = "small") -> str:
+        if not urls:
+            return f'<img src="{ResponsiveImageHelper.DEFAULT_PROFILE}" alt="{alt}" class="{css_class}" loading="lazy">'
+        main = ResponsiveImageHelper._profile_or_default(urls.get(size, urls.get('small', urls.get('thumbnail', ''))))
+        # srcset só com URLs válidas (http) do Cloudinary
+        parts = []
+        for key, w in (('thumbnail', 64), ('small', 150), ('medium', 300)):
+            v = urls.get(key, '')
+            if v and v.startswith('http'):
+                parts.append(f"{v} {w}w")
+        srcset = ", ".join(parts)
+        srcset_attr = f' srcset="{srcset}" sizes="(max-width: 768px) 64px, 150px"' if srcset else ''
+        return f'<img src="{main}"{srcset_attr} alt="{alt}" class="{css_class}" loading="lazy">'

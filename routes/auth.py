@@ -11,6 +11,20 @@ from werkzeug.utils import secure_filename
 
 auth = Blueprint('auth', __name__)
 
+
+def get_image_processor():
+    """Processador de imagem apropriado: local em dev, Cloudinary em produção.
+
+    Sem isso, o upload de foto de perfil ia sempre pro disco local (efêmero em
+    produção) e a renderização quebrava (filtros de avatar usam o helper cloud).
+    """
+    use_local = not (os.environ.get('RENDER', False) or os.environ.get('FLASK_ENV') == 'production')
+    if use_local:
+        from local_image_processor import LocalImageProcessor
+        return LocalImageProcessor
+    from image_processor import ImageProcessor
+    return ImageProcessor
+
 @auth.route('/login', methods=['GET', 'POST'])
 def login():
     from models import User  # Import aqui para evitar import circular
@@ -127,14 +141,15 @@ def edit_profile():
             
             if file and file.filename:
                 try:
-                    from local_image_processor import LocalImageProcessor
-                    
-                    # Remove imagens antigas se existirem
-                    if current_user.profile_image_urls:
-                        LocalImageProcessor.delete_image_files(current_user.profile_image_urls)
-                    
+                    processor = get_image_processor()
+
+                    # Remove imagens antigas se existirem (só o processador local
+                    # apaga arquivos em disco; no Cloudinary deixamos como está)
+                    if current_user.profile_image_urls and hasattr(processor, 'delete_image_files'):
+                        processor.delete_image_files(current_user.profile_image_urls)
+
                     # Processa e salva a nova imagem de perfil
-                    success, message, urls = LocalImageProcessor.process_and_save_profile(file)
+                    success, message, urls = processor.process_and_save_profile(file)
                     
                     if success and urls:
                         # Gera hash da nova imagem para deduplicação
