@@ -83,6 +83,11 @@
                             <i class="bi bi-water"></i> Previsão
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('main.ranking') }}">
+                            <i class="bi bi-trophy"></i> Ranking
+                        </a>
+                    </li>
                     {% if current_user.is_authenticated %}
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('diary.my_diary') }}">

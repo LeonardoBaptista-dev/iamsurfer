@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}Ranking de Surfistas - IAmSurfer{% endblock %}
+
+{% block styles %}
+<style>
+    .rank-row {
+        display: flex;
+        align-items: center;
+        gap: .75rem;
+        padding: .65rem .85rem;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: var(--surface);
+        text-decoration: none;
+        color: inherit;
+        transition: transform .15s ease, box-shadow .15s ease;
+    }
+    .rank-row:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(17,24,39,.07); color: inherit; }
+    .rank-row.me { border-color: var(--brand); background: var(--brand-faint); }
+    .rank-pos {
+        flex-shrink: 0;
+        width: 34px; height: 34px;
+        display: flex; align-items: center; justify-content: center;
+        border-radius: 50%;
+        font-weight: 800; font-size: .9rem;
+        background: var(--bg); color: var(--text-secondary);
+        border: 1px solid var(--border);
+    }
+    .rank-pos.p1 { background: #fde68a; color: #92400e; border-color: #f59e0b; }
+    .rank-pos.p2 { background: #e5e7eb; color: #374151; border-color: #9ca3af; }
+    .rank-pos.p3 { background: #fed7aa; color: #9a3412; border-color: #fb923c; }
+    .rank-avatar { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; flex-shrink: 0; border: 2px solid var(--border); }
+    .rank-name { font-weight: 700; color: var(--text-primary); line-height: 1.1; }
+    .rank-patente { font-size: .76rem; color: var(--text-muted); }
+    .rank-points { margin-left: auto; text-align: right; flex-shrink: 0; }
+    .rank-points .v { font-weight: 800; color: var(--brand); font-size: 1.05rem; line-height: 1; }
+    .rank-points .l { font-size: .62rem; text-transform: uppercase; letter-spacing: .5px; color: var(--text-muted); }
+    @media (max-width: 400px) {
+        .rank-row { gap: .5rem; padding: .55rem .6rem; }
+        .rank-avatar { width: 38px; height: 38px; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="col-12 col-lg-8 col-xl-7 mx-auto">
+
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+        <h1 class="h4 fw-bold mb-0"><i class="bi bi-trophy-fill me-1" style="color:#f59e0b;"></i>Ranking de Surfistas</h1>
+        <span class="text-muted small">Por XP da comunidade</span>
+    </div>
+    <p class="text-muted mb-4" style="font-size:.9rem;">
+        Ganhe XP postando, registrando sessões, criando picos e caronas, e interagindo com a galera.
+    </p>
+
+    {% if my_rank %}
+    <div class="alert d-flex align-items-center gap-2 mb-4" style="background:var(--brand-faint);border:1px solid var(--brand);border-radius:14px;color:var(--brand);">
+        <i class="bi bi-person-badge fs-5"></i>
+        <span>Você está em <strong>#{{ my_rank }}</strong> com <strong>{{ current_user.points or 0 }} XP</strong> · {{ current_user.patente.icon }} {{ current_user.patente.name }}</span>
+    </div>
+    {% endif %}
+
+    {% if top %}
+    <div class="d-flex flex-column gap-2">
+        {% for u in top %}
+        {% set pos = loop.index %}
+        <a href="{{ url_for('main.user_profile', username=u.username) }}"
+           class="rank-row{% if current_user.is_authenticated and u.id == current_user.id %} me{% endif %}">
+            <span class="rank-pos {% if pos <= 3 %}p{{ pos }}{% endif %}">{{ pos }}</span>
+            <img class="rank-avatar"
+                 src="{{ u.profile_image_urls|profile_thumbnail_url if u.profile_image_urls else u.profile_image|img_url }}"
+                 alt="{{ u.username }}">
+            <div class="min-w-0">
+                <div class="rank-name text-truncate">{{ u.username }}</div>
+                <div class="rank-patente">{{ u.patente.icon }} {{ u.patente.name }}</div>
+            </div>
+            <div class="rank-points">
+                <div class="v">{{ u.points or 0 }}</div>
+                <div class="l">XP</div>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="card text-center py-5 px-4">
+        <i class="bi bi-trophy display-4 text-muted mb-2"></i>
+        <h5 class="fw-bold">Ranking vazio</h5>
+        <p class="text-muted mb-0" style="font-size:.9rem;">Ainda não há surfistas pontuando.</p>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

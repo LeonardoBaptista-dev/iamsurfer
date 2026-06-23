@@ -162,6 +162,15 @@ def explore():
     posts = Post.query.order_by(desc(Post.created_at)).limit(50).all()
     return render_template('main/explore.html', posts=posts)
 
+@main.route('/ranking')
+def ranking():
+    """Ranking de surfistas por XP (gamificação): pódio + lista."""
+    top = User.query.order_by(desc(User.points), User.username).limit(50).all()
+    my_rank = None
+    if current_user.is_authenticated:
+        my_rank = User.query.filter(User.points > (current_user.points or 0)).count() + 1
+    return render_template('main/ranking.html', top=top, my_rank=my_rank)
+
 @main.route('/reels')
 @login_required
 def reels():
