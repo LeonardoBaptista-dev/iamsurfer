@@ -42,9 +42,8 @@ def _message(spot, day, quality):
     wv = day.get('wave_height')
     wave_txt = f"{wv:.1f}m" if wv else "ondas boas"
     cond_txt = _COND_TXT.get(day.get('cond') or '', '')
-    stars = '⭐' * quality
     extra = f" · {cond_txt}" if cond_txt else ''
-    return f"{spot.name} vai bombar {day.get('label', 'em breve')}! {wave_txt}{extra} {stars}".strip()
+    return f"{spot.name} vai bombar {day.get('label', 'em breve')}! {wave_txt}{extra} · qualidade {quality}/5".strip()
 
 
 def run_swell_alerts(min_quality=GOOD_QUALITY, horizon_days=HORIZON_DAYS, dedupe_hours=DEDUPE_HOURS):

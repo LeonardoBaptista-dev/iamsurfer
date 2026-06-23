@@ -332,12 +332,34 @@ def follow_spot(spot_id):
 @spots.route('/meus-picos')
 @login_required
 def my_spots():
-    """Lista os picos que o usuário segue, com a previsão atual de cada um."""
+    """Picos seguidos com a previsão + alerta: destaca quais vão bombar nos
+    próximos dias e ordena os 'bombando' primeiro."""
     from surf_forecast import get_forecast
+    from swell_alerts import _best_upcoming, GOOD_QUALITY, HORIZON_DAYS
+
     follows = SpotFollow.query.filter_by(user_id=current_user.id).order_by(SpotFollow.created_at.desc()).all()
     spots_list = [f.spot for f in follows if f.spot and f.spot.is_active]
     forecast = get_forecast(spots_list) if spots_list else {}
-    return render_template('spots/my_spots.html', spots=spots_list, forecast=forecast)
+
+    alerts = {}
+    for sp in spots_list:
+        best = _best_upcoming(forecast.get(sp.id), HORIZON_DAYS)
+        if best:
+            day, q = best
+            alerts[sp.id] = {'label': day.get('label'), 'quality': q,
+                             'wave': day.get('wave_height'), 'cond': day.get('cond'),
+                             'firing': q >= GOOD_QUALITY}
+
+    # Ordena: vão bombar primeiro, depois por melhor qualidade prevista, depois nome
+    spots_list.sort(key=lambda s: (
+        0 if alerts.get(s.id, {}).get('firing') else 1,
+        -(alerts.get(s.id, {}).get('quality') or 0),
+        s.name.lower(),
+    ))
+    firing_count = sum(1 for a in alerts.values() if a['firing'])
+
+    return render_template('spots/my_spots.html', spots=spots_list, forecast=forecast,
+                           alerts=alerts, firing_count=firing_count, good_quality=GOOD_QUALITY)
 
 
 @spots.route('/cron/swell-alerts')
