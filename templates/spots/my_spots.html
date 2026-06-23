@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}Meus Picos - IAmSurfer{% endblock %}
+
+{% block content %}
+<div class="col-12 col-lg-8 mx-auto">
+
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <h4 class="mb-0" style="font-weight:700;letter-spacing:-.3px;">
+            <i class="bi bi-bell-fill me-1" style="color:var(--brand);"></i> Meus Picos
+        </h4>
+        <a href="{{ url_for('spots.spots_map') }}" class="btn btn-sm btn-outline-primary">
+            <i class="bi bi-geo-alt"></i> Explorar picos
+        </a>
+    </div>
+
+    <p class="text-muted" style="font-size:.9rem;margin-top:-12px;">
+        Você recebe um alerta sempre que um destes picos vai bombar.
+    </p>
+
+    {% if spots %}
+    <div class="d-flex flex-column gap-3 mt-3">
+        {% for spot in spots %}
+        {% set fc = forecast.get(spot.id) %}
+        {% set cur = fc.current if fc else None %}
+        <div class="card">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="text-center" style="min-width:64px;">
+                    {% set q = cur.quality if cur else 0 %}
+                    <div style="font-size:1.5rem;font-weight:800;color:var(--brand);line-height:1;">{{ q }}<span style="font-size:.8rem;color:var(--text-muted);">/5</span></div>
+                    <div style="font-size:.95rem;">{{ '⭐' * q if q else '—' }}</div>
+                </div>
+                <div class="flex-grow-1 min-w-0">
+                    <a href="{{ url_for('spots.new_spot_detail', spot_id=spot.id) }}"
+                        class="text-decoration-none" style="font-weight:700;color:var(--text-primary);">{{ spot.name }}</a>
+                    <div style="font-size:.82rem;color:var(--text-muted);">
+                        <i class="bi bi-geo-alt"></i> {{ spot.city }}{% if spot.state %}, {{ spot.state }}{% endif %}
+                    </div>
+                    {% if cur %}
+                    <div style="font-size:.82rem;color:var(--text-secondary);margin-top:2px;">
+                        {% if cur.wave_height %}🌊 {{ '%.1f'|format(cur.wave_height) }}m{% endif %}
+                        {% if cur.wind_dir %} · 💨 {{ cur.wind_dir }}{% if cur.wind_speed %} {{ cur.wind_speed }}km/h{% endif %}{% endif %}
+                        {% if cur.cond %} · <span class="fc-cond {{ cur.cond }}">{{ cur.cond }}</span>{% endif %}
+                    </div>
+                    {% else %}
+                    <div style="font-size:.8rem;color:var(--text-muted);margin-top:2px;">Previsão indisponível no momento</div>
+                    {% endif %}
+                </div>
+                <form method="POST" action="{{ url_for('spots.follow_spot', spot_id=spot.id) }}">
+                    <button class="btn btn-sm btn-outline-secondary" title="Deixar de seguir">
+                        <i class="bi bi-bell-slash"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="card text-center py-5 px-4 mt-3">
+        <i class="bi bi-bell display-4 text-muted mb-2"></i>
+        <h5 style="font-weight:700;">Você ainda não segue nenhum pico</h5>
+        <p style="color:var(--text-muted);font-size:.9rem;">Siga seus picos favoritos para receber alertas quando o swell chegar.</p>
+        <div class="mt-2">
+            <a href="{{ url_for('spots.spots_map') }}" class="btn btn-primary">
+                <i class="bi bi-geo-alt me-1"></i> Abrir o mapa de picos
+            </a>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

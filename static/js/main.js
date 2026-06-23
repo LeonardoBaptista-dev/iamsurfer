@@ -79,43 +79,40 @@ function setupImagePreview(input) {
  * Configura os botões de curtir para usar AJAX
  */
 function setupLikeButtons() {
-    const likeButtons = document.querySelectorAll('.like-button');
-    likeButtons.forEach(button => {
-        button.addEventListener('click', function(e) {
-            e.preventDefault();
-            const postId = this.dataset.postId;
-            const likeUrl = this.dataset.likeUrl;
-            const likeCount = this.querySelector('.like-count');
-            const likeIcon = this.querySelector('.like-icon');
-            
-            fetch(likeUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
-                body: JSON.stringify({ post_id: postId })
-            })
+    // Delegação no documento: cobre também posts adicionados via scroll infinito.
+    if (window.__likeDelegationSet) return;
+    window.__likeDelegationSet = true;
+
+    document.addEventListener('click', function (e) {
+        const button = e.target.closest('.like-button');
+        if (!button) return;
+        e.preventDefault();
+        if (button.dataset.busy === '1') return;
+        button.dataset.busy = '1';
+
+        const likeUrl = button.dataset.likeUrl;
+        const likeCount = button.querySelector('.like-count');
+        const likeIcon = button.querySelector('.like-icon');
+
+        fetch(likeUrl, {
+            method: 'POST',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
             .then(response => response.json())
             .then(data => {
-                if (data.success) {
-                    // Atualiza o contador de curtidas
+                if (likeCount && typeof data.likes_count === 'number') {
                     likeCount.textContent = data.likes_count;
-                    
-                    // Alterna a classe para mostrar que foi curtido
-                    if (data.liked) {
-                        button.classList.add('liked');
-                        likeIcon.classList.remove('bi-heart');
-                        likeIcon.classList.add('bi-heart-fill');
-                    } else {
-                        button.classList.remove('liked');
-                        likeIcon.classList.remove('bi-heart-fill');
-                        likeIcon.classList.add('bi-heart');
-                    }
+                }
+                if (data.liked) {
+                    button.classList.add('liked');
+                    if (likeIcon) { likeIcon.classList.remove('bi-heart'); likeIcon.classList.add('bi-heart-fill'); }
+                } else {
+                    button.classList.remove('liked');
+                    if (likeIcon) { likeIcon.classList.remove('bi-heart-fill'); likeIcon.classList.add('bi-heart'); }
                 }
             })
-            .catch(error => console.error('Erro ao curtir post:', error));
-        });
+            .catch(error => console.error('Erro ao curtir post:', error))
+            .finally(() => { button.dataset.busy = '0'; });
     });
 }
 

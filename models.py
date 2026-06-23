@@ -88,6 +88,10 @@ class User(UserMixin, db.Model):
     
     def is_following(self, user):
         return self.followed.filter_by(followed_id=user.id).first() is not None
+
+    def is_following_spot(self, spot):
+        """True se o usuário segue o pico (recebe alertas de swell)."""
+        return SpotFollow.query.filter_by(user_id=self.id, spot_id=spot.id).first() is not None
     
     @property
     def followers(self):
@@ -280,6 +284,21 @@ class Follow(db.Model):
     
     def __repr__(self):
         return f'<Follow {self.follower.username} -> {self.followed.username}>'
+
+class SpotFollow(db.Model):
+    """Usuário segue um pico (Spot) para receber alertas de swell."""
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    spot_id = db.Column(db.Integer, db.ForeignKey('spot.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    __table_args__ = (db.UniqueConstraint('user_id', 'spot_id', name='uq_spot_follow'),)
+
+    user = db.relationship('User', backref=db.backref('followed_spots', lazy='dynamic', cascade='all, delete-orphan'))
+    spot = db.relationship('Spot', backref=db.backref('spot_followers', lazy='dynamic', cascade='all, delete-orphan'))
+
+    def __repr__(self):
+        return f'<SpotFollow u{self.user_id} -> spot{self.spot_id}>'
 
 class Message(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -596,6 +615,7 @@ class Notification(db.Model):
     related_user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)  # Usuário que gerou a notificação
     related_post_id = db.Column(db.Integer, db.ForeignKey('post.id'), nullable=True)  # Post relacionado (se for like/comment)
     related_message_id = db.Column(db.Integer, db.ForeignKey('message.id'), nullable=True)  # Mensagem relacionada
+    related_spot_id = db.Column(db.Integer, db.ForeignKey('spot.id'), nullable=True)  # Pico relacionado (alerta de swell)
     read = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
@@ -604,6 +624,7 @@ class Notification(db.Model):
     related_user = db.relationship('User', foreign_keys=[related_user_id])
     related_post = db.relationship('Post', foreign_keys=[related_post_id])
     related_message = db.relationship('Message', foreign_keys=[related_message_id])
+    related_spot = db.relationship('Spot', foreign_keys=[related_spot_id])
 
     def __repr__(self):
         return f'<Notification {self.id}: {self.type} for {self.user.username}>'

@@ -69,6 +69,22 @@
                             </span>
                             <p class="text-muted small mt-2 mb-0">{{ spot.wave_type.replace('_', ' ').title() if
                                 spot.wave_type else 'N/A' }}</p>
+
+                            {% if current_user.is_authenticated %}
+                            <button id="followSpotBtn" class="btn btn-sm mt-3 {% if is_following %}btn-outline-primary{% else %}btn-primary{% endif %}"
+                                data-spot="{{ spot.id }}" data-following="{{ '1' if is_following else '0' }}">
+                                <i class="bi {% if is_following %}bi-bell-fill{% else %}bi-bell{% endif %}"></i>
+                                <span class="follow-label">{{ 'Seguindo' if is_following else 'Seguir pico' }}</span>
+                            </button>
+                            {% else %}
+                            <a href="{{ url_for('auth.login') }}" class="btn btn-sm btn-primary mt-3">
+                                <i class="bi bi-bell"></i> Seguir pico
+                            </a>
+                            {% endif %}
+                            <p class="text-muted small mt-1 mb-0">
+                                <i class="bi bi-people"></i> <span id="followersCount">{{ followers_count }}</span> seguindo
+                            </p>
+                            <p class="text-muted mt-1 mb-0" style="font-size:.72rem;max-width:180px;">Receba alerta quando o swell chegar</p>
                         </div>
                     </div>
 
@@ -542,5 +558,35 @@
         });
     }
     });
+</script>
+
+<script>
+    // Toggle "Seguir pico" (alertas de swell)
+    (function () {
+        const btn = document.getElementById('followSpotBtn');
+        if (!btn) return;
+        btn.addEventListener('click', function () {
+            btn.disabled = true;
+            fetch(`/spots/${btn.dataset.spot}/follow`, {
+                method: 'POST',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+                .then(r => r.json())
+                .then(d => {
+                    const label = btn.querySelector('.follow-label');
+                    const icon = btn.querySelector('i');
+                    if (d.following) {
+                        btn.classList.remove('btn-primary'); btn.classList.add('btn-outline-primary');
+                        label.textContent = 'Seguindo'; icon.className = 'bi bi-bell-fill';
+                    } else {
+                        btn.classList.remove('btn-outline-primary'); btn.classList.add('btn-primary');
+                        label.textContent = 'Seguir pico'; icon.className = 'bi bi-bell';
+                    }
+                    const c = document.getElementById('followersCount');
+                    if (c && typeof d.followers === 'number') c.textContent = d.followers;
+                })
+                .finally(() => { btn.disabled = false; });
+        });
+    })();
 </script>
 {% endblock %}

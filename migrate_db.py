@@ -36,6 +36,9 @@ def ensure_columns():
             ('meeting_lat', 'FLOAT'), ('meeting_lng', 'FLOAT'),
             ('meeting_label', 'VARCHAR(200)'),
         ],
+        'notification': [
+            ('related_spot_id', 'INTEGER'),  # alertas de swell ligam ao pico
+        ],
     }
     with app.app_context():
         insp = db.inspect(db.engine)

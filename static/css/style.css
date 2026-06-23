@@ -2522,3 +2522,6 @@ h1, h2, h3, h4, h5, .navbar-brand, .fw-bold {
         margin-bottom: 58px;
     }
 }
+
+/* Coração curtido colorido em qualquer contexto (feed, post, etc.) */
+.post-action-btn.liked, .like-button.liked { color: #ef4444 !important; }

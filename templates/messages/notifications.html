@@ -11,7 +11,11 @@
     <div class="dm-list">
         {% for notification in notifications %}
         <div class="notification-item dm-row" style="cursor:default;{% if not notification.read %}background:var(--brand-faint);{% endif %}">
-            {% if notification.related_user %}
+            {% if notification.type == 'swell' %}
+            <span class="dm-avatar d-flex align-items-center justify-content-center" style="background:var(--brand-faint);">
+                <i class="bi bi-water" style="color:var(--brand);"></i>
+            </span>
+            {% elif notification.related_user %}
             <img src="{{ notification.related_user.profile_image_urls|profile_thumbnail_url if notification.related_user.profile_image_urls else notification.related_user.profile_image|img_url }}"
                 class="dm-avatar" alt="">
             {% else %}
@@ -31,6 +35,8 @@
             <a href="{{ url_for('posts.view_post', post_id=notification.related_post.id) }}" class="btn btn-secondary btn-sm">Ver post</a>
             {% elif notification.type == 'message' and notification.related_user %}
             <a href="{{ url_for('messages.conversation', username=notification.related_user.username) }}" class="btn btn-secondary btn-sm">Ver</a>
+            {% elif notification.type == 'swell' and notification.related_spot_id %}
+            <a href="{{ url_for('spots.new_spot_detail', spot_id=notification.related_spot_id) }}" class="btn btn-primary btn-sm">Ver pico</a>
             {% endif %}
             {% if not notification.read %}<span class="dm-dot"></span>{% endif %}
         </div>

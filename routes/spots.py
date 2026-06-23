@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, current_app
 from flask_login import login_required, current_user
-from models import State, City, SurfSpot, Photographer, SpotPhoto, Spot, SpotPhotoNew, PhotoSession, SessionPhoto, PhotoPurchase, SpotReport, Business, Coupon
+from models import State, City, SurfSpot, Photographer, SpotPhoto, Spot, SpotPhotoNew, PhotoSession, SessionPhoto, PhotoPurchase, SpotReport, Business, Coupon, SpotFollow, Notification
 from extensions import db
 from werkzeug.utils import secure_filename
 import os
@@ -195,9 +195,59 @@ def new_spot_detail(spot_id):
     from surf_forecast import get_forecast
     forecast = get_forecast([spot]).get(spot.id)
 
+    is_following = current_user.is_authenticated and current_user.is_following_spot(spot)
+    followers_count = SpotFollow.query.filter_by(spot_id=spot_id).count()
+
     return render_template('spots/new_detail.html', spot=spot, photos=photos,
                            sessions=sessions, businesses=businesses, reports=recent_reports,
-                           forecast=forecast)
+                           forecast=forecast, is_following=is_following,
+                           followers_count=followers_count)
+
+
+@spots.route('/spots/<int:spot_id>/follow', methods=['POST'])
+@login_required
+def follow_spot(spot_id):
+    """Seguir um pico para receber alertas de swell (toggle via AJAX ou form)."""
+    spot = Spot.query.get_or_404(spot_id)
+    existing = SpotFollow.query.filter_by(user_id=current_user.id, spot_id=spot.id).first()
+    if existing:
+        db.session.delete(existing)
+        following = False
+    else:
+        db.session.add(SpotFollow(user_id=current_user.id, spot_id=spot.id))
+        following = True
+    db.session.commit()
+    count = SpotFollow.query.filter_by(spot_id=spot.id).count()
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.is_json:
+        return jsonify({'following': following, 'followers': count})
+    flash('Você está seguindo este pico! Vai receber alertas de swell.' if following
+          else 'Deixou de seguir o pico.', 'success' if following else 'info')
+    return redirect(request.referrer or url_for('spots.new_spot_detail', spot_id=spot.id))
+
+
+@spots.route('/meus-picos')
+@login_required
+def my_spots():
+    """Lista os picos que o usuário segue, com a previsão atual de cada um."""
+    from surf_forecast import get_forecast
+    follows = SpotFollow.query.filter_by(user_id=current_user.id).order_by(SpotFollow.created_at.desc()).all()
+    spots_list = [f.spot for f in follows if f.spot and f.spot.is_active]
+    forecast = get_forecast(spots_list) if spots_list else {}
+    return render_template('spots/my_spots.html', spots=spots_list, forecast=forecast)
+
+
+@spots.route('/cron/swell-alerts')
+def cron_swell_alerts():
+    """Dispara os alertas de swell. Protegido por ?key=CRON_KEY (env).
+
+    Pensado para um cron externo (cron-job.org, GitHub Actions, Coolify
+    scheduled task) bater 1-2x ao dia.
+    """
+    key = os.environ.get('CRON_KEY')
+    if not key or request.args.get('key') != key:
+        return jsonify({'error': 'forbidden'}), 403
+    from swell_alerts import run_swell_alerts
+    return jsonify(run_swell_alerts())
 
 
 @spots.route('/spots/<int:spot_id>/sessions/new', methods=['POST'])

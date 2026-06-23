@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request, abort, send_file, send_from_directory
+from flask import Blueprint, render_template, redirect, url_for, flash, request, abort, send_file, send_from_directory, jsonify
 from flask_login import login_required, current_user
 from models import Post, Comment, Like, Notification
 from extensions import db
@@ -276,7 +276,7 @@ def like_post(post_id):
         # Se já curtiu, remove a curtida
         db.session.delete(like)
         db.session.commit()
-        flash('Curtida removida!', 'info')
+        liked = False
     else:
         # Se não, adiciona uma curtida
         like = Like(user_id=current_user.id, post_id=post_id)
@@ -291,15 +291,17 @@ def like_post(post_id):
         # Cria notificação de like (se não for próprio post)
         if current_user.id != post.user_id:
             Notification.create_like_notification(current_user, post)
-            
-        flash('Post curtido!', 'success')
-    
-    # Redireciona de volta para a página anterior
-    next_page = request.referrer
-    if not next_page:
-        next_page = url_for('posts.view_post', post_id=post_id)
-    
-    return redirect(next_page)
+        liked = True
+
+    likes_count = Like.query.filter_by(post_id=post_id).count()
+
+    # AJAX: só devolve o estado (sem reload, sem flash)
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.is_json:
+        return jsonify({'success': True, 'liked': liked,
+                        'likes': likes_count, 'likes_count': likes_count})
+
+    # Fallback sem JS: redireciona de volta
+    return redirect(request.referrer or url_for('posts.view_post', post_id=post_id))
 
 # Rota adicional para compatibilidade com os testes
 @posts.route('/posts/<int:post_id>/like', methods=['POST'])
