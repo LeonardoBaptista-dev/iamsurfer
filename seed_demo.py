@@ -13,6 +13,7 @@ Imagens/vídeos usam URLs externas (Unsplash/pravatar/sample mp4), então funcio
 igual em dev (local) e produção (Cloudinary) — o filtro img_url repassa URLs http.
 """
 import sys
+import os
 from datetime import datetime, timedelta
 
 from app import app
@@ -20,7 +21,39 @@ from extensions import db
 from models import (User, Post, Comment, Like, Follow, Message, Spot, SurfSpot,
                     SurfTrip, TripParticipant, UserBadge, Story, Notification,
                     PhotoSession, SessionPhoto, PhotoPurchase, SpotPhotoNew,
-                    Business, Coupon)
+                    SpotReport, Business, Coupon)
+
+try:
+    import cloudinary
+    import cloudinary.uploader
+except Exception:
+    cloudinary = None
+
+
+def _cloud_ready():
+    """Só sobe pro Cloudinary se houver credencial (CLOUDINARY_URL)."""
+    return cloudinary is not None and bool(os.environ.get('CLOUDINARY_URL'))
+
+
+def up_image(src, pid):
+    """Sobe uma imagem (a partir de URL) pro Cloudinary com public_id fixo
+    (overwrite => re-executável sem duplicar). Sem credencial, retorna a URL crua."""
+    if not _cloud_ready():
+        return src
+    r = cloudinary.uploader.upload(src, public_id=pid, folder="iamsurfer/demo",
+                                   overwrite=True, unique_filename=False,
+                                   resource_type="image")
+    return r['secure_url']
+
+
+def up_video(src, pid):
+    """Sobe um vídeo pro Cloudinary e entrega com q_auto (economiza banda/view)."""
+    if not _cloud_ready():
+        return src
+    r = cloudinary.uploader.upload(src, public_id=pid, folder="iamsurfer/demo/videos",
+                                   overwrite=True, unique_filename=False,
+                                   resource_type="video")
+    return r['secure_url'].replace('/video/upload/', '/video/upload/q_auto/')
 
 DEMO_PASSWORD = "surf1234"
 SENTINEL = "marina.klein"  # se existir, já foi semeado
@@ -104,33 +137,98 @@ SPOTS = [
 
 
 def reset():
-    """Apaga dados de demo (usuários com email @demo.iamsurfer.com e o que criaram)."""
-    demo_users = User.query.filter(User.email.like('%@demo.iamsurfer.com')).all()
-    ids = [u.id for u in demo_users]
+    """Apaga dados de demo (usuários @demo.iamsurfer.com e tudo que criaram).
+
+    Apaga os filhos na ordem certa com bulk-delete (sem depender de cascade do
+    ORM, que não cobre vários FKs NOT NULL: badges, mensagens recebidas,
+    sessões de foto, negócios, etc.).
+    """
+    ids = [r[0] for r in db.session.query(User.id).filter(User.email.like('%@demo.iamsurfer.com')).all()]
     if not ids:
         print("Nada de demo pra apagar.")
         return
-    # Apaga dependências que não têm cascade garantido a partir do User
-    Notification.query.filter(Notification.user_id.in_(ids) | Notification.related_user_id.in_(ids)).delete(synchronize_session=False)
-    for t in SurfTrip.query.filter(SurfTrip.creator_id.in_(ids)).all():
-        db.session.delete(t)
-    TripParticipant.query.filter(TripParticipant.user_id.in_(ids)).delete(synchronize_session=False)
-    Story.query.filter(Story.user_id.in_(ids)).delete(synchronize_session=False)
-    PhotoPurchase.query.filter(PhotoPurchase.user_id.in_(ids)).delete(synchronize_session=False)
-    for s in Spot.query.filter(Spot.created_by.in_(ids)).all():
-        db.session.delete(s)  # cascata apaga sessões/fotos/negócios/cupons do pico
-    for u in demo_users:
-        db.session.delete(u)  # cascade apaga posts/comments/likes/messages/follows
+
+    def col(model, idcol, cond):
+        return [r[0] for r in db.session.query(idcol).filter(cond).all()]
+
+    spot_ids = col(Spot, Spot.id, Spot.created_by.in_(ids))
+    post_ids = col(Post, Post.id, Post.user_id.in_(ids))
+    trip_ids = col(SurfTrip, SurfTrip.id, SurfTrip.creator_id.in_(ids))
+    sess_cond = PhotoSession.photographer_id.in_(ids)
+    if spot_ids:
+        sess_cond = sess_cond | PhotoSession.spot_id.in_(spot_ids)
+    sess_ids = col(PhotoSession, PhotoSession.id, sess_cond)
+    photo_ids = col(SessionPhoto, SessionPhoto.id, SessionPhoto.session_id.in_(sess_ids)) if sess_ids else []
+    biz_cond = Business.owner_id.in_(ids)
+    if spot_ids:
+        biz_cond = biz_cond | Business.spot_id.in_(spot_ids)
+    biz_ids = col(Business, Business.id, biz_cond)
+
+    def dele(model, cond):
+        model.query.filter(cond).delete(synchronize_session=False)
+
+    # Venda de fotos
+    pp_cond = PhotoPurchase.user_id.in_(ids)
+    if photo_ids:
+        pp_cond = pp_cond | PhotoPurchase.photo_id.in_(photo_ids)
+    dele(PhotoPurchase, pp_cond)
+    if sess_ids:
+        dele(SessionPhoto, SessionPhoto.session_id.in_(sess_ids))
+        dele(PhotoSession, PhotoSession.id.in_(sess_ids))
+    # Negócios
+    if biz_ids:
+        dele(Coupon, Coupon.business_id.in_(biz_ids))
+        dele(Business, Business.id.in_(biz_ids))
+    # Fotos/relatos de pico
+    spn_cond = SpotPhotoNew.uploaded_by.in_(ids)
+    if spot_ids:
+        spn_cond = spn_cond | SpotPhotoNew.spot_id.in_(spot_ids)
+    dele(SpotPhotoNew, spn_cond)
+    dele(SpotReport, SpotReport.user_id.in_(ids))
+    # Social
+    like_cond = Like.user_id.in_(ids)
+    com_cond = Comment.user_id.in_(ids)
+    notif_cond = Notification.user_id.in_(ids) | Notification.related_user_id.in_(ids)
+    if post_ids:
+        like_cond = like_cond | Like.post_id.in_(post_ids)
+        com_cond = com_cond | Comment.post_id.in_(post_ids)
+        notif_cond = notif_cond | Notification.related_post_id.in_(post_ids)
+    dele(Like, like_cond)
+    dele(Comment, com_cond)
+    dele(Notification, notif_cond)
+    # Caronas
+    tp_cond = TripParticipant.user_id.in_(ids)
+    if trip_ids:
+        tp_cond = tp_cond | TripParticipant.trip_id.in_(trip_ids)
+    dele(TripParticipant, tp_cond)
+    dele(SurfTrip, SurfTrip.creator_id.in_(ids))
+    # Demais
+    dele(Story, Story.user_id.in_(ids))
+    dele(Message, Message.sender_id.in_(ids) | Message.recipient_id.in_(ids))
+    dele(UserBadge, UserBadge.user_id.in_(ids))
+    dele(Follow, Follow.follower_id.in_(ids) | Follow.followed_id.in_(ids))
+    dele(Post, Post.user_id.in_(ids))
+    dele(Spot, Spot.created_by.in_(ids))
+    dele(User, User.id.in_(ids))
     db.session.commit()
-    print(f"Removidos {len(ids)} usuários de demo e seus dados.")
+    print(f"Removidos {len(ids)} usuarios de demo e seus dados.")
 
 
 def seed():
+    # 0) Sobe as mídias pro Cloudinary (uma vez cada, public_id fixo)
+    if _cloud_ready():
+        print("  Subindo mídias pro Cloudinary (avatares, fotos, vídeos)...")
+    else:
+        print("  [aviso] Sem CLOUDINARY_URL — usando URLs externas cruas.")
+    av_url = {n: up_image(AV(n), f"avatar_{n}") for n in sorted({u[6] for u in USERS})}
+    surf_url = [up_image(SURF[i], f"surf_{i}") for i in range(len(SURF))]
+    video_url = [up_video(VIDEOS[i], f"reel_{i}") for i in range(len(VIDEOS))]
+
     # 1) Usuários
     users = {}
     for uname, name, email, loc, pts, badges, av, bio in USERS:
         u = User(username=uname, email=email, location=loc, points=pts, bio=bio,
-                 profile_image=AV(av), is_public=True,
+                 profile_image=av_url[av], is_public=True,
                  joined_at=NOW - timedelta(days=120 - USERS.index(
                      next(x for x in USERS if x[0] == uname)) * 8))
         u.set_password(DEMO_PASSWORD)
@@ -176,7 +274,7 @@ def seed():
     for i, (text, img) in enumerate(captions):
         author = ulist[i % len(ulist)]
         spot = spots[i % len(spots)] if i % 2 == 0 else None
-        p = Post(content=text, image_url=SURF[img], user_id=author.id,
+        p = Post(content=text, image_url=surf_url[img], user_id=author.id,
                  post_type='regular', spot_id=(spot.id if spot else None),
                  created_at=NOW - timedelta(days=i // 2, hours=(i * 5) % 24))
         db.session.add(p)
@@ -194,7 +292,7 @@ def seed():
     reels = []
     for i, cap in enumerate(reel_caps):
         author = ulist[(i * 2) % len(ulist)]
-        r = Post(content=cap, video_url=VIDEOS[i % len(VIDEOS)], image_url=SURF[(i + 3) % len(SURF)],
+        r = Post(content=cap, video_url=video_url[i % len(video_url)], image_url=surf_url[(i + 3) % len(surf_url)],
                  user_id=author.id, post_type='reel',
                  created_at=NOW - timedelta(days=i, hours=2))
         db.session.add(r)
@@ -205,7 +303,7 @@ def seed():
     # 5) Stories (expiram em 24h) — pra barra de stories aparecer
     for i in range(6):
         author = ulist[i]
-        db.session.add(Story(user_id=author.id, media_url=SURF[(i + 1) % len(SURF)],
+        db.session.add(Story(user_id=author.id, media_url=surf_url[(i + 1) % len(surf_url)],
                              media_type='image', created_at=NOW - timedelta(hours=i + 1),
                              expires_at=NOW + timedelta(hours=23 - i)))
     print("  + 6 stories ativos")
