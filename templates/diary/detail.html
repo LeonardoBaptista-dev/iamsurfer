@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+
+{% block title %}{{ session.spot_name }} — Diário de {{ session.user.username }} | IAmSurfer{% endblock %}
+
+{% block styles %}
+<style>
+    .detail-card {
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        overflow: hidden;
+        background: var(--surface);
+    }
+    .detail-photo {
+        width: 100%;
+        max-height: 460px;
+        object-fit: cover;
+        display: block;
+    }
+    .detail-photo-empty {
+        height: 180px;
+        background: var(--gradient);
+    }
+    .detail-stars i { color: #f59e0b; font-size: 1.05rem; }
+    .detail-stars i.off { color: var(--border-hover); }
+    .meta-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: .75rem;
+    }
+    @media (min-width: 576px) {
+        .meta-grid { grid-template-columns: repeat(4, 1fr); }
+    }
+    .meta-item {
+        background: var(--brand-faint);
+        border-radius: 12px;
+        padding: .75rem;
+        text-align: center;
+    }
+    .meta-item .v { font-weight: 800; font-size: 1.1rem; color: var(--brand); line-height: 1; }
+    .meta-item .k { font-size: .68rem; text-transform: uppercase; letter-spacing: .5px; color: var(--text-muted); margin-top: .25rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-3 mt-lg-4">
+    <div class="col-lg-8 col-xl-7">
+
+        <div class="d-flex align-items-center justify-content-between gap-2 mb-3">
+            <a href="{{ url_for('diary.user_diary', username=session.user.username) }}" class="btn btn-sm btn-light d-inline-flex align-items-center gap-1">
+                <i class="bi bi-arrow-left"></i> Diário de {{ session.user.username }}
+            </a>
+            {% if is_owner %}
+            <div class="d-flex gap-2">
+                <a href="{{ url_for('diary.edit_session', session_id=session.id) }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i><span class="d-none d-sm-inline ms-1">Editar</span></a>
+                <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal"><i class="bi bi-trash"></i><span class="d-none d-sm-inline ms-1">Excluir</span></button>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="detail-card shadow-sm">
+            {% if session.photo_url %}
+            <img src="{{ session.photo_url|img_url }}" alt="{{ session.spot_name }}" class="detail-photo">
+            {% else %}
+            <div class="detail-photo-empty"></div>
+            {% endif %}
+
+            <div class="p-3 p-md-4">
+                <div class="d-flex flex-wrap align-items-start justify-content-between gap-2 mb-2">
+                    <div>
+                        <h1 class="h4 fw-bold mb-1" style="color: var(--brand);">
+                            <i class="bi bi-geo-alt-fill me-1"></i>{{ session.spot_name }}
+                        </h1>
+                        <div class="text-muted small">
+                            <i class="bi bi-calendar-event me-1"></i>{{ session.session_date.strftime('%d/%m/%Y') }}
+                        </div>
+                    </div>
+                    {% if session.conditions %}
+                    <span class="badge bg-{{ session.conditions_color }}-subtle text-{{ session.conditions_color }}-emphasis fs-6">{{ session.conditions_label }}</span>
+                    {% endif %}
+                </div>
+
+                <div class="detail-stars mb-3">
+                    {% for n in range(1, 6) %}
+                        <i class="bi {% if n <= session.rating %}bi-star-fill{% else %}bi-star off{% endif %}"></i>
+                    {% endfor %}
+                </div>
+
+                <div class="meta-grid mb-3">
+                    <div class="meta-item">
+                        <div class="v">{{ session.duration_label or '—' }}</div>
+                        <div class="k">Duração</div>
+                    </div>
+                    <div class="meta-item">
+                        <div class="v">{% if session.wave_height %}{{ session.wave_height }}m{% else %}—{% endif %}</div>
+                        <div class="k">Altura</div>
+                    </div>
+                    <div class="meta-item">
+                        <div class="v">{{ session.wave_count if session.wave_count is not none else '—' }}</div>
+                        <div class="k">Ondas</div>
+                    </div>
+                    <div class="meta-item">
+                        <div class="v" style="font-size:.9rem;">{{ session.board or '—' }}</div>
+                        <div class="k">Prancha</div>
+                    </div>
+                </div>
+
+                {% if session.notes %}
+                <div class="border-top pt-3">
+                    <h2 class="h6 fw-bold text-secondary mb-2">Observações</h2>
+                    <p class="mb-0" style="white-space: pre-line;">{{ session.notes }}</p>
+                </div>
+                {% endif %}
+
+                {% if session.spot_id %}
+                <div class="border-top pt-3 mt-3">
+                    <a href="{{ url_for('spots.new_spot_detail', spot_id=session.spot_id) }}" class="text-decoration-none small fw-semibold" style="color: var(--brand-light);">
+                        <i class="bi bi-map me-1"></i>Ver pico no mapa
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+</div>
+
+{% if is_owner %}
+<!-- Modal de confirmação -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 16px;">
+            <div class="modal-body p-4 text-center">
+                <i class="bi bi-trash text-danger mb-2" style="font-size: 2rem;"></i>
+                <h2 class="h5 fw-bold">Excluir sessão?</h2>
+                <p class="text-muted">Essa ação não pode ser desfeita.</p>
+                <form method="POST" action="{{ url_for('diary.delete_session', session_id=session.id) }}" class="d-flex gap-2 justify-content-center mt-3">
+                    <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger px-4">Excluir</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

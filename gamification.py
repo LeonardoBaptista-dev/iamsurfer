@@ -12,6 +12,7 @@ POINTS = {
     'spot': 50,             # criar pico (ao ser aprovado)
     'trip_create': 20,      # criar carona
     'trip_join': 10,        # participar de carona (confirmado)
+    'session_log': 8,       # registrar sessão no diário de surfe
     'comment': 3,           # comentar
     'comment_received': 2,  # receber comentário
     'like_received': 2,     # receber curtida

@@ -341,6 +341,7 @@ def register_blueprints():
     from routes.trips import trips
     from routes.spots import spots
     from routes.stories import stories
+    from routes.diary import diary
     app.register_blueprint(auth)
     app.register_blueprint(main)
     app.register_blueprint(posts)
@@ -349,6 +350,7 @@ def register_blueprints():
     app.register_blueprint(trips)
     app.register_blueprint(spots)
     app.register_blueprint(stories)
+    app.register_blueprint(diary)
 
 register_blueprints()
 

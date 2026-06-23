@@ -22,12 +22,21 @@ def login():
         return redirect(url_for('main.index'))
     
     if request.method == 'POST':
-        username = request.form.get('username')
+        # Aceita login por username OU email, sem diferenciar maiúsculas e
+        # ignorando espaços nas pontas. (Usernames podem ter espaços/maiúsculas,
+        # ex.: "Leonardo Baptista" — match exato confundia os usuários.)
+        identifier = (request.form.get('username') or '').strip()
         password = request.form.get('password')
         remember = True if request.form.get('remember') else False
-        
-        user = User.query.filter_by(username=username).first()
-        
+
+        ident_lower = identifier.lower()
+        user = User.query.filter(
+            db.or_(
+                db.func.lower(User.username) == ident_lower,
+                db.func.lower(User.email) == ident_lower,
+            )
+        ).first()
+
         if not user or not user.check_password(password):
             flash('Por favor, verifique suas credenciais e tente novamente.', 'danger')
             return redirect(url_for('auth.login'))

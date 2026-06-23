@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+
+{% set fd = form_data %}
+{% set s = session %}
+{% set editing = s is not none %}
+
+{% block title %}{{ 'Editar sessão' if editing else 'Nova sessão' }} — Diário | IAmSurfer{% endblock %}
+
+{% block styles %}
+<style>
+    .diary-form-card {
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        background: var(--surface);
+    }
+    .diary-form-card .form-label {
+        font-weight: 600;
+        font-size: .85rem;
+        color: var(--text-secondary);
+    }
+    /* Estrelas de nota */
+    .star-input {
+        display: inline-flex;
+        flex-direction: row-reverse;
+        gap: .15rem;
+        font-size: 1.8rem;
+    }
+    .star-input input { display: none; }
+    .star-input label {
+        color: var(--border-hover);
+        cursor: pointer;
+        transition: color .12s ease;
+        line-height: 1;
+    }
+    .star-input label:hover,
+    .star-input label:hover ~ label,
+    .star-input input:checked ~ label {
+        color: #f59e0b;
+    }
+    .photo-preview {
+        width: 100%;
+        max-height: 280px;
+        object-fit: cover;
+        border-radius: 14px;
+        border: 1px solid var(--border);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-3 mt-lg-4">
+    <div class="col-lg-8 col-xl-7">
+
+        <div class="d-flex align-items-center gap-2 mb-3">
+            <a href="{{ url_for('diary.my_diary') }}" class="btn btn-sm btn-light rounded-circle" aria-label="Voltar"><i class="bi bi-arrow-left"></i></a>
+            <h1 class="h4 fw-bold mb-0">{{ 'Editar sessão' if editing else 'Registrar sessão' }}</h1>
+        </div>
+
+        <form method="POST"
+              action="{{ url_for('diary.edit_session', session_id=s.id) if editing else url_for('diary.new_session') }}"
+              enctype="multipart/form-data" class="diary-form-card p-3 p-md-4">
+
+            <div class="row g-3">
+                <!-- Pico -->
+                <div class="col-12">
+                    <label class="form-label" for="spot_name"><i class="bi bi-geo-alt me-1"></i>Pico / Praia *</label>
+                    <input type="text" class="form-control" id="spot_name" name="spot_name" list="spotlist"
+                           placeholder="Ex.: Joaquina, Florianópolis" required
+                           value="{{ fd.get('spot_name','') if fd else (s.spot_name if s else '') }}">
+                    <datalist id="spotlist">
+                        {% for spot in spots %}
+                        <option value="{{ spot.name }}{% if spot.city %} - {{ spot.city }}{% endif %}"></option>
+                        {% endfor %}
+                    </datalist>
+                </div>
+
+                <!-- Data e duração -->
+                <div class="col-6">
+                    <label class="form-label" for="session_date"><i class="bi bi-calendar-event me-1"></i>Data</label>
+                    <input type="date" class="form-control" id="session_date" name="session_date"
+                           value="{{ fd.get('session_date','') if fd else (s.session_date.strftime('%Y-%m-%d') if s else '') }}">
+                </div>
+                <div class="col-6">
+                    <label class="form-label" for="duration_min"><i class="bi bi-stopwatch me-1"></i>Duração (min)</label>
+                    <input type="number" min="0" max="600" class="form-control" id="duration_min" name="duration_min"
+                           placeholder="90"
+                           value="{{ fd.get('duration_min','') if fd else (s.duration_min if s and s.duration_min else '') }}">
+                </div>
+
+                <!-- Condições e prancha -->
+                <div class="col-12 col-sm-6">
+                    <label class="form-label" for="conditions"><i class="bi bi-water me-1"></i>Condições</label>
+                    {% set cur_cond = fd.get('conditions','') if fd else (s.conditions if s else '') %}
+                    <select class="form-select" id="conditions" name="conditions">
+                        <option value="">—</option>
+                        {% for val, lbl in [('flat','Flat'),('poor','Fraco'),('fair','Razoável'),('good','Bom'),('epic','Épico')] %}
+                        <option value="{{ val }}" {% if cur_cond == val %}selected{% endif %}>{{ lbl }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-12 col-sm-6">
+                    <label class="form-label" for="board"><i class="bi bi-bookmark me-1"></i>Prancha</label>
+                    <input type="text" class="form-control" id="board" name="board" placeholder="Ex.: Fish 5'10"
+                           value="{{ fd.get('board','') if fd else (s.board if s and s.board else '') }}">
+                </div>
+
+                <!-- Altura e nº de ondas -->
+                <div class="col-6">
+                    <label class="form-label" for="wave_height"><i class="bi bi-arrows-vertical me-1"></i>Altura (m)</label>
+                    <input type="number" step="0.1" min="0" max="20" class="form-control" id="wave_height" name="wave_height"
+                           placeholder="1.5"
+                           value="{{ fd.get('wave_height','') if fd else (s.wave_height if s and s.wave_height else '') }}">
+                </div>
+                <div class="col-6">
+                    <label class="form-label" for="wave_count"><i class="bi bi-water me-1"></i>Ondas pegadas</label>
+                    <input type="number" min="0" max="999" class="form-control" id="wave_count" name="wave_count"
+                           placeholder="12"
+                           value="{{ fd.get('wave_count','') if fd else (s.wave_count if s and s.wave_count else '') }}">
+                </div>
+
+                <!-- Nota (estrelas) -->
+                <div class="col-12">
+                    <label class="form-label d-block"><i class="bi bi-star me-1"></i>Como foi a sessão?</label>
+                    {% set cur_rating = (fd.get('rating','3')|int) if fd else (s.rating if s else 3) %}
+                    <div class="star-input">
+                        {% for n in [5,4,3,2,1] %}
+                        <input type="radio" id="star{{ n }}" name="rating" value="{{ n }}" {% if cur_rating == n %}checked{% endif %}>
+                        <label for="star{{ n }}" title="{{ n }}"><i class="bi bi-star-fill"></i></label>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Observações -->
+                <div class="col-12">
+                    <label class="form-label" for="notes"><i class="bi bi-pencil me-1"></i>Observações</label>
+                    <textarea class="form-control" id="notes" name="notes" rows="3"
+                              placeholder="Maré, vento, sensações, manobras...">{{ fd.get('notes','') if fd else (s.notes if s and s.notes else '') }}</textarea>
+                </div>
+
+                <!-- Foto -->
+                <div class="col-12">
+                    <label class="form-label" for="photo"><i class="bi bi-image me-1"></i>Foto (opcional)</label>
+                    {% if editing and s.photo_url %}
+                    <img src="{{ s.photo_url|img_url }}" alt="Foto atual" class="photo-preview mb-2">
+                    <div class="form-text mb-2">Enviar uma nova substitui a atual.</div>
+                    {% endif %}
+                    <input type="file" class="form-control" id="photo" name="photo" accept="image/*">
+                </div>
+            </div>
+
+            <div class="d-flex gap-2 mt-4">
+                <button type="submit" class="btn btn-follow flex-grow-1 py-2 fw-bold">
+                    <i class="bi bi-check-lg me-1"></i>{{ 'Salvar alterações' if editing else 'Registrar sessão' }}
+                </button>
+                <a href="{{ url_for('diary.view_session', session_id=s.id) if editing else url_for('diary.my_diary') }}" class="btn btn-outline-secondary py-2 px-3">Cancelar</a>
+            </div>
+        </form>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Pré-preenche a data com hoje quando o campo está vazio (criação).
+    (function () {
+        var d = document.getElementById('session_date');
+        if (d && !d.value) {
+            d.value = new Date().toISOString().slice(0, 10);
+        }
+    })();
+</script>
+{% endblock %}

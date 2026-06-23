@@ -791,3 +791,77 @@ class StoryView(db.Model):
 
     def __repr__(self):
         return f'<StoryView s{self.story_id} u{self.user_id}>'
+
+
+class SurfSession(db.Model):
+    """Diário de surfe: registro pessoal de uma sessão de surf.
+
+    Cada surfista anota suas sessões (data, pico, condições, prancha, nota e
+    observações), com foto opcional. É o "diário" privado/público do usuário.
+    """
+    __tablename__ = 'surf_session'
+
+    # Condições possíveis (rótulo de exibição em pt-BR)
+    CONDITIONS = [
+        ('flat', 'Flat'),
+        ('poor', 'Fraco'),
+        ('fair', 'Razoável'),
+        ('good', 'Bom'),
+        ('epic', 'Épico'),
+    ]
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
+    # Pico opcional do mapa colaborativo; spot_name é sempre preenchido (rótulo
+    # livre ou nome do pico) para a sessão fazer sentido mesmo sem vínculo.
+    spot_id = db.Column(db.Integer, db.ForeignKey('spot.id'), nullable=True)
+    spot_name = db.Column(db.String(120), nullable=False)
+
+    session_date = db.Column(db.Date, nullable=False, default=datetime.utcnow)
+    duration_min = db.Column(db.Integer, nullable=True)   # duração em minutos
+    wave_height = db.Column(db.Float, nullable=True)      # altura média (m)
+    wave_count = db.Column(db.Integer, nullable=True)     # ondas pegadas
+    board = db.Column(db.String(100), nullable=True)      # prancha usada
+    conditions = db.Column(db.String(20), nullable=True)  # flat/poor/fair/good/epic
+    rating = db.Column(db.Integer, nullable=False, default=3)  # 1 a 5
+    notes = db.Column(db.Text, nullable=True)
+
+    # Foto opcional (mesmo esquema dos posts: dict de URLs responsivas + fallback)
+    photo_urls = db.Column(db.JSON, nullable=True)
+    photo_url = db.Column(db.String(255), nullable=True)
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    user = db.relationship('User', backref=db.backref('surf_sessions', lazy='dynamic', cascade='all, delete-orphan'))
+    spot = db.relationship('Spot', backref=db.backref('logged_sessions', lazy='dynamic'))
+
+    __table_args__ = (
+        db.Index('idx_surf_session_user_date', 'user_id', 'session_date'),
+    )
+
+    @property
+    def conditions_label(self):
+        return dict(self.CONDITIONS).get(self.conditions, '—')
+
+    @property
+    def conditions_color(self):
+        """Cor (Bootstrap) coerente com a condição, para o selo."""
+        return {
+            'flat': 'secondary', 'poor': 'secondary', 'fair': 'warning',
+            'good': 'success', 'epic': 'primary',
+        }.get(self.conditions, 'secondary')
+
+    @property
+    def duration_label(self):
+        if not self.duration_min:
+            return None
+        h, m = divmod(self.duration_min, 60)
+        if h and m:
+            return f'{h}h{m:02d}'
+        if h:
+            return f'{h}h'
+        return f'{m}min'
+
+    def __repr__(self):
+        return f'<SurfSession {self.id} u{self.user_id} {self.spot_name}>'
