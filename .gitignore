@@ -57,4 +57,5 @@ migration_error.txt
 .idea/
 .vscode/
 *.swp
-*.swo 
+*.swo
+.coolify.env

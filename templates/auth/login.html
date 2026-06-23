@@ -1,69 +1,98 @@
-{% extends "base.html" %}
+{% extends "base_auth.html" %}
 
-{% block title %}IAmSurfer - Login{% endblock %}
+{% block title %}IAmSurfer — Entrar{% endblock %}
 
 {% block content %}
-<div class="auth-wrapper">
-    <div class="auth-card fade-in">
-        <!-- Header -->
-        <div class="auth-header">
-            <div class="brand-logo" style="background: transparent;">
-                <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="IAmSurfer Logo" style="width: 48px; height: 48px; object-fit: contain;">
+<div class="authx">
+    <!-- Painel visual (some no mobile) -->
+    <aside class="authx-visual">
+        <span class="authx-orb authx-orb-1"></span>
+        <span class="authx-orb authx-orb-2"></span>
+        <div class="authx-visual-inner">
+            <div class="authx-brand">
+                <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="IAmSurfer">
+                <span>IAmSurfer</span>
             </div>
-            <h1>IAmSurfer</h1>
-            <p>A rede social para surfistas</p>
+            <h2 class="authx-hero">Entre na<br>onda. 🌊</h2>
+            <p class="authx-sub">A rede social dos surfistas. Compartilhe suas sessões, descubra
+                picos, pegue caronas e acompanhe a previsão do mar.</p>
+            <ul class="authx-features">
+                <li><span class="authx-feat-ic"><i class="bi bi-camera-reels"></i></span> Reels das suas melhores ondas</li>
+                <li><span class="authx-feat-ic"><i class="bi bi-globe-americas"></i></span> SurfMap com os picos da galera</li>
+                <li><span class="authx-feat-ic"><i class="bi bi-car-front"></i></span> Caronas pra surfar junto</li>
+            </ul>
         </div>
+        <svg class="authx-wave" viewBox="0 0 1440 120" preserveAspectRatio="none" aria-hidden="true">
+            <path d="M0,64 C240,120 480,0 720,40 C960,80 1200,120 1440,72 L1440,120 L0,120 Z" fill="rgba(255,255,255,.10)"/>
+            <path d="M0,88 C240,40 480,120 720,80 C960,40 1200,80 1440,96 L1440,120 L0,120 Z" fill="rgba(255,255,255,.07)"/>
+        </svg>
+    </aside>
 
-        <!-- Body -->
-        <div class="auth-body">
-            <h5 class="mb-4" style="font-weight:700;font-size:1.05rem;color:var(--text-primary);">Entrar na sua conta
-            </h5>
+    <!-- Painel do formulário -->
+    <main class="authx-panel">
+        <div class="authx-card">
+            <a class="authx-logo-mobile" href="{{ url_for('auth.login') }}">
+                <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="IAmSurfer">
+                <span>IAmSurfer</span>
+            </a>
+
+            <h1 class="authx-title">Bem-vindo de volta</h1>
+            <p class="authx-muted">Entre pra continuar surfando o feed.</p>
 
             {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
             {% for category, message in messages %}
-            <div class="alert alert-{{ category }} fade-in mb-3">{{ message }}</div>
+            <div class="authx-alert authx-alert-{{ category }}">{{ message }}</div>
             {% endfor %}
             {% endif %}
             {% endwith %}
 
-            <form method="POST" action="{{ url_for('auth.login') }}">
-                <div class="mb-3">
-                    <label for="username" class="form-label">Nome de usuário</label>
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="bi bi-person"></i></span>
-                        <input type="text" class="form-control" id="username" name="username" placeholder="Seu usuário"
-                            required>
-                    </div>
+            <form method="POST" action="{{ url_for('auth.login') }}" class="authx-form">
+                <div class="authx-field">
+                    <i class="bi bi-person authx-field-ic"></i>
+                    <input type="text" id="username" name="username" placeholder=" " autocomplete="username" required>
+                    <label for="username">Nome de usuário</label>
                 </div>
 
-                <div class="mb-4">
-                    <label for="password" class="form-label">Senha</label>
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="bi bi-lock"></i></span>
-                        <input type="password" class="form-control" id="password" name="password"
-                            placeholder="Sua senha" required>
-                    </div>
+                <div class="authx-field">
+                    <i class="bi bi-lock authx-field-ic"></i>
+                    <input type="password" id="password" name="password" placeholder=" " autocomplete="current-password" required>
+                    <label for="password">Senha</label>
+                    <button type="button" class="authx-eye" aria-label="Mostrar senha" data-target="password">
+                        <i class="bi bi-eye"></i>
+                    </button>
                 </div>
 
-                <div class="mb-4 d-flex align-items-center justify-content-between">
-                    <div class="form-check mb-0">
-                        <input type="checkbox" class="form-check-input" id="remember" name="remember">
-                        <label class="form-check-label" for="remember"
-                            style="font-size:.875rem;color:var(--text-secondary);">Lembrar de mim</label>
-                    </div>
+                <div class="authx-row">
+                    <label class="authx-check">
+                        <input type="checkbox" id="remember" name="remember">
+                        <span>Lembrar de mim</span>
+                    </label>
                 </div>
 
-                <div class="d-grid">
-                    <button type="submit" class="btn btn-primary"
-                        style="border-radius:10px;padding:12px;">Entrar</button>
-                </div>
+                <button type="submit" class="authx-btn">Entrar</button>
             </form>
-        </div>
 
-        <div class="auth-footer">
-            Não tem uma conta? <a href="{{ url_for('auth.signup') }}">Cadastre-se</a>
+            <div class="authx-divider"><span>ou</span></div>
+
+            <p class="authx-foot">Não tem uma conta?
+                <a href="{{ url_for('auth.signup') }}">Cadastre-se</a>
+            </p>
         </div>
-    </div>
+    </main>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.querySelectorAll('.authx-eye').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const inp = document.getElementById(btn.dataset.target);
+            const ic = btn.querySelector('i');
+            const show = inp.type === 'password';
+            inp.type = show ? 'text' : 'password';
+            ic.className = show ? 'bi bi-eye-slash' : 'bi bi-eye';
+        });
+    });
+</script>
 {% endblock %}

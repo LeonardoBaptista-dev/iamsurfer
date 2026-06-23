@@ -1,109 +1,130 @@
-{% extends "base.html" %}
+{% extends "base_auth.html" %}
 
-{% block title %}IAmSurfer - Cadastro{% endblock %}
+{% block title %}IAmSurfer — Cadastro{% endblock %}
 
 {% block content %}
-<div class="auth-wrapper">
-    <div class="auth-card fade-in">
-        <!-- Header -->
-        <div class="auth-header">
-            <div class="brand-logo" style="background: transparent;">
-                <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="IAmSurfer Logo" style="width: 48px; height: 48px; object-fit: contain;">
+<div class="authx">
+    <!-- Painel visual (some no mobile) -->
+    <aside class="authx-visual">
+        <span class="authx-orb authx-orb-1"></span>
+        <span class="authx-orb authx-orb-2"></span>
+        <div class="authx-visual-inner">
+            <div class="authx-brand">
+                <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="IAmSurfer">
+                <span>IAmSurfer</span>
             </div>
-            <h1>IAmSurfer</h1>
-            <p>Crie sua conta e entre na onda</p>
+            <h2 class="authx-hero">Crie sua<br>conta. 🏄</h2>
+            <p class="authx-sub">Junte-se à comunidade. Poste suas ondas, siga outros surfistas,
+                marque picos no mapa e nunca mais perca um swell.</p>
+            <ul class="authx-features">
+                <li><span class="authx-feat-ic"><i class="bi bi-camera-reels"></i></span> Reels das suas melhores ondas</li>
+                <li><span class="authx-feat-ic"><i class="bi bi-globe-americas"></i></span> SurfMap com os picos da galera</li>
+                <li><span class="authx-feat-ic"><i class="bi bi-water"></i></span> Previsão do mar pra cada pico</li>
+            </ul>
         </div>
+        <svg class="authx-wave" viewBox="0 0 1440 120" preserveAspectRatio="none" aria-hidden="true">
+            <path d="M0,64 C240,120 480,0 720,40 C960,80 1200,120 1440,72 L1440,120 L0,120 Z" fill="rgba(255,255,255,.10)"/>
+            <path d="M0,88 C240,40 480,120 720,80 C960,40 1200,80 1440,96 L1440,120 L0,120 Z" fill="rgba(255,255,255,.07)"/>
+        </svg>
+    </aside>
 
-        <!-- Body -->
-        <div class="auth-body">
-            <h5 class="mb-4" style="font-weight:700;font-size:1.05rem;color:var(--text-primary);">Criar uma nova conta
-            </h5>
+    <!-- Painel do formulário -->
+    <main class="authx-panel">
+        <div class="authx-card">
+            <a class="authx-logo-mobile" href="{{ url_for('auth.login') }}">
+                <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="IAmSurfer">
+                <span>IAmSurfer</span>
+            </a>
+
+            <h1 class="authx-title">Criar uma conta</h1>
+            <p class="authx-muted">Leva menos de um minuto. Bora?</p>
 
             {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
             {% for category, message in messages %}
-            <div class="alert alert-{{ category }} fade-in mb-3">{{ message }}</div>
+            <div class="authx-alert authx-alert-{{ category }}">{{ message }}</div>
             {% endfor %}
             {% endif %}
             {% endwith %}
 
-            <form method="POST" action="{{ url_for('auth.signup') }}">
-                <div class="mb-3">
-                    <label for="username" class="form-label">Nome de usuário</label>
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="bi bi-person"></i></span>
-                        <input type="text" class="form-control" id="username" name="username" placeholder="@seunome"
-                            required>
-                    </div>
-                    <small class="text-muted" style="font-size:.78rem;">Usado no seu perfil público</small>
+            <form method="POST" action="{{ url_for('auth.signup') }}" class="authx-form">
+                <div class="authx-field">
+                    <i class="bi bi-person authx-field-ic"></i>
+                    <input type="text" id="username" name="username" placeholder=" " autocomplete="username" required>
+                    <label for="username">Nome de usuário</label>
                 </div>
 
-                <div class="mb-3">
-                    <label for="email" class="form-label">Email</label>
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="bi bi-envelope"></i></span>
-                        <input type="email" class="form-control" id="email" name="email" placeholder="seu@email.com"
-                            required>
-                    </div>
+                <div class="authx-field">
+                    <i class="bi bi-envelope authx-field-ic"></i>
+                    <input type="email" id="email" name="email" placeholder=" " autocomplete="email" required>
+                    <label for="email">Email</label>
                 </div>
 
-                <div class="mb-4">
-                    <label for="password" class="form-label">Senha</label>
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="bi bi-lock"></i></span>
-                        <input type="password" class="form-control" id="password" name="password"
-                            placeholder="Mínimo 6 caracteres" required minlength="6">
-                    </div>
+                <div class="authx-field">
+                    <i class="bi bi-lock authx-field-ic"></i>
+                    <input type="password" id="password" name="password" placeholder=" " autocomplete="new-password" required minlength="6">
+                    <label for="password">Senha (mín. 6 caracteres)</label>
+                    <button type="button" class="authx-eye" aria-label="Mostrar senha" data-target="password">
+                        <i class="bi bi-eye"></i>
+                    </button>
                 </div>
 
-                <div class="mb-4">
-                    <div class="form-check">
-                        <input type="checkbox" class="form-check-input" id="terms" required>
-                        <label class="form-check-label" for="terms"
-                            style="font-size:.875rem;color:var(--text-secondary);">
-                            Concordo com os <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal">Termos de
-                                Serviço</a>
-                        </label>
-                    </div>
+                <div class="authx-row">
+                    <label class="authx-check">
+                        <input type="checkbox" id="terms" required>
+                        <span>Concordo com os <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal">Termos de Serviço</a></span>
+                    </label>
                 </div>
 
-                <div class="d-grid">
-                    <button type="submit" class="btn btn-primary" style="border-radius:10px;padding:12px;">Criar
-                        conta</button>
-                </div>
+                <button type="submit" class="authx-btn">Criar conta</button>
             </form>
-        </div>
 
-        <div class="auth-footer">
-            Já tem uma conta? <a href="{{ url_for('auth.login') }}">Faça login</a>
+            <div class="authx-divider"><span>ou</span></div>
+
+            <p class="authx-foot">Já tem uma conta?
+                <a href="{{ url_for('auth.login') }}">Faça login</a>
+            </p>
         </div>
-    </div>
+    </main>
 </div>
 
 <!-- Terms Modal -->
 <div class="modal fade" id="termsModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-scrollable">
-        <div class="modal-content" style="border-radius:var(--radius-md);border:1px solid var(--border);">
+    <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered">
+        <div class="modal-content" style="border-radius:18px;border:1px solid var(--border);">
             <div class="modal-header" style="border-bottom:1px solid var(--border);">
-                <h5 class="modal-title" style="font-weight:700;font-size:.95rem;">Termos de Serviço</h5>
+                <h5 class="modal-title" style="font-weight:800;font-size:1rem;">Termos de Serviço</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body" style="font-size:.875rem;color:var(--text-secondary);">
+            <div class="modal-body" style="font-size:.9rem;color:var(--text-secondary);">
                 <p>Bem-vindo ao IAmSurfer! Ao criar uma conta, você concorda com estes termos.</p>
                 <h6 style="font-weight:700;color:var(--text-primary);">1. Aceitação dos Termos</h6>
                 <p>Ao usar o IAmSurfer, você concorda com estes termos de serviço.</p>
                 <h6 style="font-weight:700;color:var(--text-primary);">2. Conta</h6>
-                <p>Você é responsável por manter a confidencialidade da sua senha e por todas as atividades da conta.
-                </p>
+                <p>Você é responsável por manter a confidencialidade da sua senha e por todas as atividades da conta.</p>
                 <h6 style="font-weight:700;color:var(--text-primary);">3. Conteúdo</h6>
                 <p>Não publique conteúdo ilegal, abusivo ou que viole direitos de terceiros.</p>
                 <h6 style="font-weight:700;color:var(--text-primary);">4. Conduta</h6>
                 <p>Mantenha um ambiente amigável e respeitoso. Não toleramos assédio ou discriminação.</p>
             </div>
             <div class="modal-footer" style="border-top:1px solid var(--border);">
-                <button type="button" class="btn btn-primary btn-sm" data-bs-dismiss="modal">Entendi</button>
+                <button type="button" class="authx-btn authx-btn-sm" data-bs-dismiss="modal">Entendi</button>
             </div>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.querySelectorAll('.authx-eye').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const inp = document.getElementById(btn.dataset.target);
+            const ic = btn.querySelector('i');
+            const show = inp.type === 'password';
+            inp.type = show ? 'text' : 'password';
+            ic.className = show ? 'bi bi-eye-slash' : 'bi bi-eye';
+        });
+    });
+</script>
 {% endblock %}
