@@ -87,31 +87,31 @@
     .lp-step h4 { font-size: 1rem; font-weight: 700; margin-bottom: .25rem; }
     .lp-step p { font-size: .86rem; color: var(--text-secondary); margin-bottom: 0; }
 
-    /* Cupons / benefícios */
-    .lp-coupon {
-        height: 100%;
+    /* Cupons / benefícios (banner) */
+    .lp-perks {
         display: flex;
-        align-items: stretch;
+        align-items: center;
+        gap: 1.25rem;
         border: 1px dashed var(--brand);
-        border-radius: 16px;
-        overflow: hidden;
-        background: var(--surface);
+        background: var(--brand-faint);
+        border-radius: 20px;
+        padding: clamp(1.25rem, 4vw, 2.25rem);
     }
-    .lp-coupon .disc {
+    .lp-perks-ic {
         flex-shrink: 0;
-        width: 92px;
-        background: var(--gradient);
-        color: #fff;
-        display: flex; flex-direction: column; align-items: center; justify-content: center;
-        text-align: center; padding: .5rem;
-        font-weight: 800;
+        width: 64px; height: 64px;
+        border-radius: 18px;
+        background: var(--gradient); color: #fff;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.9rem;
     }
-    .lp-coupon .disc .v { font-size: 1.05rem; line-height: 1.05; }
-    .lp-coupon .disc .t { font-size: .58rem; text-transform: uppercase; letter-spacing: .5px; opacity: .9; margin-top: 2px; }
-    .lp-coupon .body { padding: .8rem .9rem; min-width: 0; }
-    .lp-coupon .body .desc { font-weight: 700; font-size: .92rem; color: var(--text-primary); }
-    .lp-coupon .body .biz { font-size: .8rem; color: var(--text-secondary); margin-top: .2rem; }
-    .lp-coupon .body .where { font-size: .74rem; color: var(--text-muted); margin-top: .15rem; }
+    .lp-perks-body h2 { font-weight: 800; letter-spacing: -.5px; font-size: clamp(1.25rem, 3vw, 1.7rem); margin-bottom: .35rem; }
+    .lp-perks-body p { color: var(--text-secondary); margin-bottom: 1rem; }
+    .lp-perks .lp-btn-primary { background: var(--brand); color: #fff; }
+    .lp-perks .lp-btn-primary:hover { color: #fff; }
+    @media (max-width: 575.98px) {
+        .lp-perks { flex-direction: column; text-align: center; }
+    }
 
     /* CTA final */
     .lp-final {
@@ -216,37 +216,17 @@
     </div>
 </section>
 
-{% if coupons %}
-<!-- CUPONS / BENEFÍCIOS -->
+<!-- CUPONS / BENEFÍCIOS (chamada) -->
 <section class="mt-5">
-    <div class="text-center mb-4">
-        <h2 class="lp-section-title"><i class="bi bi-ticket-perforated-fill me-1" style="color:var(--brand);"></i>Vantagens da comunidade</h2>
-        <p class="text-muted">Cupons e benefícios em escolas, pousadas, lojas e bares parceiros nos picos. Resgate como membro.</p>
-    </div>
-    <div class="row g-3">
-        {% for c in coupons %}
-        <div class="col-12 col-sm-6 col-lg-4">
-            <div class="lp-coupon">
-                <div class="disc">
-                    <span class="v">{{ c.discount or 'OFF' }}</span>
-                    <span class="t">desconto</span>
-                </div>
-                <div class="body">
-                    <div class="desc text-truncate">{{ c.description or c.code }}</div>
-                    {% if c.business %}
-                    <div class="biz"><i class="bi bi-shop me-1"></i>{{ c.business.name }}{% if c.business.category %} · {{ c.business.category }}{% endif %}</div>
-                    {% if c.business.spot %}<div class="where"><i class="bi bi-geo-alt me-1"></i>{{ c.business.spot.name }}</div>{% endif %}
-                    {% endif %}
-                </div>
-            </div>
+    <div class="lp-perks">
+        <div class="lp-perks-ic"><i class="bi bi-ticket-perforated-fill"></i></div>
+        <div class="lp-perks-body">
+            <h2>Cupons exclusivos pra quem é da plataforma</h2>
+            <p>Cadastrado no IAmSurfer, você surfista tem acesso a <strong>cupons e benefícios exclusivos</strong> em escolas, pousadas, lojas e bares parceiros nos picos.</p>
+            <a href="{{ url_for('auth.signup') }}" class="lp-btn-primary"><i class="bi bi-person-plus-fill"></i> Quero meus cupons</a>
         </div>
-        {% endfor %}
-    </div>
-    <div class="text-center mt-3">
-        <a href="{{ url_for('auth.signup') }}" class="text-decoration-none fw-semibold" style="color:var(--brand);">Cadastre-se para resgatar <i class="bi bi-arrow-right"></i></a>
     </div>
 </section>
-{% endif %}
 
 <!-- COMO FUNCIONA -->
 <section class="mt-5">
