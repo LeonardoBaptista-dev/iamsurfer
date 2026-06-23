@@ -1,0 +1,237 @@
+{% extends "base.html" %}
+
+{% block title %}IAmSurfer — A rede social dos surfistas{% endblock %}
+
+{% block styles %}
+<style>
+    /* Hero */
+    .lp-hero {
+        position: relative;
+        background: var(--gradient);
+        color: #fff;
+        border-radius: 24px;
+        overflow: hidden;
+        padding: clamp(2rem, 6vw, 4.5rem) clamp(1.25rem, 5vw, 3.5rem);
+        margin-top: .5rem;
+    }
+    .lp-hero::after {
+        content: "";
+        position: absolute;
+        right: -80px; top: -80px;
+        width: 320px; height: 320px;
+        background: radial-gradient(circle, rgba(255,255,255,.18), transparent 70%);
+        pointer-events: none;
+    }
+    .lp-hero h1 {
+        font-weight: 800;
+        font-size: clamp(1.9rem, 5.5vw, 3.4rem);
+        letter-spacing: -1px;
+        line-height: 1.05;
+        margin-bottom: 1rem;
+        max-width: 720px;
+    }
+    .lp-hero p.lead {
+        font-size: clamp(1rem, 2.4vw, 1.25rem);
+        opacity: .92;
+        max-width: 560px;
+        margin-bottom: 1.75rem;
+    }
+    .lp-cta { display: flex; flex-wrap: wrap; gap: .75rem; }
+    .lp-btn-primary {
+        background: #fff; color: var(--brand);
+        font-weight: 800; border-radius: 12px;
+        padding: .8rem 1.6rem; text-decoration: none;
+        display: inline-flex; align-items: center; gap: .5rem;
+        transition: transform .15s ease, box-shadow .15s ease;
+    }
+    .lp-btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(0,0,0,.18); color: var(--brand); }
+    .lp-btn-ghost {
+        background: rgba(255,255,255,.14); color: #fff;
+        font-weight: 700; border-radius: 12px; border: 1px solid rgba(255,255,255,.4);
+        padding: .8rem 1.5rem; text-decoration: none;
+        display: inline-flex; align-items: center; gap: .5rem;
+    }
+    .lp-btn-ghost:hover { background: rgba(255,255,255,.24); color: #fff; }
+    .lp-stats { display: flex; flex-wrap: wrap; gap: 1.75rem; margin-top: 2.25rem; }
+    .lp-stat .n { font-size: clamp(1.5rem, 4vw, 2.2rem); font-weight: 800; line-height: 1; }
+    .lp-stat .l { font-size: .8rem; opacity: .85; text-transform: uppercase; letter-spacing: .5px; }
+
+    /* Seções */
+    .lp-section-title { font-weight: 800; letter-spacing: -.5px; font-size: clamp(1.4rem, 3.5vw, 2rem); }
+    .lp-feature {
+        height: 100%;
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        background: var(--surface);
+        padding: 1.4rem;
+        transition: transform .18s ease, box-shadow .18s ease;
+    }
+    .lp-feature:hover { transform: translateY(-4px); box-shadow: 0 12px 28px rgba(17,24,39,.08); }
+    .lp-ic {
+        width: 50px; height: 50px; border-radius: 14px;
+        display: flex; align-items: center; justify-content: center;
+        background: var(--brand-faint); color: var(--brand);
+        font-size: 1.5rem; margin-bottom: .9rem;
+    }
+    .lp-feature h3 { font-size: 1.05rem; font-weight: 700; margin-bottom: .35rem; }
+    .lp-feature p { font-size: .9rem; color: var(--text-secondary); margin-bottom: 0; }
+
+    /* Passos */
+    .lp-step { text-align: center; padding: 1rem; }
+    .lp-step-n {
+        width: 44px; height: 44px; border-radius: 50%;
+        background: var(--brand); color: #fff; font-weight: 800;
+        display: flex; align-items: center; justify-content: center;
+        margin: 0 auto .75rem;
+    }
+    .lp-step h4 { font-size: 1rem; font-weight: 700; margin-bottom: .25rem; }
+    .lp-step p { font-size: .86rem; color: var(--text-secondary); margin-bottom: 0; }
+
+    /* CTA final */
+    .lp-final {
+        background: var(--gradient);
+        color: #fff;
+        border-radius: 24px;
+        padding: clamp(2rem, 5vw, 3.5rem);
+        text-align: center;
+    }
+    .lp-final h2 { font-weight: 800; font-size: clamp(1.5rem, 4vw, 2.3rem); letter-spacing: -.5px; margin-bottom: .5rem; }
+    .lp-final p { opacity: .9; margin-bottom: 1.5rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- HERO -->
+<section class="lp-hero">
+    <h1>Onde os surfistas se conectam, registram e descobrem as melhores ondas.</h1>
+    <p class="lead">Feed da galera, diário de sessões, previsão por pico, alertas de swell, caronas e ranking — tudo num só lugar.</p>
+    <div class="lp-cta">
+        <a href="{{ url_for('auth.signup') }}" class="lp-btn-primary"><i class="bi bi-person-plus-fill"></i> Criar conta grátis</a>
+        <a href="{{ url_for('auth.login') }}" class="lp-btn-ghost"><i class="bi bi-box-arrow-in-right"></i> Já tenho conta</a>
+    </div>
+    <div class="lp-stats">
+        <div class="lp-stat"><div class="n">{{ stats.surfers }}</div><div class="l">Surfistas</div></div>
+        <div class="lp-stat"><div class="n">{{ stats.spots }}</div><div class="l">Picos mapeados</div></div>
+        <div class="lp-stat"><div class="n">{{ stats.posts }}</div><div class="l">Publicações</div></div>
+    </div>
+</section>
+
+<!-- FEATURES -->
+<section class="mt-5">
+    <div class="text-center mb-4">
+        <h2 class="lp-section-title">Tudo o que sua vida no surf precisa</h2>
+        <p class="text-muted">Mais que rede social: uma ferramenta pra surfar mais e melhor.</p>
+    </div>
+    <div class="row g-3 g-md-4">
+        <div class="col-12 col-sm-6 col-lg-4">
+            <div class="lp-feature">
+                <div class="lp-ic"><i class="bi bi-camera-reels-fill"></i></div>
+                <h3>Feed, fotos e reels</h3>
+                <p>Compartilhe suas ondas em posts, stories e vídeos. Siga amigos e descubra surfistas.</p>
+            </div>
+        </div>
+        <div class="col-12 col-sm-6 col-lg-4">
+            <div class="lp-feature">
+                <div class="lp-ic"><i class="bi bi-journal-text"></i></div>
+                <h3>Diário de surfe</h3>
+                <p>Registre cada sessão com pico, condições e nota. Veja sua evolução, estatísticas e conquistas.</p>
+            </div>
+        </div>
+        <div class="col-12 col-sm-6 col-lg-4">
+            <div class="lp-feature">
+                <div class="lp-ic"><i class="bi bi-water"></i></div>
+                <h3>Previsão por pico</h3>
+                <p>Ondas e vento dos próximos dias, com a melhor janela destacada. Filtre por região e estado.</p>
+            </div>
+        </div>
+        <div class="col-12 col-sm-6 col-lg-4">
+            <div class="lp-feature">
+                <div class="lp-ic"><i class="bi bi-broadcast-pin"></i></div>
+                <h3>Alertas de swell</h3>
+                <p>Siga seus picos favoritos e receba aviso quando o mar for bombar. Não perca mais aquele dia épico.</p>
+            </div>
+        </div>
+        <div class="col-12 col-sm-6 col-lg-4">
+            <div class="lp-feature">
+                <div class="lp-ic"><i class="bi bi-geo-alt-fill"></i></div>
+                <h3>SurfMap</h3>
+                <p>Mapa interativo dos picos por região. Veja condições, fotos e relatos antes de cair na água.</p>
+            </div>
+        </div>
+        <div class="col-12 col-sm-6 col-lg-4">
+            <div class="lp-feature">
+                <div class="lp-ic"><i class="bi bi-car-front-fill"></i></div>
+                <h3>Caronas pro surf</h3>
+                <p>Ofereça ou pegue carona pra surfar junto, dividir a gasolina e fazer novos amigos no line-up.</p>
+            </div>
+        </div>
+        <div class="col-12 col-sm-6 col-lg-4">
+            <div class="lp-feature">
+                <div class="lp-ic"><i class="bi bi-trophy-fill"></i></div>
+                <h3>Ranking e conquistas</h3>
+                <p>Ganhe XP, suba de patente e dispute o ranking da comunidade a cada sessão e interação.</p>
+            </div>
+        </div>
+        <div class="col-12 col-sm-6 col-lg-4">
+            <div class="lp-feature">
+                <div class="lp-ic"><i class="bi bi-images"></i></div>
+                <h3>Fotos à venda</h3>
+                <p>Fotógrafos publicam ensaios dos picos e você encontra (e compra) aquela foto sua dropando.</p>
+            </div>
+        </div>
+        <div class="col-12 col-sm-6 col-lg-4">
+            <div class="lp-feature">
+                <div class="lp-ic"><i class="bi bi-chat-dots-fill"></i></div>
+                <h3>Comunidade</h3>
+                <p>Mensagens, seguidores e relatos de condições. Toda a tribo do surf conectada.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- COMO FUNCIONA -->
+<section class="mt-5">
+    <div class="text-center mb-4">
+        <h2 class="lp-section-title">Comece em 1 minuto</h2>
+    </div>
+    <div class="row g-3">
+        <div class="col-6 col-lg-3">
+            <div class="lp-step">
+                <div class="lp-step-n">1</div>
+                <h4>Crie sua conta</h4>
+                <p>Grátis, em segundos.</p>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="lp-step">
+                <div class="lp-step-n">2</div>
+                <h4>Siga seus picos</h4>
+                <p>E receba alertas de swell.</p>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="lp-step">
+                <div class="lp-step-n">3</div>
+                <h4>Registre sessões</h4>
+                <p>Monte seu diário de surfe.</p>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="lp-step">
+                <div class="lp-step-n">4</div>
+                <h4>Engaje e suba</h4>
+                <p>Poste, interaja e dispute o ranking.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA FINAL -->
+<section class="lp-final mt-5">
+    <h2>Pronto pra entrar na maré?</h2>
+    <p>Junte-se à comunidade e nunca mais perca um swell.</p>
+    <a href="{{ url_for('auth.signup') }}" class="lp-btn-primary"><i class="bi bi-person-plus-fill"></i> Criar conta grátis</a>
+</section>
+
+{% endblock %}

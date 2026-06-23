@@ -86,7 +86,13 @@ def build_feed_items(following_ids, page=1, per_page=20):
 @main.route('/')
 def index():
     if not current_user.is_authenticated:
-        return redirect(url_for('auth.login'))
+        # Visitante: landing page pública que apresenta e "vende" a rede
+        stats = {
+            'surfers': User.query.count(),
+            'spots': Spot.query.filter_by(status='approved', is_active=True).count(),
+            'posts': Post.query.count(),
+        }
+        return render_template('main/landing.html', stats=stats)
     if current_user.is_admin:
         return redirect(url_for('admin.index'))
 
