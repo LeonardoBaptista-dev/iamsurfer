@@ -22,7 +22,7 @@
                         </label>
                         <input type="file" id="profile_image" name="profile_image" accept="image/*" class="d-none"
                             onchange="previewImage(this);">
-                        <small class="text-muted d-block mt-1" style="font-size:.72rem;">JPG, PNG ou GIF até 5MB</small>
+                        <small class="text-muted d-block mt-1" style="font-size:.72rem;">JPG, PNG ou GIF — qualquer tamanho, otimizamos pra você</small>
                     </div>
                 </div>
 
@@ -53,9 +53,39 @@
             </div>
         </div>
 
-        <div class="d-flex justify-content-end gap-2 mb-5">
+        <div class="d-flex justify-content-end gap-2 mb-4">
             <a href="{{ url_for('main.user_profile', username=current_user.username) }}" class="btn btn-secondary">Cancelar</a>
             <button type="submit" class="btn btn-primary">Salvar alterações</button>
+        </div>
+    </form>
+
+    <!-- Trocar senha -->
+    <form method="POST" action="{{ url_for('auth.change_password') }}">
+        <div class="card mb-5">
+            <div class="card-body p-4">
+                <h6 class="mb-3" style="font-weight:700;"><i class="bi bi-shield-lock me-1"></i>Trocar senha</h6>
+                <div class="mb-3">
+                    <label for="current_password" class="form-label">Senha atual</label>
+                    <input type="password" class="form-control" id="current_password" name="current_password"
+                        autocomplete="current-password" required>
+                </div>
+                <div class="row g-3">
+                    <div class="col-12 col-sm-6">
+                        <label for="new_password" class="form-label">Nova senha</label>
+                        <input type="password" class="form-control" id="new_password" name="new_password"
+                            autocomplete="new-password" minlength="8" required>
+                        <small class="text-muted" style="font-size:.72rem;">Mínimo 8 caracteres.</small>
+                    </div>
+                    <div class="col-12 col-sm-6">
+                        <label for="confirm_password" class="form-label">Confirmar nova senha</label>
+                        <input type="password" class="form-control" id="confirm_password" name="confirm_password"
+                            autocomplete="new-password" minlength="8" required>
+                    </div>
+                </div>
+                <div class="d-flex justify-content-end mt-3">
+                    <button type="submit" class="btn btn-primary">Alterar senha</button>
+                </div>
+            </div>
         </div>
     </form>
 

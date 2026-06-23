@@ -110,6 +110,27 @@ def signup():
     
     return render_template('auth/signup.html')
 
+@auth.route('/profile/password', methods=['POST'])
+@login_required
+def change_password():
+    current = request.form.get('current_password') or ''
+    new = request.form.get('new_password') or ''
+    confirm = request.form.get('confirm_password') or ''
+
+    if not current_user.check_password(current):
+        flash('Senha atual incorreta.', 'danger')
+    elif len(new) < 8:
+        flash('A nova senha precisa ter ao menos 8 caracteres.', 'danger')
+    elif new != confirm:
+        flash('A confirmação não confere com a nova senha.', 'danger')
+    else:
+        current_user.set_password(new)
+        db.session.commit()
+        flash('Senha alterada com sucesso!', 'success')
+
+    return redirect(url_for('auth.edit_profile'))
+
+
 @auth.route('/logout')
 @login_required
 def logout():
