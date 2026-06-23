@@ -5,13 +5,13 @@ concedidos (no v1, pelo admin) e desbloqueiam poderes específicos.
 """
 
 BADGES = {
-    'fotografo':  {'label': 'Fotógrafo',  'icon': '📸',
+    'fotografo':  {'label': 'Fotógrafo',  'icon': 'bi-camera',
                    'desc': 'Cria sessões e vende fotos nos picos'},
-    'empresario': {'label': 'Negócio',    'icon': '🏢',
+    'empresario': {'label': 'Negócio',    'icon': 'bi-shop',
                    'desc': 'Divulga negócio e cupons dentro do pico'},
-    'atleta':     {'label': 'Atleta',     'icon': '🥇',
+    'atleta':     {'label': 'Atleta',     'icon': 'bi-trophy',
                    'desc': 'Atleta / embaixador verificado'},
-    'influencer': {'label': 'Influencer', 'icon': '⭐',
+    'influencer': {'label': 'Influencer', 'icon': 'bi-star',
                    'desc': 'Criador de conteúdo verificado'},
 }
 

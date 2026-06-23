@@ -42,7 +42,7 @@
                         <div class="col-md-4">
                             <label class="form-label">Selo</label>
                             <select name="type" class="form-select" required>
-                                {% for key in ORDER %}<option value="{{ key }}">{{ BADGES[key].icon }} {{ BADGES[key].label }}</option>{% endfor %}
+                                {% for key in ORDER %}<option value="{{ key }}">{{ BADGES[key].label }}</option>{% endfor %}
                             </select>
                         </div>
                         <div class="col-md-3 d-grid">
@@ -63,7 +63,7 @@
                                 <td class="ps-3" style="font-weight:600;">{{ u.username }}</td>
                                 <td>
                                     {% for b in user_badges.get(u.id, []) %}
-                                    <span class="role-badge me-1">{{ BADGES[b.type].icon }} {{ BADGES[b.type].label }}</span>
+                                    <span class="role-badge me-1"><i class="bi {{ BADGES[b.type].icon }}"></i> {{ BADGES[b.type].label }}</span>
                                     {% else %}
                                     <span class="text-muted" style="font-size:.85rem;">—</span>
                                     {% endfor %}

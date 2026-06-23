@@ -46,5 +46,10 @@ EXPOSE 5000
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
+# Healthcheck: usa python (curl/wget não vêm na imagem slim). Coolify/Traefik
+# usam isso para rolling updates e para só rotear tráfego a containers saudáveis.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=45s --retries=3 \
+    CMD python -c "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:5000/healthz', timeout=4).status==200 else 1)" || exit 1
+
 # Executar usando o script de entrada
 CMD ["/entrypoint.sh"] 
