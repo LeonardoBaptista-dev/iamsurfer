@@ -23,7 +23,7 @@ VIDEO_EXTS = {'mp4', 'mov', 'webm'}
 
 
 def _is_production():
-    return bool(os.environ.get('RENDER', False)) or os.environ.get('FLASK_ENV') == 'production'
+    return os.environ.get('FLASK_ENV') == 'production'
 
 
 def _resolve_url(u):

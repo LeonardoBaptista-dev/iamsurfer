@@ -18,7 +18,7 @@ def get_image_processor():
     Sem isso, o upload de foto de perfil ia sempre pro disco local (efêmero em
     produção) e a renderização quebrava (filtros de avatar usam o helper cloud).
     """
-    use_local = not (os.environ.get('RENDER', False) or os.environ.get('FLASK_ENV') == 'production')
+    use_local = os.environ.get('FLASK_ENV') != 'production'
     if use_local:
         from local_image_processor import LocalImageProcessor
         return LocalImageProcessor

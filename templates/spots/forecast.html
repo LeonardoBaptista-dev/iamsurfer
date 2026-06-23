@@ -2,6 +2,32 @@
 
 {% block title %}Previsão de Surf - IAmSurfer{% endblock %}
 
+{% block styles %}
+<style>
+    .fc-filters {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .5rem;
+        align-items: center;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: .65rem .75rem;
+        margin-bottom: 1.25rem;
+    }
+    .fc-filters .form-select,
+    .fc-filters .form-control { font-size: .85rem; }
+    .fc-filters .fc-search { flex: 1 1 180px; min-width: 140px; }
+    .fc-filters .fc-sel { flex: 0 1 170px; }
+    .fc-filters .fc-count { font-size: .78rem; color: var(--text-muted); margin-left: auto; }
+    @media (max-width: 575.98px) {
+        .fc-filters .fc-sel,
+        .fc-filters .fc-search { flex: 1 1 100%; }
+        .fc-filters .fc-count { margin-left: 0; width: 100%; }
+    }
+</style>
+{% endblock %}
+
 {% macro arrow(deg, cls='') %}
 {% if deg is not none %}<i class="bi bi-arrow-up fc-arrow {{ cls }}" style="transform: rotate({{ (deg + 180) % 360 }}deg);"></i>{% endif %}
 {% endmacro %}
@@ -25,12 +51,45 @@
         ● = qualidade (tamanho + vento). <i class="bi bi-arrow-up fc-arrow"></i> = direção (pra onde vai). Clique num dia para ver hora a hora.
     </p>
 
-    {% if not spots %}
+    {% if total_count %}
+    <!-- Filtros: região / estado / busca por nome -->
+    <form method="GET" action="{{ url_for('spots.forecast') }}" class="fc-filters" id="fcFilters">
+        <select name="region" class="form-select fc-sel" id="fcRegion" aria-label="Filtrar por região" onchange="this.form.state.value='';this.form.submit()">
+            <option value="">Todas as regiões</option>
+            {% for r in regions %}
+            <option value="{{ r }}" {% if sel_region == r %}selected{% endif %}>{{ r }}</option>
+            {% endfor %}
+        </select>
+        <select name="state" class="form-select fc-sel" id="fcState" aria-label="Filtrar por estado" onchange="this.form.submit()">
+            <option value="">Todos os estados</option>
+            {% for s in states_meta %}
+            <option value="{{ s.uf }}" data-region="{{ s.region }}" {% if sel_state == s.uf %}selected{% endif %}>{{ s.uf }}</option>
+            {% endfor %}
+        </select>
+        <input type="search" name="q" class="form-control fc-search" placeholder="Buscar pico pelo nome..." value="{{ sel_q }}" aria-label="Buscar pico">
+        <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-search"></i></button>
+        {% if sel_region or sel_state or sel_q %}
+        <a href="{{ url_for('spots.forecast') }}" class="btn btn-outline-secondary btn-sm" title="Limpar filtros"><i class="bi bi-x-lg"></i></a>
+        {% endif %}
+        <span class="fc-count">{{ spots|length }} de {{ total_count }} picos</span>
+    </form>
+    {% endif %}
+
+    {% if not total_count %}
     <div class="card text-center py-5 px-4">
         <i class="bi bi-water display-4 text-muted mb-2"></i>
         <h5 style="font-weight:700;">Nenhum pico aprovado ainda</h5>
         <div class="d-flex justify-content-center mt-2">
             <a href="{{ url_for('spots.spots_map') }}" class="btn btn-primary"><i class="bi bi-geo-alt me-1"></i> Abrir mapa</a>
+        </div>
+    </div>
+    {% elif not spots %}
+    <div class="card text-center py-5 px-4">
+        <i class="bi bi-search display-4 text-muted mb-2"></i>
+        <h5 style="font-weight:700;">Nenhum pico encontrado</h5>
+        <p class="text-muted mb-3" style="font-size:.9rem;">Nenhum pico bate com esse filtro.</p>
+        <div class="d-flex justify-content-center">
+            <a href="{{ url_for('spots.forecast') }}" class="btn btn-outline-primary"><i class="bi bi-x-lg me-1"></i> Limpar filtros</a>
         </div>
     </div>
     {% elif not forecasts %}
@@ -105,6 +164,19 @@
 
 {% block scripts %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+// Mostra no select de estados apenas os UFs da região escolhida
+(function () {
+    var region = document.getElementById('fcRegion');
+    var state = document.getElementById('fcState');
+    if (!region || !state) return;
+    var r = region.value;
+    Array.prototype.forEach.call(state.options, function (o) {
+        if (!o.value) { o.hidden = false; return; }
+        o.hidden = !!r && o.dataset.region !== r;
+    });
+})();
+</script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     var store = {};

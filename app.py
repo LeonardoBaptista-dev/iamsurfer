@@ -19,7 +19,7 @@ app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'uma_chave_secreta_tempo
 # Configuração do banco de dados
 database_url = os.environ.get('DATABASE_URL')
 if database_url and database_url.startswith("postgres://"):
-    # O Render usa 'postgresql://' em vez de 'postgres://'
+    # SQLAlchemy/psycopg2 espera 'postgresql://' (alguns provedores entregam 'postgres://')
     database_url = database_url.replace("postgres://", "postgresql://", 1)
 
 app.config['SQLALCHEMY_DATABASE_URI'] = database_url or 'sqlite:///iamsurfer.db'
@@ -33,8 +33,8 @@ app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100MB
 # Tamanho máximo aceito de um vídeo enviado (antes da compressão).
 app.config['MAX_VIDEO_UPLOAD_SIZE'] = 100 * 1024 * 1024  # 100MB
 
-# Verificar se está em ambiente de produção (Render)
-is_production = os.environ.get('RENDER', False) or os.environ.get('FLASK_ENV') == 'production'
+# Verificar se está em ambiente de produção
+is_production = os.environ.get('FLASK_ENV') == 'production'
 
 # Configuração para desenvolvimento local vs produção
 # No Docker, mesmo em desenvolvimento, vamos usar armazenamento local
@@ -209,7 +209,7 @@ def inject_badges():
     from badges import BADGES
     return {'BADGES': BADGES}
 
-# Rota de health check para monitoramento do Render
+# Rota de health check para monitoramento (Coolify/Traefik)
 @app.route('/healthz')
 def health_check():
     try:

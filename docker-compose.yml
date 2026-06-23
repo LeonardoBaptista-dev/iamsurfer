@@ -9,8 +9,8 @@ services:
     environment:
       - FLASK_APP=app.py
       # 'development' aqui é o ambiente LOCAL deste compose (usa armazenamento
-      # local de imagens). Em produção (Render) defina FLASK_ENV=production e as
-      # credenciais do Cloudinary/DATABASE_URL via variáveis de ambiente seguras.
+      # local de imagens). Em produção (Coolify/Hostinger) defina FLASK_ENV=production
+      # e as credenciais do Cloudinary/DATABASE_URL via variáveis de ambiente seguras.
       - FLASK_ENV=development
       # Banco local do próprio compose (credenciais locais, não são segredo)
       - DATABASE_URL=postgresql://iamsurfer:iamsurfer@db/iamsurfer

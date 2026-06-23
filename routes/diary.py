@@ -20,7 +20,7 @@ diary = Blueprint('diary', __name__)
 
 def get_image_processor():
     """Retorna o processador de imagem apropriado (local em dev, cloud em prod)."""
-    use_local = not (os.environ.get('RENDER', False) or os.environ.get('FLASK_ENV') == 'production')
+    use_local = os.environ.get('FLASK_ENV') != 'production'
     if use_local:
         from local_image_processor import LocalImageProcessor
         return LocalImageProcessor

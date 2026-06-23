@@ -94,13 +94,53 @@ def spots_map():
     # Usa mapa GRATUITO (OpenStreetMap + Leaflet) por padrão
     return render_template('spots/map_free.html', spots=json.dumps(spots_data))
 
+# UF -> região (Brasil). Usado para filtrar a previsão por região/estado.
+UF_REGION = {
+    'AC': 'Norte', 'AP': 'Norte', 'AM': 'Norte', 'PA': 'Norte', 'RO': 'Norte', 'RR': 'Norte', 'TO': 'Norte',
+    'AL': 'Nordeste', 'BA': 'Nordeste', 'CE': 'Nordeste', 'MA': 'Nordeste', 'PB': 'Nordeste',
+    'PE': 'Nordeste', 'PI': 'Nordeste', 'RN': 'Nordeste', 'SE': 'Nordeste',
+    'DF': 'Centro-Oeste', 'GO': 'Centro-Oeste', 'MT': 'Centro-Oeste', 'MS': 'Centro-Oeste',
+    'ES': 'Sudeste', 'MG': 'Sudeste', 'RJ': 'Sudeste', 'SP': 'Sudeste',
+    'PR': 'Sul', 'RS': 'Sul', 'SC': 'Sul',
+}
+REGION_ORDER = ['Norte', 'Nordeste', 'Centro-Oeste', 'Sudeste', 'Sul']
+
+
 @spots.route('/forecast')
 def forecast():
-    """Previsão de surf (ondas + vento) de todos os picos aprovados."""
+    """Previsão de surf (ondas + vento) dos picos aprovados, com filtro por
+    região/estado/nome. Filtra ANTES de buscar a previsão para não consultar a
+    API de todos os picos quando o usuário só quer uma região."""
     from surf_forecast import get_forecast
-    approved = Spot.query.filter_by(status='approved', is_active=True).order_by(Spot.name).all()
-    forecasts = get_forecast(approved)
-    return render_template('spots/forecast.html', spots=approved, forecasts=forecasts)
+
+    region = (request.args.get('region') or '').strip()
+    state = (request.args.get('state') or '').strip().upper()
+    q = (request.args.get('q') or '').strip()
+
+    base = Spot.query.filter_by(status='approved', is_active=True)
+    total_count = base.count()
+
+    # Estados disponíveis (para os selects) — query leve, sem buscar previsão
+    all_states = sorted({s for (s,) in base.with_entities(Spot.state).distinct() if s})
+    states_meta = [{'uf': s, 'region': UF_REGION.get(s, '')} for s in all_states]
+    regions_present = [r for r in REGION_ORDER if any(UF_REGION.get(s) == r for s in all_states)]
+
+    query = base
+    if region:
+        ufs = [uf for uf, rg in UF_REGION.items() if rg == region]
+        query = query.filter(Spot.state.in_(ufs))
+    if state:
+        query = query.filter(Spot.state == state)
+    if q:
+        query = query.filter(Spot.name.ilike(f'%{q}%'))
+
+    filtered = query.order_by(Spot.name).all()
+    forecasts = get_forecast(filtered)
+
+    return render_template('spots/forecast.html', spots=filtered, forecasts=forecasts,
+                           regions=regions_present, states_meta=states_meta,
+                           sel_region=region, sel_state=state, sel_q=q,
+                           total_count=total_count)
 
 @spots.route('/spots/add', methods=['GET', 'POST'])
 @login_required
