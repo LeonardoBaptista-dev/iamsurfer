@@ -9,10 +9,10 @@
         <span class="authx-orb authx-orb-1"></span>
         <span class="authx-orb authx-orb-2"></span>
         <div class="authx-visual-inner">
-            <div class="authx-brand">
+            <a class="authx-brand" href="{{ url_for('main.index') }}" style="text-decoration:none;color:inherit;">
                 <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="IAmSurfer">
                 <span>IAmSurfer</span>
-            </div>
+            </a>
             <h2 class="authx-hero">Entre na<br>onda.</h2>
             <p class="authx-sub">A rede social dos surfistas. Compartilhe suas sessões, descubra
                 picos, pegue caronas e acompanhe a previsão do mar.</p>
@@ -31,7 +31,7 @@
     <!-- Painel do formulário -->
     <main class="authx-panel">
         <div class="authx-card">
-            <a class="authx-logo-mobile" href="{{ url_for('auth.login') }}">
+            <a class="authx-logo-mobile" href="{{ url_for('main.index') }}">
                 <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="IAmSurfer">
                 <span>IAmSurfer</span>
             </a>

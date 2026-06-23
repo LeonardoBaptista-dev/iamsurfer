@@ -1717,12 +1717,19 @@ footer.bg-light {
         width: 100%;
     }
 
-    /* menus dropdown abertos dentro do menu recolhido não estouram a tela */
+    /* No menu recolhido, os dropdowns fluem inline (acordeão) em vez de flutuar
+       posicionados pelo Popper — assim nada (ex.: "Sair") sai da tela. */
     .navbar .dropdown-menu {
-        width: auto !important;
-        max-width: calc(100vw - 32px);
+        position: static !important;
+        transform: none !important;
+        inset: auto !important;
+        float: none;
+        width: 100% !important;
+        max-width: 100%;
+        max-height: none !important;
         box-shadow: none;
         border: 1px solid var(--border);
+        margin-top: .25rem;
     }
 
     /* itens do menu recolhido alinhados à esquerda (não centralizados) */
