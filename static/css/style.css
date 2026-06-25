@@ -1733,7 +1733,6 @@ footer.bg-light {
         float: none;
         width: 100% !important;
         max-width: 100%;
-        max-height: none !important;
         box-shadow: none;
         border: 1px solid var(--border);
         margin-top: .25rem;
@@ -2588,6 +2587,15 @@ h1, h2, h3, h4, h5, .navbar-brand, .fw-bold {
 @media (max-width: 575.98px) {
     .toast-stack { top: auto; bottom: 74px; left: 12px; right: 12px; width: auto; }
 }
+
+/* Dropdown de notificações (sininho) */
+.notif-menu {
+    width: 320px;
+    max-width: calc(100vw - 24px);
+    max-height: 70vh;
+    overflow-y: auto;
+}
+.notif-menu .dropdown-item { white-space: normal; }
 
 /* ── Indigo só na LOGO e nos BOTÕES: neutraliza textos/ícones de destaque ── */
 .text-brand, .text-primary { color: var(--text-primary) !important; }

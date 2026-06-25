@@ -149,30 +149,20 @@
                                 class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
                                 id="notificationBadge" style="display: none;">0</span>
                         </a>
-                        <ul class="dropdown-menu dropdown-menu-end"
-                            style="width: 300px; max-width: calc(100vw - 24px); max-height: 420px; overflow-y: auto;">
-                            <li>
-                                <h6 class="dropdown-header"
-                                    style="font-size:.7rem;letter-spacing:.8px;text-transform:uppercase;color:var(--text-muted);">
-                                    Notificações</h6>
-                            </li>
-                            <li>
-                                <hr class="dropdown-divider">
-                            </li>
+                        <div class="dropdown-menu dropdown-menu-end notif-menu">
+                            <h6 class="dropdown-header"
+                                style="font-size:.7rem;letter-spacing:.8px;text-transform:uppercase;color:var(--text-muted);">
+                                Notificações</h6>
+                            <hr class="dropdown-divider">
                             <div id="notificationsList">
-                                <li><span class="dropdown-item text-muted"
-                                        style="font-size:.85rem;">Carregando...</span></li>
+                                <span class="dropdown-item text-muted" style="font-size:.85rem;">Carregando...</span>
                             </div>
-                            <li>
-                                <hr class="dropdown-divider">
-                            </li>
-                            <li>
-                                <a class="dropdown-item text-center" href="{{ url_for('messages.notifications') }}"
-                                    style="font-size:.82rem;color:var(--text-secondary);font-weight:600;">
-                                    Ver todas as notificações
-                                </a>
-                            </li>
-                        </ul>
+                            <hr class="dropdown-divider">
+                            <a class="dropdown-item text-center" href="{{ url_for('messages.notifications') }}"
+                                style="font-size:.82rem;color:var(--text-secondary);font-weight:600;">
+                                Ver todas as notificações
+                            </a>
+                        </div>
                     </li>
 
                     <!-- User Dropdown -->
@@ -337,18 +327,21 @@
                     const list = document.getElementById('notificationsList');
                     list.innerHTML = '';
                     if (!items.length) {
-                        list.innerHTML = '<li><span class="dropdown-item text-muted" style="font-size:.85rem;">Nenhuma notificação</span></li>';
+                        list.innerHTML = '<span class="dropdown-item text-muted" style="font-size:.85rem;">Nenhuma notificação</span>';
                     } else {
                         [...items].slice(0, 5).forEach(n => {
-                            const li = document.createElement('li');
-                            li.innerHTML = `<span class="dropdown-item" style="font-size:.85rem;">${n.innerHTML}</span>`;
-                            list.appendChild(li);
+                            const item = document.createElement('div');
+                            item.className = 'dropdown-item';
+                            item.style.fontSize = '.85rem';
+                            item.style.whiteSpace = 'normal';
+                            item.innerHTML = n.innerHTML;
+                            list.appendChild(item);
                         });
                     }
                 })
                 .catch(() => {
                     document.getElementById('notificationsList').innerHTML =
-                        '<li><span class="dropdown-item text-muted" style="font-size:.85rem;">Erro ao carregar</span></li>';
+                        '<span class="dropdown-item text-muted" style="font-size:.85rem;">Erro ao carregar</span>';
                 });
         }
 
