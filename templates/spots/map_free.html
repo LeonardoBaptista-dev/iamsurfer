@@ -247,15 +247,13 @@
                     {% endif %}
                 </div>
                 <div class="card-body p-3 pt-2 d-flex flex-column flex-grow-1">
-                    <div class="map-instructions rounded-3 p-2 mb-2 flex-shrink-0" id="mapInstructions" style="background: var(--bg); border: 1px solid var(--border);">
-                        <i class="bi bi-info-circle-fill me-2" style="color:var(--text-primary);"></i>
-                        <span style="font-size: 0.85rem; color: var(--text-secondary);"><strong>Como usar:</strong> Clique nos marcadores para explorar os picos.</span>
-                        {% if current_user.is_authenticated %}
-                        <span id="addModeInstructions" style="display: none; font-size: 0.85rem;" class="mt-1 text-success d-block fw-bold">
+                    {% if current_user.is_authenticated %}
+                    <div class="map-instructions rounded-3 p-2 mb-2 flex-shrink-0" id="mapInstructions" style="display: none; background: var(--bg); border: 1px solid var(--border);">
+                        <span id="addModeInstructions" style="font-size: 0.85rem;" class="text-success d-block fw-bold">
                             <i class="bi bi-pin-map-fill me-1"></i> Modo Adicionar Ativo: Clique no mapa para adicionar!
                         </span>
-                        {% endif %}
                     </div>
+                    {% endif %}
                     <div class="loading-spinner" id="loadingSpinner">
                         <div class="spinner-border text-primary spinner-border-sm" role="status">
                             <span class="visually-hidden">Carregando mapa...</span>

@@ -234,7 +234,7 @@
     {% set _toast_ic = {'success':'bi-check-circle-fill','danger':'bi-exclamation-octagon-fill','error':'bi-exclamation-octagon-fill','warning':'bi-exclamation-triangle-fill','info':'bi-info-circle-fill','message':'bi-info-circle-fill'} %}
     <div class="toast-stack" id="toastStack" aria-live="polite" aria-atomic="true">
         {% with messages = get_flashed_messages(with_categories=true) %}
-        {% for category, message in messages %}
+        {% for category, message in messages if category in ['danger', 'error', 'warning'] %}
         <div class="toastx toastx-{{ category }}" role="status">
             <i class="bi {{ _toast_ic.get(category, 'bi-info-circle-fill') }} toastx-ic"></i>
             <span class="toastx-msg">{{ message }}</span>
