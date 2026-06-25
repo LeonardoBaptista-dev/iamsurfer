@@ -120,7 +120,7 @@
                     <h6 style="font-weight:700;margin-bottom:10px;"><i class="bi bi-map me-1"></i> Trajeto</h6>
                     <div id="route-map"></div>
                     <div class="d-flex gap-3 mt-2" style="font-size:.78rem;color:var(--text-muted);">
-                        <span>🚗 {{ trip.departure_location }}</span><span>🏄 {{ trip.get_destination_display() }}</span>
+                        <span><i class="bi bi-pin-map me-1"></i>{{ trip.departure_location }}</span><span><i class="bi bi-geo-alt-fill me-1"></i>{{ trip.get_destination_display() }}</span>
                     </div>
                 </div>
             </div>

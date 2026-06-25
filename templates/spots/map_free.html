@@ -708,18 +708,18 @@
                     toggleAddMode();
 
                     // Mostra mensagem de sucesso
-                    alert('🎉 Spot adicionado com sucesso! Ele será analisado por nossa equipe antes de aparecer no mapa público.');
+                    alert('Spot adicionado com sucesso! Ele será analisado por nossa equipe antes de aparecer no mapa público.');
 
                     // Limpa formulário
                     document.getElementById('quickAddForm').reset();
 
                 } else {
-                    alert('❌ Erro ao adicionar spot: ' + (data.message || 'Erro desconhecido'));
+                    alert('Erro ao adicionar spot: ' + (data.message || 'Erro desconhecido'));
                 }
             })
             .catch(error => {
                 console.error('Erro:', error);
-                alert('❌ Erro de comunicação com o servidor');
+                alert('Erro de comunicação com o servidor');
             });
     }
 

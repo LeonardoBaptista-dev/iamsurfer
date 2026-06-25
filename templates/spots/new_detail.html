@@ -52,19 +52,19 @@
                         <div>
                             <h2>{{ spot.name }}</h2>
                             <p class="text-muted mb-2">
-                                <i class="fas fa-map-marker-alt"></i>
+                                <i class="bi bi-geo-alt"></i>
                                 {{ spot.city }}{% if spot.city and spot.state %}, {% endif %}{{ spot.state }}{% if
                                 spot.city or spot.state %}, {% endif %}{{ spot.country }}
                             </p>
                             {% if spot.address %}
                             <p class="text-muted mb-2">
-                                <i class="fas fa-directions"></i> {{ spot.address }}
+                                <i class="bi bi-signpost-2"></i> {{ spot.address }}
                             </p>
                             {% endif %}
                         </div>
                         <div class="text-start text-sm-end">
                             <span
-                                class="badge {% if spot.difficulty == 'iniciante' %}bg-success{% elif spot.difficulty == 'intermediário' %}bg-info{% else %}bg-warning{% endif %} fs-6">
+                                class="badge {% if spot.difficulty == 'iniciante' %}bg-success-subtle text-success-emphasis{% elif spot.difficulty == 'intermediário' %}bg-warning-subtle text-warning-emphasis{% else %}bg-danger-subtle text-danger-emphasis{% endif %}">
                                 {{ spot.difficulty.title() if spot.difficulty else 'N/A' }}
                             </span>
                             <p class="text-muted small mt-2 mb-0">{{ spot.wave_type.replace('_', ' ').title() if
@@ -118,11 +118,11 @@
                 </li>
                 <li class="nav-item">
                     <button class="nav-link" id="sessions-tab" data-bs-toggle="tab" data-bs-target="#sessions"
-                        type="button" role="tab">📸 Fotos à venda ({{ sessions|length }})</button>
+                        type="button" role="tab"><i class="bi bi-camera me-1"></i>Fotos à venda ({{ sessions|length }})</button>
                 </li>
                 <li class="nav-item">
                     <button class="nav-link" id="biz-tab" data-bs-toggle="tab" data-bs-target="#biz"
-                        type="button" role="tab">🏢 Negócios ({{ businesses|length }})</button>
+                        type="button" role="tab"><i class="bi bi-shop me-1"></i>Negócios ({{ businesses|length }})</button>
                 </li>
                 <li class="nav-item">
                     <button class="nav-link" id="reports-tab" data-bs-toggle="tab" data-bs-target="#reports"
@@ -192,7 +192,7 @@
                                 {% if current_user.is_authenticated %}
                                 <button class="btn btn-primary btn-sm" data-bs-toggle="modal"
                                     data-bs-target="#uploadPhotoModal">
-                                    <i class="fas fa-plus"></i> Adicionar Foto
+                                    <i class="bi bi-plus-lg"></i> Adicionar Foto
                                 </button>
                                 {% endif %}
                             </div>
@@ -220,7 +220,7 @@
                             </div>
                             {% else %}
                             <div class="text-center py-4">
-                                <i class="fas fa-camera fa-3x text-muted mb-3"></i>
+                                <i class="bi bi-camera text-muted mb-3" style="font-size:2.5rem;"></i>
                                 <p class="text-muted">Nenhuma foto enviada ainda.</p>
                             </div>
                             {% endif %}
@@ -472,7 +472,7 @@
                             class="btn btn-outline-primary btn-sm">
                             Adicionar Relato (Check-in)
                         </a>
-                        <button class="btn btn-outline-info btn-sm" data-bs-toggle="modal"
+                        <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal"
                             data-bs-target="#uploadPhotoModal">
                             Adicionar Foto
                         </button>

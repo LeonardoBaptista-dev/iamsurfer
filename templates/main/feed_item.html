@@ -100,7 +100,7 @@
             <!-- Caption -->
             {% if post.content %}
             <div class="post-caption">
-                <strong>{{ post.author.username }}</strong> {{ post.content }}
+                <strong>{{ post.author.username }}</strong> {{ post.content|nl2br }}
             </div>
             {% endif %}
 
