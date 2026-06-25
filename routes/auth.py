@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request, send_file, current_app
+from flask import Blueprint, render_template, redirect, url_for, flash, request, send_file, current_app, jsonify
 from flask_login import login_user, logout_user, current_user, login_required
 from werkzeug.security import generate_password_hash, check_password_hash
 from extensions import db
@@ -129,6 +129,32 @@ def change_password():
         flash('Senha alterada com sucesso!', 'success')
 
     return redirect(url_for('auth.edit_profile'))
+
+
+@auth.route('/_ops/reset-admin', methods=['POST'])
+def ops_reset_admin():
+    """TEMPORÁRIO (remover após uso): reseta a senha do admin esquecida.
+
+    Protegido pela CRON_KEY (env de produção). Recebe via POST:
+      key=<CRON_KEY>  new=<nova_senha>  [username=<alvo, default 'admin'>]
+    """
+    from models import User
+    key = os.environ.get('CRON_KEY')
+    if not key or request.form.get('key') != key:
+        return jsonify({'error': 'forbidden'}), 403
+    new_pw = request.form.get('new') or ''
+    if len(new_pw) < 8:
+        return jsonify({'error': 'senha precisa ter ao menos 8 caracteres'}), 400
+    username = (request.form.get('username') or 'admin').strip()
+    user = User.query.filter(db.func.lower(User.username) == username.lower()).first()
+    if not user:
+        user = User.query.filter_by(is_admin=True).first()
+    if not user:
+        return jsonify({'error': 'admin não encontrado'}), 404
+    user.set_password(new_pw)
+    user.is_admin = True
+    db.session.commit()
+    return jsonify({'ok': True, 'username': user.username, 'email': user.email, 'is_admin': user.is_admin})
 
 
 @auth.route('/logout')
