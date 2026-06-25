@@ -5,8 +5,9 @@
 {% block styles %}
 <style>
     .diary-hero {
-        background: var(--gradient);
-        color: #fff;
+        background: var(--surface);
+        color: var(--text-primary);
+        border: 1px solid var(--border);
         border-radius: 20px;
         overflow: hidden;
     }
@@ -23,12 +24,13 @@
         font-size: 1.5rem;
         font-weight: 800;
         line-height: 1;
+        color: var(--text-primary);
     }
     .diary-stat .lbl {
         font-size: .68rem;
         text-transform: uppercase;
         letter-spacing: .5px;
-        opacity: .8;
+        color: var(--text-muted);
     }
     .session-card {
         border: 1px solid var(--border);
@@ -59,7 +61,7 @@
         align-items: center;
         justify-content: center;
         background: var(--brand-faint);
-        color: var(--brand-light);
+        color: var(--text-secondary);
         font-size: 2.2rem;
     }
     .session-stars i { color: #f59e0b; font-size: .8rem; }
@@ -106,9 +108,9 @@
     .ach span { font-size: .66rem; line-height: 1.1; font-weight: 600; }
     .ach.done {
         opacity: 1;
-        color: var(--brand);
+        color: var(--text-primary);
         background: var(--brand-faint);
-        border-color: var(--brand);
+        border-color: var(--text-primary);
     }
 </style>
 {% endblock %}
@@ -123,12 +125,12 @@
                 <div class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-3 mb-3">
                     <div>
                         <h1 class="h4 mb-1 fw-bold"><i class="bi bi-journal-text me-2"></i>Diário de Surfe</h1>
-                        <p class="mb-0 small opacity-75">
+                        <p class="mb-0 small text-muted">
                             {% if is_owner %}Suas sessões registradas{% else %}Sessões de {{ owner.username }}{% endif %}
                         </p>
                     </div>
                     {% if is_owner %}
-                    <a href="{{ url_for('diary.new_session') }}" class="btn btn-light fw-bold px-3 align-self-start align-self-sm-center" style="border-radius: 12px; color: var(--brand);">
+                    <a href="{{ url_for('diary.new_session') }}" class="btn btn-primary fw-bold px-3 align-self-start align-self-sm-center" style="border-radius: 12px;">
                         <i class="bi bi-plus-lg me-1"></i> Nova sessão
                     </a>
                     {% endif %}
@@ -163,7 +165,7 @@
                     <h2 class="insight-title"><i class="bi bi-graph-up-arrow me-1"></i>Sessões por mês</h2>
                     <div class="insight-chart"><canvas id="diaryChart"></canvas></div>
                     {% if stats.fav_spot %}
-                    <p class="mb-0 mt-2 small text-muted"><i class="bi bi-heart-fill text-danger me-1"></i>Pico favorito: <strong style="color:var(--brand);">{{ stats.fav_spot }}</strong></p>
+                    <p class="mb-0 mt-2 small text-muted"><i class="bi bi-heart-fill text-danger me-1"></i>Pico favorito: <strong style="color:var(--text-primary);">{{ stats.fav_spot }}</strong></p>
                     {% endif %}
                 </div>
             </div>
@@ -196,7 +198,7 @@
                     {% endif %}
                     <div class="p-3 d-flex flex-column flex-grow-1">
                         <div class="d-flex justify-content-between align-items-start gap-2">
-                            <h2 class="h6 fw-bold mb-1 text-truncate" style="color: var(--brand);">{{ s.spot_name }}</h2>
+                            <h2 class="h6 fw-bold mb-1 text-truncate" style="color: var(--text-primary);">{{ s.spot_name }}</h2>
                             {% if s.conditions %}
                             <span class="badge bg-{{ s.conditions_color }}-subtle text-{{ s.conditions_color }}-emphasis flex-shrink-0">{{ s.conditions_label }}</span>
                             {% endif %}
@@ -221,7 +223,7 @@
         {% else %}
         <div class="card border-0 shadow-sm text-center py-5" style="border-radius: 20px;">
             <div class="card-body">
-                <i class="bi bi-journal-plus mb-3" style="font-size: 3rem; color: var(--brand-light);"></i>
+                <i class="bi bi-journal-plus mb-3" style="font-size: 3rem; color: var(--text-secondary);"></i>
                 <h2 class="h5 fw-bold">Diário vazio</h2>
                 <p class="text-muted mb-4">
                     {% if is_owner %}Registre sua primeira sessão e acompanhe sua evolução no surf.{% else %}{{ owner.username }} ainda não registrou sessões.{% endif %}

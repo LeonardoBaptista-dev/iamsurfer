@@ -18,7 +18,8 @@
     }
     .detail-photo-empty {
         height: 180px;
-        background: var(--gradient);
+        background: var(--bg);
+        border-bottom: 1px solid var(--border);
     }
     .detail-stars i { color: #f59e0b; font-size: 1.05rem; }
     .detail-stars i.off { color: var(--border-hover); }
@@ -36,7 +37,7 @@
         padding: .75rem;
         text-align: center;
     }
-    .meta-item .v { font-weight: 800; font-size: 1.1rem; color: var(--brand); line-height: 1; }
+    .meta-item .v { font-weight: 800; font-size: 1.1rem; color: var(--text-primary); line-height: 1; }
     .meta-item .k { font-size: .68rem; text-transform: uppercase; letter-spacing: .5px; color: var(--text-muted); margin-top: .25rem; }
 </style>
 {% endblock %}
@@ -67,7 +68,7 @@
             <div class="p-3 p-md-4">
                 <div class="d-flex flex-wrap align-items-start justify-content-between gap-2 mb-2">
                     <div>
-                        <h1 class="h4 fw-bold mb-1" style="color: var(--brand);">
+                        <h1 class="h4 fw-bold mb-1" style="color: var(--text-primary);">
                             <i class="bi bi-geo-alt-fill me-1"></i>{{ session.spot_name }}
                         </h1>
                         <div class="text-muted small">
@@ -113,7 +114,7 @@
 
                 {% if session.spot_id %}
                 <div class="border-top pt-3 mt-3">
-                    <a href="{{ url_for('spots.new_spot_detail', spot_id=session.spot_id) }}" class="text-decoration-none small fw-semibold" style="color: var(--brand-light);">
+                    <a href="{{ url_for('spots.new_spot_detail', spot_id=session.spot_id) }}" class="text-decoration-none small fw-semibold" style="color: var(--text-secondary);">
                         <i class="bi bi-map me-1"></i>Ver pico no mapa
                     </a>
                 </div>

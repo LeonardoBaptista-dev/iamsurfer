@@ -14,8 +14,8 @@
     /* indigo-700 */
     --brand-light: #6366f1;
     /* indigo-500 */
-    --brand-faint: #eef2ff;
-    /* indigo-50  */
+    --brand-faint: #f1f3f5;
+    /* cinza neutro claro (antes indigo-50) — sem fundo azul */
     --brand-hover: #312e81;
     /* indigo-900 */
 
@@ -834,8 +834,8 @@ a:hover {
     justify-content: center;
     text-align: center;
     padding: 16px;
-    background: var(--gradient);
-    color: #fff;
+    background: var(--bg);
+    color: var(--text-muted);
     font-size: .85rem;
     font-weight: 500;
     line-height: 1.4;
@@ -905,12 +905,12 @@ a:hover {
 }
 
 .sidebar .nav-link.active {
-    background: var(--gradient);
-    color: #fff;
+    background: var(--bg);
+    color: var(--text-primary);
 }
 
 .sidebar .nav-link.active i {
-    color: #fff;
+    color: var(--text-primary);
 }
 
 .sidebar .nav-link i {
@@ -940,7 +940,7 @@ main h1.h2 {
 }
 
 .nav-pills .nav-link.active {
-    background: var(--brand) !important;
+    background: var(--text-primary) !important;
     color: #fff;
 }
 
@@ -1053,7 +1053,7 @@ main h1.h2 {
 }
 
 .trip-status.scheduled { background: var(--brand-faint); color: var(--brand); }
-.trip-status.ongoing   { background: var(--brand); color: #fff; }
+.trip-status.ongoing   { background: var(--text-primary); color: #fff; }
 .trip-status.completed { background: #f1f5f9; color: #64748b; }
 .trip-status.cancelled { background: #fef2f2; color: #b91c1c; }
 
@@ -1197,7 +1197,7 @@ main h1.h2 {
 .patente-progress > span {
     display: block;
     height: 100%;
-    background: var(--gradient);
+    background: var(--text-primary);
     border-radius: var(--radius-pill);
     transition: width .4s ease;
 }
@@ -1207,7 +1207,7 @@ main h1.h2 {
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    background: var(--brand);
+    background: var(--text-primary);
     color: #fff;
     font-weight: 700;
     font-size: .68rem;
@@ -1342,7 +1342,7 @@ main h1.h2 {
 }
 
 .fc-rating .dot.on {
-    background: var(--brand);
+    background: var(--text-primary);
 }
 
 /* Gráfico horário */
@@ -1483,7 +1483,7 @@ main h1.h2 {
 }
 
 .chat-line.mine .chat-bubble {
-    background: var(--gradient);
+    background: var(--text-primary);
     color: #fff;
     border: none;
 }
@@ -1656,8 +1656,8 @@ main h1.h2 {
 }
 
 .pagination .page-item.active .page-link {
-    background: var(--brand);
-    border-color: var(--brand);
+    background: var(--text-primary);
+    border-color: var(--text-primary);
 }
 
 /* ─── Footer ─────────────────────────────────────── */
@@ -1678,7 +1678,7 @@ footer.bg-light {
 }
 
 .surf-gradient {
-    background: var(--gradient);
+    background: var(--surface);
 }
 
 /* Smooth fade-in */
@@ -2588,3 +2588,12 @@ h1, h2, h3, h4, h5, .navbar-brand, .fw-bold {
 @media (max-width: 575.98px) {
     .toast-stack { top: auto; bottom: 74px; left: 12px; right: 12px; width: auto; }
 }
+
+/* ── Indigo só na LOGO e nos BOTÕES: neutraliza textos/ícones de destaque ── */
+.text-brand, .text-primary { color: var(--text-primary) !important; }
+.text-info { color: var(--text-secondary) !important; }
+.navbar .nav-link.active, .navbar .nav-link.active i,
+.navbar .nav-link:hover, .navbar .nav-link:hover i { color: var(--text-primary) !important; }
+.dropdown-item:hover { color: var(--text-primary) !important; }
+.sidebar .nav-link:hover { color: var(--text-primary) !important; }
+.patente-badge { background: var(--bg) !important; color: var(--text-secondary) !important; }

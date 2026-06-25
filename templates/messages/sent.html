@@ -18,7 +18,7 @@
         {% for message in messages %}
         <a href="{{ url_for('messages.view_message', message_id=message.id) }}" class="dm-row">
             <span class="dm-avatar d-flex align-items-center justify-content-center" style="background:var(--brand-faint);">
-                <i class="bi bi-send" style="color:var(--brand-light);"></i>
+                <i class="bi bi-send" style="color:var(--text-secondary);"></i>
             </span>
             <div class="flex-grow-1 min-w-0">
                 <div class="dm-name">Para: {{ message.recipient.username }}</div>

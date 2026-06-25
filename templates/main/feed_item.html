@@ -15,7 +15,7 @@
                         {% if post.spot %}
                         <span style="font-size:.78rem;color:var(--text-muted);">está em</span>
                         <a href="{{ url_for('spots.new_spot_detail', spot_id=post.spot.id) }}"
-                            style="font-size:.78rem;color:var(--brand-light);font-weight:600;">
+                            style="font-size:.78rem;color:var(--text-secondary);font-weight:600;">
                             <i class="bi bi-geo-alt-fill" style="font-size:.7rem;"></i> {{ post.spot.name }}
                         </a>
                         {% endif %}
@@ -131,7 +131,7 @@
                         <span style="font-size:.78rem;color:var(--text-muted);">reportou condições em</span>
                         {% if item.spot %}
                         <a href="{{ url_for('spots.new_spot_detail', spot_id=item.spot.id) }}"
-                            style="font-size:.78rem;color:var(--brand-light);font-weight:600;">
+                            style="font-size:.78rem;color:var(--text-secondary);font-weight:600;">
                             <i class="bi bi-geo-alt-fill" style="font-size:.7rem;"></i> {{ item.spot.name }}
                         </a>
                         {% endif %}
@@ -156,7 +156,7 @@
                         </span>
                         {% if item.wave_height %}
                         <span class="ms-auto d-flex align-items-center" style="font-size:.82rem;color:var(--text-muted);">
-                            <i class="bi bi-water me-1" style="color:var(--brand-light);"></i> {{ item.wave_height }}m
+                            <i class="bi bi-water me-1" style="color:var(--text-secondary);"></i> {{ item.wave_height }}m
                         </span>
                         {% endif %}
                     </div>

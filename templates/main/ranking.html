@@ -17,7 +17,7 @@
         transition: transform .15s ease, box-shadow .15s ease;
     }
     .rank-row:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(17,24,39,.07); color: inherit; }
-    .rank-row.me { border-color: var(--brand); background: var(--brand-faint); }
+    .rank-row.me { border-color: var(--text-primary); background: var(--brand-faint); }
     .rank-pos {
         flex-shrink: 0;
         width: 34px; height: 34px;
@@ -34,7 +34,7 @@
     .rank-name { font-weight: 700; color: var(--text-primary); line-height: 1.1; }
     .rank-patente { font-size: .76rem; color: var(--text-muted); }
     .rank-points { margin-left: auto; text-align: right; flex-shrink: 0; }
-    .rank-points .v { font-weight: 800; color: var(--brand); font-size: 1.05rem; line-height: 1; }
+    .rank-points .v { font-weight: 800; color: var(--text-primary); font-size: 1.05rem; line-height: 1; }
     .rank-points .l { font-size: .62rem; text-transform: uppercase; letter-spacing: .5px; color: var(--text-muted); }
     @media (max-width: 400px) {
         .rank-row { gap: .5rem; padding: .55rem .6rem; }
@@ -55,7 +55,7 @@
     </p>
 
     {% if my_rank %}
-    <div class="alert d-flex align-items-center gap-2 mb-4" style="background:var(--brand-faint);border:1px solid var(--brand);border-radius:14px;color:var(--brand);">
+    <div class="alert d-flex align-items-center gap-2 mb-4" style="background:var(--brand-faint);border:1px solid var(--text-primary);border-radius:14px;color:var(--text-primary);">
         <i class="bi bi-person-badge fs-5"></i>
         <span>Você está em <strong>#{{ my_rank }}</strong> com <strong>{{ current_user.points or 0 }} XP</strong> · <i class="bi {{ current_user.patente.icon }}"></i> {{ current_user.patente.name }}</span>
     </div>

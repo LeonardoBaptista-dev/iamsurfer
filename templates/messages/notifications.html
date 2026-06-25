@@ -13,14 +13,14 @@
         <div class="notification-item dm-row" style="cursor:default;{% if not notification.read %}background:var(--brand-faint);{% endif %}">
             {% if notification.type == 'swell' %}
             <span class="dm-avatar d-flex align-items-center justify-content-center" style="background:var(--brand-faint);">
-                <i class="bi bi-water" style="color:var(--brand);"></i>
+                <i class="bi bi-water" style="color:var(--text-primary);"></i>
             </span>
             {% elif notification.related_user %}
             <img src="{{ notification.related_user.profile_image_urls|profile_thumbnail_url if notification.related_user.profile_image_urls else notification.related_user.profile_image|img_url }}"
                 class="dm-avatar" alt="">
             {% else %}
             <span class="dm-avatar d-flex align-items-center justify-content-center" style="background:var(--brand-faint);">
-                <i class="bi bi-bell-fill" style="color:var(--brand-light);"></i>
+                <i class="bi bi-bell-fill" style="color:var(--text-secondary);"></i>
             </span>
             {% endif %}
 

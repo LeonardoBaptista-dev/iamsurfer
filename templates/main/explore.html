@@ -22,7 +22,7 @@
     <div class="row mb-4 explore-header">
         <div class="col-12">
             <div class="d-flex align-items-center mb-2">
-                <i class="bi bi-compass-fill me-3 ic" style="color: var(--brand);"></i>
+                <i class="bi bi-compass-fill me-3 ic" style="color: var(--text-primary);"></i>
                 <h2 class="fw-bolder mb-0" style="color: var(--text-primary); letter-spacing: -0.5px;">Explorar</h2>
             </div>
             <p class="text-muted ms-1 sub">Descubra os posts mais recentes da comunidade surfista</p>
@@ -38,7 +38,7 @@
                             <div class="d-flex align-items-center">
                                 <img src="{{ post.author.profile_image_urls|profile_thumbnail_url if post.author.profile_image_urls else post.author.profile_image|img_url }}" class="rounded-circle shadow-sm me-3" width="40" height="40" style="object-fit: cover; border: 2px solid var(--brand-faint);">
                                 <div>
-                                    <a href="{{ url_for('main.user_profile', username=post.author.username) }}" class="fw-bold text-decoration-none d-block lh-1 mb-1" style="color: var(--brand); font-size: 0.95rem;">{{ post.author.username }}</a>
+                                    <a href="{{ url_for('main.user_profile', username=post.author.username) }}" class="fw-bold text-decoration-none d-block lh-1 mb-1" style="color: var(--text-primary); font-size: 0.95rem;">{{ post.author.username }}</a>
                                     <small class="text-muted fw-medium" style="font-size: 0.75rem;">{{ post.created_at.strftime('%d/%m/%Y %H:%M') }}</small>
                                 </div>
                             </div>
@@ -81,7 +81,7 @@
                                         {{ post.comments|length }}
                                     </a>
                                 </div>
-                                <a href="{{ url_for('posts.view_post', post_id=post.id) }}" class="text-decoration-none fw-bold" style="font-size: 0.85rem; color: var(--brand);">
+                                <a href="{{ url_for('posts.view_post', post_id=post.id) }}" class="text-decoration-none fw-bold" style="font-size: 0.85rem; color: var(--text-primary);">
                                     Ver post completo <i class="bi bi-arrow-right-short"></i>
                                 </a>
                             </div>
@@ -114,15 +114,15 @@
             </div>
             
             {% if current_user.is_authenticated %}
-                <div class="card border-0 shadow-sm mb-4" style="border-radius: 16px; background: var(--gradient);">
+                <div class="card border-0 shadow-sm mb-4" style="border-radius: 16px; background: var(--surface); border: 1px solid var(--border);">
                     <div class="card-body p-4 text-center">
-                        <i class="bi bi-lightning-charge-fill text-white fs-1 mb-2 opacity-75"></i>
-                        <h6 class="text-white fw-bold mb-3">Compartilhe sua Trip</h6>
+                        <i class="bi bi-lightning-charge-fill text-dark fs-1 mb-2"></i>
+                        <h6 class="text-dark fw-bold mb-3">Compartilhe sua Trip</h6>
                         <div class="d-flex flex-column gap-2">
-                            <a href="{{ url_for('posts.new_post') }}" class="btn btn-light fw-bold rounded-pill text-primary py-2 shadow-sm">
+                            <a href="{{ url_for('posts.new_post') }}" class="btn btn-primary fw-bold rounded-pill py-2 shadow-sm">
                                 <i class="bi bi-plus-lg me-1"></i> Criar Novo Post
                             </a>
-                            <a href="{{ url_for('main.search') }}" class="btn text-white fw-medium bg-white bg-opacity-10 rounded-pill py-2 border-0 hover-opacity border border-light border-opacity-25" style="border: 1px solid rgba(255,255,255,0.3)!important;">
+                            <a href="{{ url_for('main.search') }}" class="btn btn-outline-primary fw-medium rounded-pill py-2">
                                 <i class="bi bi-search me-1"></i> Procurar Surfistas
                             </a>
                         </div>

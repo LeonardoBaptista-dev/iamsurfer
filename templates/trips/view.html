@@ -33,27 +33,26 @@
 
     <!-- Hero -->
     <div class="card mb-4" style="overflow:hidden;">
-        <div class="p-4" style="background:var(--gradient);color:#fff;">
+        <div class="p-4" style="background:var(--surface);color:var(--text-primary);border:1px solid var(--border);">
             <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
                 <div>
-                    <span class="trip-status {{ st }}" style="background:rgba(255,255,255,.2);color:#fff;">{{ trip.status }}</span>
+                    <span class="trip-status {{ st }}" style="background:var(--text-primary);color:#fff;">{{ trip.status }}</span>
                     <h3 class="mt-2 mb-1" style="font-weight:800;letter-spacing:-.5px;">{{ trip.title }}</h3>
-                    <div style="opacity:.9;font-size:.92rem;">
+                    <div style="color:var(--text-muted);font-size:.92rem;">
                         <i class="bi bi-geo-alt-fill"></i> {{ trip.departure_location }}
                         <i class="bi bi-arrow-right mx-1"></i> {{ trip.get_destination_display() }}
                     </div>
                 </div>
                 <div class="d-flex gap-2">
                     {% if trip.creator_id == current_user.id %}
-                        <a href="{{ url_for('trips.manage_participants', trip_id=trip.id) }}" class="btn btn-sm"
-                            style="background:#fff;color:var(--brand);font-weight:700;">Gerenciar</a>
+                        <a href="{{ url_for('trips.manage_participants', trip_id=trip.id) }}" class="btn btn-sm btn-primary"
+                            style="font-weight:700;">Gerenciar</a>
                         {% if trip.status == 'Scheduled' %}
-                        <a href="{{ url_for('trips.cancel_trip', trip_id=trip.id) }}" class="btn btn-sm"
-                            style="background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.4);">Cancelar</a>
+                        <a href="{{ url_for('trips.cancel_trip', trip_id=trip.id) }}" class="btn btn-sm btn-outline-secondary">Cancelar</a>
                         {% endif %}
                     {% elif current_user.is_authenticated and not is_participant and trip.status == 'Scheduled' and trip.get_available_seats() > 0 %}
-                        <a href="{{ url_for('trips.join_trip', trip_id=trip.id) }}" class="btn btn-sm"
-                            style="background:#fff;color:var(--brand);font-weight:700;"><i class="bi bi-person-plus me-1"></i> Quero participar</a>
+                        <a href="{{ url_for('trips.join_trip', trip_id=trip.id) }}" class="btn btn-sm btn-primary"
+                            style="font-weight:700;"><i class="bi bi-person-plus me-1"></i> Quero participar</a>
                     {% endif %}
                 </div>
             </div>
