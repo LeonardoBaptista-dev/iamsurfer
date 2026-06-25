@@ -57,7 +57,7 @@
     {% if my_rank %}
     <div class="alert d-flex align-items-center gap-2 mb-4" style="background:var(--brand-faint);border:1px solid var(--brand);border-radius:14px;color:var(--brand);">
         <i class="bi bi-person-badge fs-5"></i>
-        <span>Você está em <strong>#{{ my_rank }}</strong> com <strong>{{ current_user.points or 0 }} XP</strong> · {{ current_user.patente.icon }} {{ current_user.patente.name }}</span>
+        <span>Você está em <strong>#{{ my_rank }}</strong> com <strong>{{ current_user.points or 0 }} XP</strong> · <i class="bi {{ current_user.patente.icon }}"></i> {{ current_user.patente.name }}</span>
     </div>
     {% endif %}
 
@@ -73,7 +73,7 @@
                  alt="{{ u.username }}">
             <div class="min-w-0">
                 <div class="rank-name text-truncate">{{ u.username }}</div>
-                <div class="rank-patente">{{ u.patente.icon }} {{ u.patente.name }}</div>
+                <div class="rank-patente"><i class="bi {{ u.patente.icon }}"></i> {{ u.patente.name }}</div>
             </div>
             <div class="rank-points">
                 <div class="v">{{ u.points or 0 }}</div>

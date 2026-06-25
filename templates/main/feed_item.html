@@ -10,7 +10,7 @@
                     <div class="d-flex align-items-center flex-wrap gap-1 gap-sm-2">
                         <a href="{{ url_for('main.user_profile', username=post.author.username) }}"
                             class="post-username text-dark text-decoration-none">{{ post.author.username }}</a>
-                        <span class="patente-badge" title="{{ post.author.patente.name }}">{{ post.author.patente.icon }} {{ post.author.patente.name }}</span>
+                        <span class="patente-badge" title="{{ post.author.patente.name }}"><i class="bi {{ post.author.patente.icon }}"></i> {{ post.author.patente.name }}</span>
                         {% for r in post.author.active_roles %}<span class="role-badge" title="{{ BADGES[r].label }} — {{ BADGES[r].desc }}"><i class="bi {{ BADGES[r].icon }}"></i></span>{% endfor %}
                         {% if post.spot %}
                         <span style="font-size:.78rem;color:var(--text-muted);">está em</span>
@@ -126,7 +126,7 @@
                     <div class="d-flex align-items-center flex-wrap gap-1 gap-sm-2">
                         <a href="{{ url_for('main.user_profile', username=item.author.username) }}"
                             class="post-username text-dark text-decoration-none">{{ item.author.username }}</a>
-                        <span class="patente-badge" title="{{ item.author.patente.name }}">{{ item.author.patente.icon }} {{ item.author.patente.name }}</span>
+                        <span class="patente-badge" title="{{ item.author.patente.name }}"><i class="bi {{ item.author.patente.icon }}"></i> {{ item.author.patente.name }}</span>
                         {% for r in item.author.active_roles %}<span class="role-badge" title="{{ BADGES[r].label }}"><i class="bi {{ BADGES[r].icon }}"></i></span>{% endfor %}
                         <span style="font-size:.78rem;color:var(--text-muted);">reportou condições em</span>
                         {% if item.spot %}

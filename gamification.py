@@ -19,14 +19,15 @@ POINTS = {
     'follower': 5,          # ganhar seguidor
 }
 
-# (xp_mínimo, slug, nome, emoji) — ordem crescente
+# (xp_mínimo, slug, nome, ícone Bootstrap) — ordem crescente.
+# Ícones do Bootstrap Icons (sem emojis) renderizados como <i class="bi ...">.
 LEVELS = [
-    (0,    'marola',      'Marola',        '🌊'),
-    (100,  'surfista',    'Surfista',      '🏄'),
-    (300,  'local',       'Local',         '🤙'),
-    (700,  'free-surfer', 'Free Surfer',   '🌟'),
-    (1500, 'big-rider',   'Big Rider',     '🔥'),
-    (3000, 'lenda',       'Lenda do Pico', '👑'),
+    (0,    'marola',      'Marola',        'bi-droplet'),
+    (100,  'surfista',    'Surfista',      'bi-water'),
+    (300,  'local',       'Local',         'bi-pin-map-fill'),
+    (700,  'free-surfer', 'Free Surfer',   'bi-stars'),
+    (1500, 'big-rider',   'Big Rider',     'bi-fire'),
+    (3000, 'lenda',       'Lenda do Pico', 'bi-trophy-fill'),
 ]
 
 

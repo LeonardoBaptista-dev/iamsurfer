@@ -13,7 +13,7 @@
         <div class="ig-profile-info">
             <div class="ig-profile-toprow">
                 <h1 class="ig-profile-username">{{ user.username }}</h1>
-                <span class="patente-badge lg" title="{{ user.patente.points }} XP">{{ user.patente.icon }} {{ user.patente.name }}</span>
+                <span class="patente-badge lg" title="{{ user.patente.points }} XP"><i class="bi {{ user.patente.icon }}"></i> {{ user.patente.name }}</span>
                 {% for r in user.active_roles %}<span class="role-badge lg" title="{{ BADGES[r].desc }}"><i class="bi {{ BADGES[r].icon }}"></i> {{ BADGES[r].label }}</span>{% endfor %}
 
                 {% if current_user.is_authenticated and current_user.id != user.id %}
@@ -48,7 +48,7 @@
                 <div class="d-flex justify-content-between mb-1" style="font-size:.72rem;color:var(--text-muted);font-weight:600;">
                     <span>{{ user.patente.points }} XP</span>
                     {% if user.patente.next_name %}
-                    <span>faltam {{ user.patente.to_next }} p/ {{ user.patente.next_icon }} {{ user.patente.next_name }}</span>
+                    <span>faltam {{ user.patente.to_next }} p/ <i class="bi {{ user.patente.next_icon }}"></i> {{ user.patente.next_name }}</span>
                     {% else %}<span>nível máximo 👑</span>{% endif %}
                 </div>
                 <div class="patente-progress"><span style="width: {{ user.patente.progress }}%;"></span></div>

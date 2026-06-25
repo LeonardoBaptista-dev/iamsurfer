@@ -240,17 +240,17 @@
         </div>
     </nav>
 
-    <!-- Flash Messages -->
-    <div class="container mt-3">
+    <!-- Flash Messages (toasts) -->
+    {% set _toast_ic = {'success':'bi-check-circle-fill','danger':'bi-exclamation-octagon-fill','error':'bi-exclamation-octagon-fill','warning':'bi-exclamation-triangle-fill','info':'bi-info-circle-fill','message':'bi-info-circle-fill'} %}
+    <div class="toast-stack" id="toastStack" aria-live="polite" aria-atomic="true">
         {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
         {% for category, message in messages %}
-        <div class="alert alert-{{ category }} alert-dismissible fade show fade-in">
-            {{ message }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        <div class="toastx toastx-{{ category }}" role="status">
+            <i class="bi {{ _toast_ic.get(category, 'bi-info-circle-fill') }} toastx-ic"></i>
+            <span class="toastx-msg">{{ message }}</span>
+            <button type="button" class="toastx-close" aria-label="Fechar">&times;</button>
         </div>
         {% endfor %}
-        {% endif %}
         {% endwith %}
     </div>
 
@@ -302,6 +302,15 @@
     <!-- Custom JS -->
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     <script src="{{ url_for('static', filename='js/image-system.js') }}"></script>
+
+    <!-- Toasts (flash messages) -->
+    <script>
+        document.querySelectorAll('#toastStack .toastx').forEach(function (t, i) {
+            function close() { t.classList.add('hide'); setTimeout(function () { t.remove(); }, 250); }
+            t.querySelector('.toastx-close').addEventListener('click', close);
+            setTimeout(close, 4200 + i * 400);
+        });
+    </script>
 
     {% if current_user.is_authenticated %}
     <script>
