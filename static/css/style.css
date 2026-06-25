@@ -116,7 +116,7 @@ a:hover {
 }
 
 /* No desktop (barra expandida) os itens não podem quebrar pra fora da barra */
-@media (min-width: 1200px) {
+@media (min-width: 1400px) {
     .navbar .nav-link { padding: 6px 9px !important; }
     .navbar .navbar-nav { flex-wrap: nowrap; }
 }
@@ -1714,8 +1714,8 @@ footer.bg-light {
 
 /* ─── Responsive ─────────────────────────────────── */
 
-/* Navbar recolhida (abaixo de lg): busca e menus ocupam o espaço direito */
-@media (max-width: 1199.98px) {
+/* Navbar recolhida (abaixo de xxl): busca e menus ocupam o espaço direito */
+@media (max-width: 1399.98px) {
     .navbar .form-control {
         width: 100%;
     }

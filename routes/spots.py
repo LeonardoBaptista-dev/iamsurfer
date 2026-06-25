@@ -105,6 +105,37 @@ UF_REGION = {
 }
 REGION_ORDER = ['Norte', 'Nordeste', 'Centro-Oeste', 'Sudeste', 'Sul']
 
+# Nome do estado (BR) -> UF. Normaliza picos que gravaram "Paraná" em vez de "PR",
+# pra não duplicar opções no filtro. Estados de fora do Brasil ficam como estão.
+BR_STATE_UF = {
+    'acre': 'AC', 'alagoas': 'AL', 'amapa': 'AP', 'amazonas': 'AM', 'bahia': 'BA',
+    'ceara': 'CE', 'distrito federal': 'DF', 'espirito santo': 'ES', 'goias': 'GO',
+    'maranhao': 'MA', 'mato grosso': 'MT', 'mato grosso do sul': 'MS', 'minas gerais': 'MG',
+    'para': 'PA', 'paraiba': 'PB', 'parana': 'PR', 'pernambuco': 'PE', 'piaui': 'PI',
+    'rio de janeiro': 'RJ', 'rio grande do norte': 'RN', 'rio grande do sul': 'RS',
+    'rondonia': 'RO', 'roraima': 'RR', 'santa catarina': 'SC', 'sao paulo': 'SP',
+    'sergipe': 'SE', 'tocantins': 'TO',
+}
+
+
+def _strip_accents(txt):
+    import unicodedata
+    return ''.join(c for c in unicodedata.normalize('NFD', txt)
+                   if unicodedata.category(c) != 'Mn')
+
+
+def fc_country(spot):
+    """País do pico, normalizado (default Brasil)."""
+    return (spot.country or 'Brasil').strip() or 'Brasil'
+
+
+def fc_state(spot):
+    """Estado do pico, normalizado: nome de estado BR vira UF; resto fica como está."""
+    raw = (spot.state or '').strip()
+    if not raw:
+        return ''
+    return BR_STATE_UF.get(_strip_accents(raw).lower(), raw)
+
 
 SORT_OPTIONS = {'quality': 'Melhor qualidade', 'wave': 'Maior onda', 'name': 'Nome (A-Z)'}
 
@@ -139,14 +170,14 @@ def forecast():
 
     args = request.args
     clearing = bool(args.get('clear'))
-    explicit = any(k in args for k in ('region', 'state', 'q', 'sort'))
+    explicit = any(k in args for k in ('country', 'state', 'q', 'sort'))
 
     if clearing:
-        region = state = q = ''
+        country = state = q = ''
         sort = 'quality'
     elif explicit:
-        region = (args.get('region') or '').strip()
-        state = (args.get('state') or '').strip().upper()
+        country = (args.get('country') or '').strip()
+        state = (args.get('state') or '').strip()
         q = (args.get('q') or '').strip()
         sort = (args.get('sort') or 'quality').strip()
     else:
@@ -155,32 +186,34 @@ def forecast():
             saved = json.loads(request.cookies.get('fc_filter') or '{}')
         except (ValueError, TypeError):
             saved = {}
-        region = (saved.get('region') or '').strip()
-        state = (saved.get('state') or '').strip().upper()
+        country = (saved.get('country') or '').strip()
+        state = (saved.get('state') or '').strip()
         q = (saved.get('q') or '').strip()
         sort = (saved.get('sort') or 'quality').strip()
 
     if sort not in SORT_OPTIONS:
         sort = 'quality'
 
-    base = Spot.query.filter_by(status='approved', is_active=True)
-    total_count = base.count()
+    all_spots = Spot.query.filter_by(status='approved', is_active=True).order_by(Spot.name).all()
+    total_count = len(all_spots)
 
-    # Estados disponíveis (para os selects) — query leve, sem buscar previsão
-    all_states = sorted({s for (s,) in base.with_entities(Spot.state).distinct() if s})
-    states_meta = [{'uf': s, 'region': UF_REGION.get(s, '')} for s in all_states]
-    regions_present = [r for r in REGION_ORDER if any(UF_REGION.get(s) == r for s in all_states)]
+    # Opções de filtro orientadas a dados: só aparece país/estado que TEM pico.
+    countries = sorted({fc_country(s) for s in all_spots},
+                       key=lambda c: (c != 'Brasil', c.lower()))  # Brasil primeiro
+    pairs = sorted({(fc_state(s), fc_country(s)) for s in all_spots if fc_state(s)},
+                   key=lambda t: t[0].lower())
+    states_meta = [{'uf': st, 'country': co} for (st, co) in pairs]
 
-    query = base
-    if region:
-        ufs = [uf for uf, rg in UF_REGION.items() if rg == region]
-        query = query.filter(Spot.state.in_(ufs))
+    # Aplica os filtros em Python (estado normalizado, ignora maiúsc./acento no país)
+    filtered = list(all_spots)
+    if country:
+        filtered = [s for s in filtered if fc_country(s).lower() == country.lower()]
     if state:
-        query = query.filter(Spot.state == state)
+        filtered = [s for s in filtered if fc_state(s).lower() == state.lower()]
     if q:
-        query = query.filter(Spot.name.ilike(f'%{q}%'))
+        ql = q.lower()
+        filtered = [s for s in filtered if ql in (s.name or '').lower()]
 
-    filtered = query.order_by(Spot.name).all()
     forecasts = get_forecast(filtered)
 
     # Ordenação (a query já vem por nome; reordena por qualidade/onda quando pedido)
@@ -193,8 +226,8 @@ def forecast():
 
     resp = make_response(render_template(
         'spots/forecast.html', spots=filtered, forecasts=forecasts,
-        regions=regions_present, states_meta=states_meta, sort_options=SORT_OPTIONS,
-        sel_region=region, sel_state=state, sel_q=q, sel_sort=sort,
+        countries=countries, states_meta=states_meta, sort_options=SORT_OPTIONS,
+        sel_country=country, sel_state=state, sel_q=q, sel_sort=sort,
         total_count=total_count))
 
     # Memória do filtro: salva quando o usuário age; apaga ao limpar
@@ -202,7 +235,7 @@ def forecast():
         resp.delete_cookie('fc_filter')
     elif explicit:
         resp.set_cookie('fc_filter',
-                        json.dumps({'region': region, 'state': state, 'q': q, 'sort': sort}),
+                        json.dumps({'country': country, 'state': state, 'q': q, 'sort': sort}),
                         max_age=60 * 60 * 24 * 30, samesite='Lax')
     return resp
 

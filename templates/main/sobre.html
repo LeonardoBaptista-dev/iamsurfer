@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}Sobre - IAmSurfer{% endblock %}
+
+{% block content %}
+<div class="col-lg-8 mx-auto py-3">
+    <div class="mb-4">
+        <h1 class="fw-bold mb-2" style="letter-spacing:-.5px;">Sobre o IAmSurfer</h1>
+        <p class="text-muted mb-0">A rede social feita por e para surfistas.</p>
+    </div>
+
+    <div class="card">
+        <div class="card-body" style="line-height:1.7;">
+            <p>O <strong>IAmSurfer</strong> nasceu da vontade de reunir tudo que a vida no surf precisa
+            num só lugar: o feed da galera, o registro das suas sessões, a previsão por pico,
+            os alertas de swell, as caronas para o mar e o ranking da comunidade.</p>
+
+            <h5 class="fw-bold mt-4 mb-2">O que você encontra aqui</h5>
+            <ul class="mb-0">
+                <li>Feed com fotos, reels e relatos de condições dos picos.</li>
+                <li>Diário de surfe para registrar cada sessão e acompanhar sua evolução.</li>
+                <li>Previsão de ondas e vento por pico, com a melhor janela em destaque.</li>
+                <li>Alertas de swell dos seus picos favoritos.</li>
+                <li>SurfMap colaborativo: a comunidade mapeia e enriquece os picos.</li>
+                <li>Caronas para dividir a estrada (e a gasolina) rumo ao line-up.</li>
+                <li>Ranking e conquistas para quem mais vive o surf.</li>
+            </ul>
+
+            <h5 class="fw-bold mt-4 mb-2">Nossa história</h5>
+            <p>O IAmSurfer foi idealizado e desenvolvido por um <strong>surfista programador</strong>,
+            apaixonado por tecnologia e pela vibe e o estilo de vida que envolvem o surf.
+            Da prancha ao código, a ideia foi simples: usar a tecnologia para aproximar a tribo,
+            valorizar cada sessão e ajudar todo mundo a surfar mais e melhor.</p>
+
+            <h5 class="fw-bold mt-4 mb-2">Comunidade colaborativa</h5>
+            <p class="mb-0">Os picos são construídos juntos: qualquer surfista pode cadastrar um pico ou
+            sugerir mais informações sobre ele. Nossa equipe revisa as contribuições antes de
+            publicá-las, mantendo os dados confiáveis para todo mundo.</p>
+        </div>
+    </div>
+
+    <div class="text-center mt-4">
+        <a href="{{ url_for('auth.signup') }}" class="btn btn-primary"><i class="bi bi-person-plus-fill me-1"></i> Criar conta grátis</a>
+    </div>
+</div>
+{% endblock %}

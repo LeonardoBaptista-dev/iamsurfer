@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}Ajuda - IAmSurfer{% endblock %}
+
+{% block content %}
+<div class="col-lg-8 mx-auto py-3">
+    <div class="mb-4">
+        <h1 class="fw-bold mb-2" style="letter-spacing:-.5px;">Central de Ajuda</h1>
+        <p class="text-muted mb-0">Dúvidas comuns sobre como usar o IAmSurfer.</p>
+    </div>
+
+    <div class="accordion" id="faq">
+        {% set faqs = [
+            ('Como cadastro um pico no mapa?', 'Acesse o SurfMap, clique em "Adicionar" e marque o ponto no mapa (ou use o formulário completo). O pico fica pendente até a equipe aprovar.'),
+            ('Cadastrei um pico e ele não apareceu. Por quê?', 'Todo pico novo passa por uma revisão da nossa equipe antes de ficar visível na plataforma e na previsão. Assim que aprovado, ele aparece automaticamente.'),
+            ('Posso contribuir com informações de um pico já existente?', 'Sim. Na página do pico você pode sugerir informações que faltam (tipo de onda, direção do swell, melhor vento, maré). A sugestão é avaliada por um admin antes de entrar no pico.'),
+            ('Como funciona a previsão?', 'A previsão usa dados de ondas e vento por pico, com a melhor janela em destaque. Use os filtros de país e estado para encontrar seus picos, e clique num dia para ver hora a hora.'),
+            ('O que são os alertas de swell?', 'Siga seus picos favoritos para receber um aviso quando as condições prometerem. Você gerencia tudo em "Meus Picos".'),
+            ('Como ganho XP e subo no ranking?', 'Você ganha XP registrando sessões, postando, interagindo e cadastrando picos aprovados. Quanto mais ativo, mais alto no ranking da comunidade.'),
+            ('Esqueci minha senha. E agora?', 'Entre em contato com a equipe para recuperar o acesso. Em breve teremos recuperação automática por e-mail.')
+        ] %}
+        {% for q, a in faqs %}
+        <div class="accordion-item">
+            <h2 class="accordion-header">
+                <button class="accordion-button {% if not loop.first %}collapsed{% endif %}" type="button"
+                    data-bs-toggle="collapse" data-bs-target="#faq{{ loop.index }}">
+                    {{ q }}
+                </button>
+            </h2>
+            <div id="faq{{ loop.index }}" class="accordion-collapse collapse {% if loop.first %}show{% endif %}" data-bs-parent="#faq">
+                <div class="accordion-body text-secondary">{{ a }}</div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="card mt-4">
+        <div class="card-body d-flex align-items-center gap-3 flex-wrap">
+            <i class="bi bi-chat-dots fs-3"></i>
+            <div>
+                <div class="fw-bold">Não achou o que procurava?</div>
+                <div class="text-muted" style="font-size:.9rem;">Fale com a gente pelas mensagens da plataforma ou pelas redes do IAmSurfer.</div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

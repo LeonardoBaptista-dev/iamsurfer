@@ -29,7 +29,7 @@
 
 <body>
     <!-- Navbar -->
-    <nav class="navbar navbar-expand-xl sticky-top">
+    <nav class="navbar navbar-expand-xxl sticky-top">
         <div class="container">
             {% if current_user.is_authenticated and current_user.is_admin %}
             <a class="navbar-brand" href="{{ url_for('admin.index') }}">
@@ -46,7 +46,7 @@
             </button>
 
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto gap-1 ms-xl-3 mt-3 mt-xl-0">
+                <ul class="navbar-nav me-auto gap-1 ms-xxl-3 mt-3 mt-xxl-0">
                     <li class="nav-item">
                         {% if current_user.is_authenticated and current_user.is_admin %}
                         <a class="nav-link" href="{{ url_for('admin.index') }}">
@@ -102,7 +102,7 @@
                     {% endif %}
                 </ul>
 
-                <form class="d-flex me-xl-2 mt-3 mt-xl-0" action="{{ url_for('main.search') }}" method="GET">
+                <form class="d-flex me-xxl-2 mt-3 mt-xxl-0" action="{{ url_for('main.search') }}" method="GET">
                     <input class="form-control me-2" type="search" name="q" placeholder="Buscar usuários"
                         aria-label="Buscar">
                     <button class="btn btn-outline-light" type="submit">
@@ -110,7 +110,7 @@
                     </button>
                 </form>
 
-                <ul class="navbar-nav gap-1 mt-3 mt-xl-0 mb-3 mb-xl-0">
+                <ul class="navbar-nav gap-1 mt-3 mt-xxl-0 mb-3 mb-xxl-0">
                     {% if current_user.is_authenticated %}
                     {% if current_user.is_admin %}
                     <li class="nav-item dropdown">
@@ -283,7 +283,13 @@
     <!-- Footer -->
     <footer class="bg-light py-4 mt-4">
         <div class="container text-center">
-            <p class="mb-0" style="font-size:.82rem;">&copy; 2026 IAmSurfer &mdash; A Rede Social para Surfistas</p>
+            <nav class="d-flex flex-wrap justify-content-center gap-3 gap-sm-4 mb-2" aria-label="Rodapé">
+                <a href="{{ url_for('main.sobre') }}" class="text-decoration-none" style="font-size:.82rem;color:var(--text-secondary);">Sobre</a>
+                <a href="{{ url_for('main.ajuda') }}" class="text-decoration-none" style="font-size:.82rem;color:var(--text-secondary);">Ajuda</a>
+                <a href="{{ url_for('main.termos') }}" class="text-decoration-none" style="font-size:.82rem;color:var(--text-secondary);">Termos</a>
+                <a href="{{ url_for('main.privacidade') }}" class="text-decoration-none" style="font-size:.82rem;color:var(--text-secondary);">Privacidade</a>
+            </nav>
+            <p class="mb-0" style="font-size:.82rem;">&copy; 2026 IAmSurfer</p>
         </div>
     </footer>
 

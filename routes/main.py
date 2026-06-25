@@ -168,6 +168,27 @@ def explore():
     posts = Post.query.order_by(desc(Post.created_at)).limit(50).all()
     return render_template('main/explore.html', posts=posts)
 
+
+# ─── Páginas institucionais (footer) ───────────────────────────────
+@main.route('/sobre')
+def sobre():
+    return render_template('main/sobre.html')
+
+
+@main.route('/ajuda')
+def ajuda():
+    return render_template('main/ajuda.html')
+
+
+@main.route('/termos')
+def termos():
+    return render_template('main/termos.html')
+
+
+@main.route('/privacidade')
+def privacidade():
+    return render_template('main/privacidade.html')
+
 @main.route('/ranking')
 def ranking():
     """Ranking de surfistas por XP (gamificação): pódio + lista."""

@@ -67,16 +67,16 @@
     {% if total_count %}
     <!-- Filtros: região / estado / busca por nome -->
     <form method="GET" action="{{ url_for('spots.forecast') }}" class="fc-filters" id="fcFilters">
-        <select name="region" class="form-select fc-sel" id="fcRegion" aria-label="Filtrar por região" onchange="this.form.state.value='';this.form.submit()">
-            <option value="">Todas as regiões</option>
-            {% for r in regions %}
-            <option value="{{ r }}" {% if sel_region == r %}selected{% endif %}>{{ r }}</option>
+        <select name="country" class="form-select fc-sel" id="fcCountry" aria-label="Filtrar por país" onchange="this.form.state.value='';this.form.submit()">
+            <option value="">Todos os países</option>
+            {% for c in countries %}
+            <option value="{{ c }}" {% if sel_country == c %}selected{% endif %}>{{ c }}</option>
             {% endfor %}
         </select>
         <select name="state" class="form-select fc-sel" id="fcState" aria-label="Filtrar por estado" onchange="this.form.submit()">
             <option value="">Todos os estados</option>
             {% for s in states_meta %}
-            <option value="{{ s.uf }}" data-region="{{ s.region }}" {% if sel_state == s.uf %}selected{% endif %}>{{ s.uf }}</option>
+            <option value="{{ s.uf }}" data-country="{{ s.country }}" {% if sel_state == s.uf %}selected{% endif %}>{{ s.uf }}</option>
             {% endfor %}
         </select>
         <select name="sort" class="form-select fc-sel" aria-label="Ordenar" onchange="this.form.submit()">
@@ -86,7 +86,7 @@
         </select>
         <input type="search" name="q" class="form-control fc-search" placeholder="Buscar pico pelo nome..." value="{{ sel_q }}" aria-label="Buscar pico">
         <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-search"></i></button>
-        {% if sel_region or sel_state or sel_q %}
+        {% if sel_country or sel_state or sel_q %}
         <a href="{{ url_for('spots.forecast', clear=1) }}" class="btn btn-outline-secondary btn-sm" title="Limpar filtros"><i class="bi bi-x-lg"></i></a>
         {% endif %}
         <span class="fc-count">{{ spots|length }} de {{ total_count }} picos</span>
@@ -185,15 +185,15 @@
 {% block scripts %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script>
-// Mostra no select de estados apenas os UFs da região escolhida
+// Mostra no select de estados apenas os do país escolhido
 (function () {
-    var region = document.getElementById('fcRegion');
+    var country = document.getElementById('fcCountry');
     var state = document.getElementById('fcState');
-    if (!region || !state) return;
-    var r = region.value;
+    if (!country || !state) return;
+    var c = country.value;
     Array.prototype.forEach.call(state.options, function (o) {
         if (!o.value) { o.hidden = false; return; }
-        o.hidden = !!r && o.dataset.region !== r;
+        o.hidden = !!c && o.dataset.country !== c;
     });
 })();
 </script>
