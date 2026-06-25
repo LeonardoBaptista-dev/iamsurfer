@@ -29,7 +29,7 @@
 
 <body>
     <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg sticky-top">
+    <nav class="navbar navbar-expand-xl sticky-top">
         <div class="container">
             {% if current_user.is_authenticated and current_user.is_admin %}
             <a class="navbar-brand" href="{{ url_for('admin.index') }}">
@@ -46,7 +46,7 @@
             </button>
 
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto gap-1 ms-lg-3 mt-3 mt-lg-0">
+                <ul class="navbar-nav me-auto gap-1 ms-xl-3 mt-3 mt-xl-0">
                     <li class="nav-item">
                         {% if current_user.is_authenticated and current_user.is_admin %}
                         <a class="nav-link" href="{{ url_for('admin.index') }}">
@@ -102,7 +102,7 @@
                     {% endif %}
                 </ul>
 
-                <form class="d-flex me-lg-2 mt-3 mt-lg-0" action="{{ url_for('main.search') }}" method="GET">
+                <form class="d-flex me-xl-2 mt-3 mt-xl-0" action="{{ url_for('main.search') }}" method="GET">
                     <input class="form-control me-2" type="search" name="q" placeholder="Buscar usuários"
                         aria-label="Buscar">
                     <button class="btn btn-outline-light" type="submit">
@@ -110,7 +110,7 @@
                     </button>
                 </form>
 
-                <ul class="navbar-nav gap-1 mt-3 mt-lg-0 mb-3 mb-lg-0">
+                <ul class="navbar-nav gap-1 mt-3 mt-xl-0 mb-3 mb-xl-0">
                     {% if current_user.is_authenticated %}
                     {% if current_user.is_admin %}
                     <li class="nav-item dropdown">
@@ -181,7 +181,7 @@
                             data-bs-toggle="dropdown">
                             <img src="{{ current_user.profile_image|img_url }}" class="rounded-circle" width="28"
                                 height="28" style="object-fit:cover;border:2px solid rgba(255,255,255,.35);">
-                            <span style="font-size:.875rem;">{{ current_user.username }}</span>
+                            <span class="d-none d-xxl-inline text-truncate" style="font-size:.875rem;max-width:140px;">{{ current_user.username }}</span>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end">
                             <li>
