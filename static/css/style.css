@@ -1880,7 +1880,7 @@ footer.bg-light {
     --accent: #8b5cf6;          /* violet-500 */
     --accent-2: #06b6d4;        /* cyan-500 (usado só em detalhes) */
     --gradient-brand: linear-gradient(135deg, #4338ca 0%, #6366f1 50%, #8b5cf6 100%);
-    --gradient-story: linear-gradient(135deg, #6366f1, #8b5cf6 45%, #ec4899 90%);
+    --gradient-story: linear-gradient(135deg, #f59e0b, #ef4444 45%, #ec4899 90%);
     --ring-focus: 0 0 0 4px rgba(99, 102, 241, .16);
     --shadow-soft: 0 2px 8px rgba(17, 24, 39, .05), 0 8px 24px rgba(17, 24, 39, .06);
 }
@@ -2605,3 +2605,97 @@ h1, h2, h3, h4, h5, .navbar-brand, .fw-bold {
 .dropdown-item:hover { color: var(--text-primary) !important; }
 .sidebar .nav-link:hover { color: var(--text-primary) !important; }
 .patente-badge { background: var(--bg) !important; color: var(--text-secondary) !important; }
+
+/* ═══════════════════════════════════════════════════════════════
+   SEM FUNDO AZUL/INDIGO — superfícies viram BRANCO (texto escuro)
+   e botões/realces viram PRETO (texto branco). Nenhum fundo indigo.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Botões de destaque: preto sólido (era gradiente indigo) */
+.btn-primary,
+.btn-follow,
+.authx-btn,
+.btn-submit {
+    background: var(--text-primary) !important;
+    background-image: none !important;
+    color: #fff !important;
+    border: none !important;
+}
+
+.btn-primary:hover,
+.btn-follow:hover,
+.authx-btn:hover,
+.btn-submit:hover {
+    background: #000 !important;
+    color: #fff !important;
+    box-shadow: 0 8px 20px rgba(17, 24, 39, .25) !important;
+    filter: none !important;
+}
+
+.btn-outline-primary {
+    border-color: var(--text-primary) !important;
+    color: var(--text-primary) !important;
+}
+
+.btn-outline-primary:hover {
+    background: var(--text-primary) !important;
+    color: #fff !important;
+}
+
+/* Badges/realces utilitários: preto/cinza em vez de indigo/azul */
+.bg-primary,
+.bg-brand { background-color: var(--text-primary) !important; color: #fff !important; }
+.bg-info  { background-color: var(--text-secondary) !important; color: #fff !important; }
+.card.bg-primary,
+.card.bg-info { color: #fff !important; }
+
+/* Botão "+" da tabbar mobile: preto */
+.mtab-create i {
+    background: var(--text-primary) !important;
+    box-shadow: 0 4px 12px rgba(17, 24, 39, .35) !important;
+}
+
+/* Cards de estatística do admin: branco c/ texto escuro (era gradiente) */
+.stat-card {
+    background: var(--surface) !important;
+    background-image: none !important;
+    border: 1px solid var(--border) !important;
+}
+.stat-card::before { display: none !important; }
+.stat-card .display-4 { color: var(--text-primary) !important; text-shadow: none !important; }
+.stat-card h5 { color: var(--text-secondary) !important; }
+.stat-card .card-footer {
+    background: var(--bg) !important;
+    border-top: 1px solid var(--border) !important;
+}
+.stat-card .card-footer a,
+.stat-card .card-footer i { color: var(--text-primary) !important; }
+
+/* Cabeçalho dos cards de auth: branco, texto escuro (era gradiente) */
+.auth-header {
+    background: var(--surface) !important;
+    background-image: none !important;
+    color: var(--text-primary) !important;
+    border-bottom: 1px solid var(--border);
+}
+.auth-header .brand-logo { background: var(--bg) !important; }
+.auth-header .brand-logo i,
+.auth-header h1,
+.auth-header p { color: var(--text-primary) !important; opacity: 1; }
+
+/* Painel imersivo do auth (login/cadastro): branco, texto escuro */
+.authx-visual {
+    background: var(--surface) !important;
+    background-image: none !important;
+    color: var(--text-primary) !important;
+    border-right: 1px solid var(--border);
+}
+.authx-brand,
+.authx-hero { color: var(--text-primary) !important; }
+.authx-sub,
+.authx-features li { color: var(--text-secondary) !important; }
+.authx-orb { display: none !important; }
+.authx-feat-ic { background: var(--bg) !important; color: var(--text-primary) !important; }
+
+/* Pontinhos/realces que eram indigo → escuro */
+.dm-dot { background: var(--text-primary) !important; }

@@ -177,7 +177,7 @@ document.addEventListener('DOMContentLoaded', () => {
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' }).addTo(map);
     L.marker(dep, { icon: pin('🚗') }).addTo(map).bindPopup('Partida');
     L.marker(dest, { icon: pin('🏄') }).addTo(map).bindPopup('Destino');
-    L.polyline([dep, dest], { color: '#6366f1', weight: 3, dashArray: '6,8' }).addTo(map);
+    L.polyline([dep, dest], { color: '#111827', weight: 3, dashArray: '6,8' }).addTo(map);
     map.fitBounds([dep, dest], { padding: [40, 40], maxZoom: 13 });
     setTimeout(() => map.invalidateSize(), 200);
 });

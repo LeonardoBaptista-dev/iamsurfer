@@ -45,8 +45,8 @@
     }
 
     .map-instructions {
-        background: #eef2ff;
-        border: 1px solid #c7d2fe;
+        background: var(--bg);
+        border: 1px solid var(--border);
         border-radius: 5px;
         padding: 8px;
         margin-bottom: 10px;
@@ -63,8 +63,9 @@
     }
 
     .add-mode-active {
-        background-color: #3730a3 !important;
-        border-color: #3730a3 !important;
+        background-color: #111827 !important;
+        border-color: #111827 !important;
+        color: #fff !important;
     }
 
     .loading-spinner {
@@ -108,7 +109,7 @@
 
     .spot-pop .cover-fallback {
         height: 70px;
-        background: var(--gradient);
+        background: var(--text-primary);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -169,7 +170,7 @@
     .spot-pop .btn-detail {
         display: block;
         text-align: center;
-        background: var(--brand);
+        background: var(--text-primary);
         color: #fff;
         font-weight: 700;
         font-size: .82rem;
@@ -179,12 +180,12 @@
     }
 
     .spot-pop .btn-detail:hover {
-        background: var(--brand-hover);
+        background: #000;
         color: #fff;
     }
 
     .custom-marker {
-        background: #3730a3;
+        background: #111827;
         border: 2px solid white;
         border-radius: 50%;
         width: 32px;
@@ -206,7 +207,7 @@
     }
 
     .new-spot-marker {
-        background: #3730a3;
+        background: #111827;
         animation: pulse 2s infinite;
     }
 
@@ -513,7 +514,7 @@
             const popupContent = createSpotPopup(spot);
             marker.bindPopup(popupContent, {
                 maxWidth: 250,
-                minWidth: 250,
+                minWidth: 200,
                 className: 'spot-popup'
             });
 
@@ -1015,7 +1016,7 @@
             const popupContent = createSpotPopup(spot);
             marker.bindPopup(popupContent, {
                 maxWidth: 250,
-                minWidth: 250,
+                minWidth: 200,
                 className: 'spot-popup'
             });
 

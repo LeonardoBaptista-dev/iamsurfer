@@ -61,7 +61,7 @@
                                 </div>
                             {% endif %}
                             
-                            <div class="d-flex justify-content-between align-items-center border-top pt-3 mt-3" style="border-color: var(--border)!important;">
+                            <div class="d-flex justify-content-between align-items-center border-top pt-3 mt-3 flex-wrap gap-2" style="border-color: var(--border)!important;">
                                 <div class="d-flex gap-2">
                                     {% if current_user.is_authenticated %}
                                     <form action="{{ url_for('posts.like_post', post_id=post.id) }}" method="POST" class="d-inline mb-0">

@@ -18,6 +18,17 @@
     }
     .reels-viewport::-webkit-scrollbar { display: none; }
 
+    /* No mobile a tabbar fixa (58px) cobre a base do reel; desconta a altura
+       e reposiciona os botões pra não ficarem escondidos atrás dela. */
+    @media (max-width: 991px) {
+        .reels-viewport {
+            height: calc(100vh - 60px - 58px);
+            border-radius: 0;
+        }
+        .reel-actions { bottom: 28px; }
+        .reel-overlay { padding-bottom: 18px; }
+    }
+
     .reel-slide {
         position: relative;
         height: 100%;

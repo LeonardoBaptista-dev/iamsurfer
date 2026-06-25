@@ -108,6 +108,11 @@
         border: 1px solid var(--border);
     }
 
+    /* No mobile, sobe acima da tabbar fixa (58px) pra não sobrepor os botões */
+    @media (max-width: 991px) {
+        .sticky-submit { bottom: calc(58px + 12px); }
+    }
+
     .btn-submit {
         background: var(--brand);
         color: white;

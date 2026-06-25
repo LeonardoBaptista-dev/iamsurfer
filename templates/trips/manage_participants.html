@@ -131,7 +131,7 @@ document.addEventListener('DOMContentLoaded', () => {
     PENDING.forEach(p => {
         const html = `<strong>${p.name}</strong><br><small>${p.label || (p.lat.toFixed(5) + ', ' + p.lng.toFixed(5))}</small>
             <div class="pop-actions">
-                <form method="POST" action="${p.approve}"><button style="background:#0d6efd;">Aprovar</button></form>
+                <form method="POST" action="${p.approve}"><button style="background:#111827;color:#fff;">Aprovar</button></form>
                 <form method="POST" action="${p.reject}"><button style="background:#6c757d;">Rejeitar</button></form>
             </div>`;
         L.marker([p.lat, p.lng], { icon: pin('📍') }).addTo(map).bindPopup(html);
