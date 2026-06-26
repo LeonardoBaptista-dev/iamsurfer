@@ -2459,6 +2459,77 @@ h1, h2, h3, h4, h5, .navbar-brand, .fw-bold {
     color: var(--text-primary) !important;
 }
 
+/* ── Top bar (mobile, estilo Instagram) ── */
+.mobile-topbar {
+    position: sticky;
+    top: 0;
+    z-index: 1031;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 14px;
+    padding-top: env(safe-area-inset-top, 0);
+    background: rgba(255, 255, 255, .96);
+    -webkit-backdrop-filter: saturate(1.4) blur(14px);
+    backdrop-filter: saturate(1.4) blur(14px);
+    border-bottom: 1px solid var(--border);
+}
+
+.mtb-brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 800;
+    font-size: 1.15rem;
+    letter-spacing: -.02em;
+    color: var(--text-primary);
+    text-decoration: none;
+}
+
+.mtb-brand img { object-fit: contain; }
+
+.mtb-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.mtb-btn {
+    position: relative;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    color: var(--text-primary);
+    font-size: 1.35rem;
+    text-decoration: none;
+    transition: background .15s, transform .15s;
+}
+
+.mtb-btn:active { transform: scale(.9); }
+
+.mtb-badge {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    border-radius: 8px;
+    background: #ef4444;
+    color: #fff;
+    font-size: .62rem;
+    font-weight: 700;
+    line-height: 1;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    border: 1.5px solid #fff;
+}
+
 /* ── Bottom tabbar (mobile) ── */
 .mobile-tabbar {
     position: fixed;
@@ -2466,40 +2537,48 @@ h1, h2, h3, h4, h5, .navbar-brand, .fw-bold {
     left: 0;
     right: 0;
     z-index: 1030;
-    height: 58px;
+    height: 60px;
     background: rgba(255, 255, 255, .96);
     -webkit-backdrop-filter: saturate(1.4) blur(14px);
     backdrop-filter: saturate(1.4) blur(14px);
     border-top: 1px solid var(--border);
     display: flex;
-    align-items: center;
+    align-items: stretch;
     justify-content: space-around;
-    padding: 0 6px env(safe-area-inset-bottom, 0);
+    padding-bottom: env(safe-area-inset-bottom, 0);
 }
 
 .mtab {
     flex: 1;
-    height: 100%;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    color: var(--text-secondary);
-    font-size: 1.5rem;
+    gap: 3px;
+    color: var(--text-muted);
+    font-size: 1.35rem;
     text-decoration: none;
     transition: color .15s, transform .15s;
 }
 
+.mtab-label {
+    font-size: .64rem;
+    font-weight: 600;
+    letter-spacing: .01em;
+    line-height: 1;
+}
+
 .mtab:active {
-    transform: scale(.9);
+    transform: scale(.92);
 }
 
 .mtab.active {
-    color: var(--text-primary);
+    color: var(--brand);
 }
 
 .mtab-avatar {
-    width: 28px;
-    height: 28px;
+    width: 26px;
+    height: 26px;
     border-radius: 50%;
     object-fit: cover;
     border: 2px solid var(--border);
@@ -2509,30 +2588,14 @@ h1, h2, h3, h4, h5, .navbar-brand, .fw-bold {
     border-color: var(--brand);
 }
 
-.mtab-create {
-    color: #fff;
-}
-
-.mtab-create i {
-    width: 40px;
-    height: 34px;
-    border-radius: 11px;
-    background: var(--gradient-brand);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.25rem;
-    box-shadow: 0 4px 12px rgba(99, 102, 241, .4);
-}
-
-/* Espaço pro conteúdo não ficar atrás da tabbar no mobile */
+/* Espaço pro conteúdo não ficar atrás das barras no mobile */
 @media (max-width: 991px) {
     body {
         padding-bottom: 64px;
     }
 
     footer.bg-light {
-        margin-bottom: 58px;
+        margin-bottom: 60px;
     }
 }
 
@@ -2683,12 +2746,6 @@ h1, h2, h3, h4, h5, .navbar-brand, .fw-bold {
 .bg-info  { background-color: var(--text-secondary) !important; color: #fff !important; }
 .card.bg-primary,
 .card.bg-info { color: #fff !important; }
-
-/* Botão "+" da tabbar mobile: preto */
-.mtab-create i {
-    background: var(--text-primary) !important;
-    box-shadow: 0 4px 12px rgba(17, 24, 39, .35) !important;
-}
 
 /* Cards de estatística do admin: branco c/ texto escuro (era gradiente) */
 .stat-card {

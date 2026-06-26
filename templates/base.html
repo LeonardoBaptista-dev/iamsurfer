@@ -28,8 +28,32 @@
 </head>
 
 <body>
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand-xxl sticky-top">
+    <!-- Mobile top bar (Instagram-style) — só no celular -->
+    <header class="mobile-topbar d-lg-none">
+        <a class="mtb-brand" href="{{ url_for('main.index') }}">
+            <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="IAmSurfer" height="26">
+            <span>IAmSurfer</span>
+        </a>
+        <div class="mtb-actions">
+            {% if current_user.is_authenticated %}
+            <a href="{{ url_for('messages.notifications') }}" class="mtb-btn" aria-label="Notificações">
+                <i class="bi bi-bell"></i>
+                <span class="mtb-badge" id="notificationBadgeMobile" style="display:none;">0</span>
+            </a>
+            <a href="{{ url_for('messages.inbox') }}" class="mtb-btn" aria-label="Mensagens">
+                <i class="bi bi-chat-dots"></i>
+                <span class="mtb-badge" id="messagesBadgeMobile" style="display:none;">0</span>
+            </a>
+            {% else %}
+            <a href="{{ url_for('auth.login') }}" class="mtb-btn" aria-label="Entrar">
+                <i class="bi bi-box-arrow-in-right"></i>
+            </a>
+            {% endif %}
+        </div>
+    </header>
+
+    <!-- Navbar (desktop / tablet) -->
+    <nav class="navbar navbar-expand-xxl sticky-top d-none d-lg-flex">
         <div class="container">
             {% if current_user.is_authenticated and current_user.is_admin %}
             <a class="navbar-brand" href="{{ url_for('admin.index') }}">
@@ -240,29 +264,36 @@
     <nav class="mobile-tabbar d-lg-none" aria-label="Navegação">
         <a href="{{ url_for('main.index') }}" class="mtab {% if request.endpoint == 'main.index' %}active{% endif %}" aria-label="Início">
             <i class="bi {% if request.endpoint == 'main.index' %}bi-house-door-fill{% else %}bi-house-door{% endif %}"></i>
+            <span class="mtab-label">Início</span>
         </a>
         <a href="{{ url_for('main.explore') }}" class="mtab {% if request.endpoint == 'main.explore' %}active{% endif %}" aria-label="Explorar">
             <i class="bi bi-search"></i>
+            <span class="mtab-label">Explorar</span>
         </a>
         {% if current_user.is_authenticated %}
-        <a href="{{ url_for('posts.new_post') }}" class="mtab mtab-create" aria-label="Criar">
-            <i class="bi bi-plus-lg"></i>
+        <a href="{{ url_for('posts.new_post') }}" class="mtab mtab-create {% if request.endpoint == 'posts.new_post' %}active{% endif %}" aria-label="Criar">
+            <i class="bi bi-plus-square{% if request.endpoint == 'posts.new_post' %}-fill{% endif %}"></i>
+            <span class="mtab-label">Criar</span>
         </a>
         {% else %}
         <a href="{{ url_for('auth.login') }}" class="mtab mtab-create" aria-label="Criar">
-            <i class="bi bi-plus-lg"></i>
+            <i class="bi bi-plus-square"></i>
+            <span class="mtab-label">Criar</span>
         </a>
         {% endif %}
         <a href="{{ url_for('main.reels') }}" class="mtab {% if request.endpoint == 'main.reels' %}active{% endif %}" aria-label="Reels">
             <i class="bi bi-camera-reels{% if request.endpoint == 'main.reels' %}-fill{% endif %}"></i>
+            <span class="mtab-label">Reels</span>
         </a>
         {% if current_user.is_authenticated %}
         <a href="{{ url_for('main.user_profile', username=current_user.username) }}" class="mtab {% if request.endpoint == 'main.user_profile' %}active{% endif %}" aria-label="Perfil">
             <img src="{{ current_user.profile_image|img_url }}" class="mtab-avatar" alt="">
+            <span class="mtab-label">Perfil</span>
         </a>
         {% else %}
         <a href="{{ url_for('auth.login') }}" class="mtab" aria-label="Entrar">
             <i class="bi bi-person-circle"></i>
+            <span class="mtab-label">Entrar</span>
         </a>
         {% endif %}
     </nav>
@@ -301,12 +332,17 @@
             fetch('/api/notifications/count')
                 .then(r => r.json())
                 .then(data => {
-                    const nb = document.getElementById('notificationBadge');
-                    const mb = document.getElementById('messagesBadge');
-                    nb.textContent = data.notifications;
-                    nb.style.display = data.notifications > 0 ? 'inline' : 'none';
-                    mb.textContent = data.messages;
-                    mb.style.display = data.messages > 0 ? 'inline' : 'none';
+                    [
+                        ['notificationBadge', data.notifications],
+                        ['notificationBadgeMobile', data.notifications],
+                        ['messagesBadge', data.messages],
+                        ['messagesBadgeMobile', data.messages],
+                    ].forEach(([id, count]) => {
+                        const el = document.getElementById(id);
+                        if (!el) return;
+                        el.textContent = count;
+                        el.style.display = count > 0 ? 'inline-flex' : 'none';
+                    });
                 })
                 .catch(() => { });
         }
