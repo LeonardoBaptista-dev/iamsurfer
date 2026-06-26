@@ -233,10 +233,10 @@
         <!-- Footer links -->
         <div class="sidebar-card">
             <div class="d-flex flex-wrap gap-2" style="font-size:.75rem;color:var(--text-muted);">
-                <a href="#" style="color:var(--text-muted);">Sobre</a>
-                <a href="#" style="color:var(--text-muted);">Ajuda</a>
-                <a href="#" style="color:var(--text-muted);">Termos</a>
-                <a href="#" style="color:var(--text-muted);">Privacidade</a>
+                <a href="{{ url_for('main.sobre') }}" style="color:var(--text-muted);">Sobre</a>
+                <a href="{{ url_for('main.ajuda') }}" style="color:var(--text-muted);">Ajuda</a>
+                <a href="{{ url_for('main.termos') }}" style="color:var(--text-muted);">Termos</a>
+                <a href="{{ url_for('main.privacidade') }}" style="color:var(--text-muted);">Privacidade</a>
             </div>
             <p style="font-size:.72rem;color:var(--text-muted);margin-top:10px;margin-bottom:0;">&copy; 2026 IAmSurfer
             </p>

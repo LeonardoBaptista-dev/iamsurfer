@@ -136,6 +136,11 @@
                                     <i class="bi bi-people"></i> Gerenciar Usuários
                                 </a>
                             </li>
+                            <li>
+                                <a class="dropdown-item" href="{{ url_for('admin.contributions') }}">
+                                    <i class="bi bi-pencil-square"></i> Contribuições
+                                </a>
+                            </li>
                         </ul>
                     </li>
                     {% endif %}
@@ -171,7 +176,6 @@
                             data-bs-toggle="dropdown">
                             <img src="{{ current_user.profile_image|img_url }}" class="rounded-circle" width="28"
                                 height="28" style="object-fit:cover;border:2px solid rgba(255,255,255,.35);">
-                            <span class="d-none d-xxl-inline text-truncate" style="font-size:.875rem;max-width:140px;">{{ current_user.username }}</span>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end">
                             <li>
@@ -245,7 +249,7 @@
     </div>
 
     <!-- Main Content -->
-    <main class="container pb-4">
+    <main class="container pt-4 pb-4">
         {% block content %}{% endblock %}
     </main>
 
@@ -335,13 +339,22 @@
                     if (!items.length) {
                         list.innerHTML = '<span class="dropdown-item text-muted" style="font-size:.85rem;">Nenhuma notificação</span>';
                     } else {
-                        [...items].slice(0, 5).forEach(n => {
-                            const item = document.createElement('div');
-                            item.className = 'dropdown-item';
-                            item.style.fontSize = '.85rem';
-                            item.style.whiteSpace = 'normal';
-                            item.innerHTML = n.innerHTML;
-                            list.appendChild(item);
+                        [...items].slice(0, 6).forEach(n => {
+                            const link = n.querySelector('a[href]');
+                            const avatar = n.querySelector('.dm-avatar');
+                            const text = n.querySelector('p');
+                            const time = n.querySelector('.dm-time');
+                            const unread = !!n.querySelector('.dm-dot');
+                            const a = document.createElement('a');
+                            a.className = 'dropdown-item notif-item' + (unread ? ' unread' : '');
+                            a.href = link ? link.getAttribute('href') : '/notifications';
+                            a.innerHTML =
+                                (avatar ? avatar.outerHTML : '') +
+                                '<span class="notif-text">' +
+                                '<span class="notif-msg">' + (text ? text.innerHTML : '') + '</span>' +
+                                '<span class="notif-time">' + (time ? time.textContent : '') + '</span>' +
+                                '</span>';
+                            list.appendChild(a);
                         });
                     }
                 })

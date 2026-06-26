@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, current_app
 from flask_login import login_required, current_user
-from models import State, City, SurfSpot, Photographer, SpotPhoto, Spot, SpotPhotoNew, PhotoSession, SessionPhoto, PhotoPurchase, SpotReport, Business, Coupon, SpotFollow, Notification
+from models import State, City, SurfSpot, Photographer, SpotPhoto, Spot, SpotPhotoNew, PhotoSession, SessionPhoto, PhotoPurchase, SpotReport, Business, Coupon, SpotFollow, Notification, SpotContribution
 from extensions import db
 from werkzeug.utils import secure_filename
 import os
@@ -164,33 +164,15 @@ def forecast():
     """Previsão de surf (ondas + vento) dos picos aprovados, com filtro por
     região/estado/nome, ordenação e memória do último filtro (cookie). Filtra
     ANTES de buscar a previsão para não consultar a API de todos os picos."""
-    import json
-    from flask import make_response
     from surf_forecast import get_forecast
 
+    # Os filtros vêm SÓ da URL. Sem "memória" por cookie: abrir a Previsão sem
+    # parâmetros sempre mostra TODOS os picos (evita um filtro antigo esconder picos).
     args = request.args
-    clearing = bool(args.get('clear'))
-    explicit = any(k in args for k in ('country', 'state', 'q', 'sort'))
-
-    if clearing:
-        country = state = q = ''
-        sort = 'quality'
-    elif explicit:
-        country = (args.get('country') or '').strip()
-        state = (args.get('state') or '').strip()
-        q = (args.get('q') or '').strip()
-        sort = (args.get('sort') or 'quality').strip()
-    else:
-        # Visita "limpa": restaura o último filtro salvo no cookie
-        try:
-            saved = json.loads(request.cookies.get('fc_filter') or '{}')
-        except (ValueError, TypeError):
-            saved = {}
-        country = (saved.get('country') or '').strip()
-        state = (saved.get('state') or '').strip()
-        q = (saved.get('q') or '').strip()
-        sort = (saved.get('sort') or 'quality').strip()
-
+    country = (args.get('country') or '').strip()
+    state = (args.get('state') or '').strip()
+    q = (args.get('q') or '').strip()
+    sort = (args.get('sort') or 'quality').strip()
     if sort not in SORT_OPTIONS:
         sort = 'quality'
 
@@ -224,20 +206,11 @@ def forecast():
         filtered.sort(key=lambda s: (-_fc_best_quality(forecasts.get(s.id)),
                                      -_fc_best_wave(forecasts.get(s.id)), s.name.lower()))
 
-    resp = make_response(render_template(
+    return render_template(
         'spots/forecast.html', spots=filtered, forecasts=forecasts,
         countries=countries, states_meta=states_meta, sort_options=SORT_OPTIONS,
         sel_country=country, sel_state=state, sel_q=q, sel_sort=sort,
-        total_count=total_count))
-
-    # Memória do filtro: salva quando o usuário age; apaga ao limpar
-    if clearing:
-        resp.delete_cookie('fc_filter')
-    elif explicit:
-        resp.set_cookie('fc_filter',
-                        json.dumps({'country': country, 'state': state, 'q': q, 'sort': sort}),
-                        max_age=60 * 60 * 24 * 30, samesite='Lax')
-    return resp
+        total_count=total_count)
 
 @spots.route('/spots/add', methods=['GET', 'POST'])
 @login_required
@@ -339,6 +312,33 @@ def new_spot_detail(spot_id):
                            sessions=sessions, businesses=businesses, reports=recent_reports,
                            forecast=forecast, is_following=is_following,
                            followers_count=followers_count)
+
+
+# Campos que um usuário comum pode sugerir para um pico (whitelist)
+CONTRIB_FIELDS = ['wave_type', 'bottom_type', 'difficulty', 'crowd_level',
+                  'best_wind_direction', 'best_swell_direction', 'best_tide', 'description']
+
+
+@spots.route('/spots/<int:spot_id>/contribute', methods=['POST'])
+@login_required
+def contribute_spot(spot_id):
+    """Usuário sugere informações para um pico. Entra na fila de moderação
+    (status pending) e só é aplicado ao pico quando um admin aprovar."""
+    spot = Spot.query.get_or_404(spot_id)
+    data = {}
+    for f in CONTRIB_FIELDS:
+        v = (request.form.get(f) or '').strip()
+        if v:
+            data[f] = v[:600] if f == 'description' else v[:60]
+    if not data:
+        flash('Selecione ou preencha ao menos um campo para sugerir.', 'danger')
+        return redirect(url_for('spots.new_spot_detail', spot_id=spot.id))
+    note = (request.form.get('note') or '').strip()[:200]
+    db.session.add(SpotContribution(
+        spot_id=spot.id, user_id=current_user.id,
+        data=json.dumps(data, ensure_ascii=False), note=note, status='pending'))
+    db.session.commit()
+    return redirect(url_for('spots.new_spot_detail', spot_id=spot.id, contributed=1))
 
 
 @spots.route('/spots/<int:spot_id>/follow', methods=['POST'])

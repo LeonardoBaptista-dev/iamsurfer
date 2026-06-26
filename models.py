@@ -518,6 +518,37 @@ class Spot(db.Model):
     def __repr__(self):
         return f'<Spot {self.name}>'
 
+
+class SpotContribution(db.Model):
+    """Sugestão de informações para um pico, enviada por um usuário comum e
+    sujeita à aprovação de um admin antes de ser aplicada ao pico."""
+    id = db.Column(db.Integer, primary_key=True)
+    spot_id = db.Column(db.Integer, db.ForeignKey('spot.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    data = db.Column(db.Text, nullable=False)   # JSON {campo: valor proposto}
+    note = db.Column(db.Text)                    # observação opcional do colaborador
+    status = db.Column(db.String(20), default='pending')  # pending, approved, rejected
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    reviewed_by = db.Column(db.Integer, db.ForeignKey('user.id'))
+    reviewed_at = db.Column(db.DateTime)
+
+    spot = db.relationship('Spot', backref=db.backref('contributions', lazy='dynamic',
+                                                       cascade='all, delete-orphan'))
+    user = db.relationship('User', foreign_keys=[user_id], backref='spot_contributions')
+    reviewer = db.relationship('User', foreign_keys=[reviewed_by])
+
+    def fields(self):
+        """Dicionário {campo: valor} proposto nesta contribuição."""
+        import json
+        try:
+            return json.loads(self.data or '{}')
+        except (ValueError, TypeError):
+            return {}
+
+    def __repr__(self):
+        return f'<SpotContribution spot={self.spot_id} status={self.status}>'
+
+
 class SpotPhotoNew(db.Model):
     """Modelo para fotos dos spots colaborativos"""
     __tablename__ = 'spot_photo_new'

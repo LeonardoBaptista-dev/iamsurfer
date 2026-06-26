@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, abort, jsonify
 from flask_login import login_required, current_user
-from models import User, Post, Comment, Message, Spot, UserBadge
+from models import User, Post, Comment, Message, Spot, UserBadge, SpotContribution
 from extensions import db
 from functools import wraps
 from sqlalchemy import func
@@ -168,6 +168,63 @@ def spots():
     }
     
     return render_template('admin/spots.html', spots=spots, stats=stats, status_filter=status_filter)
+
+
+# Campos que uma contribuição pode alterar no pico (whitelist de segurança)
+ALLOWED_CONTRIB_FIELDS = {'wave_type', 'bottom_type', 'difficulty', 'crowd_level',
+                          'best_wind_direction', 'best_swell_direction', 'best_tide', 'description'}
+
+
+@admin.route('/contributions')
+@login_required
+@admin_required
+def contributions():
+    """Fila de moderação das sugestões de informação enviadas pelos usuários."""
+    pending = (SpotContribution.query.filter_by(status='pending')
+               .order_by(SpotContribution.created_at.desc()).all())
+    recent = (SpotContribution.query.filter(SpotContribution.status != 'pending')
+              .order_by(SpotContribution.reviewed_at.desc()).limit(20).all())
+    return render_template('admin/contributions.html', pending=pending, recent=recent)
+
+
+@admin.route('/contributions/<int:contrib_id>/approve', methods=['POST'])
+@login_required
+@admin_required
+def approve_contribution(contrib_id):
+    """Aprova: aplica os campos sugeridos ao pico e marca como aprovada."""
+    c = SpotContribution.query.get_or_404(contrib_id)
+    if c.status != 'pending':
+        flash('Esta contribuição já foi avaliada.', 'warning')
+        return redirect(url_for('admin.contributions'))
+    applied = 0
+    for field, value in c.fields().items():
+        if field in ALLOWED_CONTRIB_FIELDS and value:
+            setattr(c.spot, field, value)
+            applied += 1
+    c.status = 'approved'
+    c.reviewed_by = current_user.id
+    c.reviewed_at = datetime.utcnow()
+    db.session.commit()
+    flash(f'Contribuição aplicada ao pico "{c.spot.name}" ({applied} campo(s)).', 'success')
+    return redirect(url_for('admin.contributions'))
+
+
+@admin.route('/contributions/<int:contrib_id>/reject', methods=['POST'])
+@login_required
+@admin_required
+def reject_contribution(contrib_id):
+    """Rejeita a sugestão (não altera o pico)."""
+    c = SpotContribution.query.get_or_404(contrib_id)
+    if c.status != 'pending':
+        flash('Esta contribuição já foi avaliada.', 'warning')
+        return redirect(url_for('admin.contributions'))
+    c.status = 'rejected'
+    c.reviewed_by = current_user.id
+    c.reviewed_at = datetime.utcnow()
+    db.session.commit()
+    flash('Contribuição rejeitada.', 'info')
+    return redirect(url_for('admin.contributions'))
+
 
 @admin.route('/badges')
 @login_required
