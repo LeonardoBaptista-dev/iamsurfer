@@ -112,38 +112,6 @@
 
                 <ul class="navbar-nav gap-1 mt-3 mt-xxl-0 mb-3 mb-xxl-0">
                     {% if current_user.is_authenticated %}
-                    {% if current_user.is_admin %}
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                            <i class="bi bi-gear"></i> Admin
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li>
-                                <a class="dropdown-item" href="{{ url_for('admin.index') }}">
-                                    <i class="bi bi-speedometer2"></i> Dashboard
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item" href="{{ url_for('main.home') }}">
-                                    <i class="bi bi-house-door"></i> Página Inicial
-                                </a>
-                            </li>
-                            <li>
-                                <hr class="dropdown-divider">
-                            </li>
-                            <li>
-                                <a class="dropdown-item" href="{{ url_for('admin.users') }}">
-                                    <i class="bi bi-people"></i> Gerenciar Usuários
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item" href="{{ url_for('admin.contributions') }}">
-                                    <i class="bi bi-pencil-square"></i> Contribuições
-                                </a>
-                            </li>
-                        </ul>
-                    </li>
-                    {% endif %}
 
                     <!-- Notifications Bell -->
                     <li class="nav-item dropdown">
@@ -211,6 +179,21 @@
                                     <i class="bi bi-gear"></i> Configurações
                                 </a>
                             </li>
+                            {% if current_user.is_admin %}
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{{ url_for('admin.index') }}">
+                                    <i class="bi bi-speedometer2"></i> Painel Admin
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{{ url_for('admin.contributions') }}">
+                                    <i class="bi bi-pencil-square"></i> Contribuições
+                                </a>
+                            </li>
+                            {% endif %}
                             <li>
                                 <hr class="dropdown-divider">
                             </li>
