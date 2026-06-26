@@ -35,6 +35,9 @@
             <span>IAmSurfer</span>
         </a>
         <div class="mtb-actions">
+            <a href="{{ url_for('main.explore') }}" class="mtb-btn" aria-label="Buscar">
+                <i class="bi bi-search"></i>
+            </a>
             {% if current_user.is_authenticated %}
             <a href="{{ url_for('messages.notifications') }}" class="mtb-btn" aria-label="Notificações">
                 <i class="bi bi-bell"></i>
@@ -266,9 +269,13 @@
             <i class="bi {% if request.endpoint == 'main.index' %}bi-house-door-fill{% else %}bi-house-door{% endif %}"></i>
             <span class="mtab-label">Início</span>
         </a>
-        <a href="{{ url_for('main.explore') }}" class="mtab {% if request.endpoint == 'main.explore' %}active{% endif %}" aria-label="Explorar">
-            <i class="bi bi-search"></i>
-            <span class="mtab-label">Explorar</span>
+        <a href="{{ url_for('spots.spots_map') }}" class="mtab {% if request.endpoint == 'spots.spots_map' %}active{% endif %}" aria-label="SurfMap">
+            <i class="bi bi-geo-alt{% if request.endpoint == 'spots.spots_map' %}-fill{% endif %}"></i>
+            <span class="mtab-label">SurfMap</span>
+        </a>
+        <a href="{{ url_for('spots.forecast') }}" class="mtab {% if request.endpoint == 'spots.forecast' %}active{% endif %}" aria-label="Previsão">
+            <i class="bi bi-water"></i>
+            <span class="mtab-label">Previsão</span>
         </a>
         {% if current_user.is_authenticated %}
         <a href="{{ url_for('posts.new_post') }}" class="mtab mtab-create {% if request.endpoint == 'posts.new_post' %}active{% endif %}" aria-label="Criar">
@@ -281,6 +288,10 @@
             <span class="mtab-label">Criar</span>
         </a>
         {% endif %}
+        <a href="{{ url_for('trips.list_trips') }}" class="mtab {% if request.endpoint and request.endpoint.startswith('trips.') %}active{% endif %}" aria-label="Caronas">
+            <i class="bi bi-car-front{% if request.endpoint and request.endpoint.startswith('trips.') %}-fill{% endif %}"></i>
+            <span class="mtab-label">Caronas</span>
+        </a>
         <a href="{{ url_for('main.reels') }}" class="mtab {% if request.endpoint == 'main.reels' %}active{% endif %}" aria-label="Reels">
             <i class="bi bi-camera-reels{% if request.endpoint == 'main.reels' %}-fill{% endif %}"></i>
             <span class="mtab-label">Reels</span>
