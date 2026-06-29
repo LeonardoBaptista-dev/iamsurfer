@@ -725,6 +725,31 @@ class Notification(db.Model):
         db.session.commit()
         return notification
 
+    @classmethod
+    def notify_admins(cls, ntype, content, related_user_id=None, related_spot_id=None):
+        """Cria uma notificação para todos os administradores.
+
+        Usado quando algo entra na fila de moderação (novo pico, sugestão de
+        informações) para que o admin saiba que há algo a validar.
+        """
+        admins = User.query.filter_by(is_admin=True).all()
+        created = []
+        for admin_user in admins:
+            # Não notifica o próprio admin se foi ele quem gerou a ação
+            if related_user_id and admin_user.id == related_user_id:
+                continue
+            n = cls(
+                user_id=admin_user.id,
+                type=ntype,
+                content=content,
+                related_user_id=related_user_id,
+                related_spot_id=related_spot_id,
+            )
+            db.session.add(n)
+            created.append(n)
+        db.session.commit()
+        return created
+
 class UserBadge(db.Model):
     """Selo de papel (pago/verificado) concedido a um usuário.
 

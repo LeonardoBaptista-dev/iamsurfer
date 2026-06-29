@@ -255,6 +255,11 @@ def add_spot():
                 db.session.add(spot)
                 db.session.commit()
 
+                Notification.notify_admins(
+                    'spot_pending',
+                    f'{current_user.username} sugeriu um novo pico: {spot.name}',
+                    related_user_id=current_user.id, related_spot_id=spot.id)
+
                 return jsonify({
                     'success': True,
                     'message': 'Spot adicionado com sucesso! Aguardando aprovação.',
@@ -287,7 +292,12 @@ def add_spot():
                 
                 db.session.add(spot)
                 db.session.commit()
-                
+
+                Notification.notify_admins(
+                    'spot_pending',
+                    f'{current_user.username} sugeriu um novo pico: {spot.name}',
+                    related_user_id=current_user.id, related_spot_id=spot.id)
+
                 flash('Spot adicionado com sucesso! Aguarde a aprovação do administrador.', 'success')
                 return redirect(url_for('spots.spots_map'))
             
@@ -357,6 +367,12 @@ def contribute_spot(spot_id):
         spot_id=spot.id, user_id=current_user.id,
         data=json.dumps(data, ensure_ascii=False), note=note, status='pending'))
     db.session.commit()
+
+    Notification.notify_admins(
+        'spot_contribution',
+        f'{current_user.username} sugeriu informações para o pico {spot.name}',
+        related_user_id=current_user.id, related_spot_id=spot.id)
+
     return redirect(url_for('spots.new_spot_detail', spot_id=spot.id, contributed=1))
 
 

@@ -37,6 +37,10 @@
             <a href="{{ url_for('messages.conversation', username=notification.related_user.username) }}" class="btn btn-secondary btn-sm">Ver</a>
             {% elif notification.type == 'swell' and notification.related_spot_id %}
             <a href="{{ url_for('spots.new_spot_detail', spot_id=notification.related_spot_id) }}" class="btn btn-primary btn-sm">Ver pico</a>
+            {% elif notification.type == 'spot_pending' %}
+            <a href="{{ url_for('admin.spots', status='pending') }}" class="btn btn-primary btn-sm">Validar</a>
+            {% elif notification.type == 'spot_contribution' %}
+            <a href="{{ url_for('admin.contributions') }}" class="btn btn-primary btn-sm">Validar</a>
             {% endif %}
             {% if not notification.read %}<span class="dm-dot"></span>{% endif %}
         </div>
