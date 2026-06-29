@@ -51,7 +51,7 @@
 
         <!-- Composer -->
         <div class="p-3" style="border-top:1px solid var(--border);">
-            <form method="POST" id="messageForm" class="d-flex gap-2">
+            <form method="POST" action="{{ url_for('messages.send_message', username=other_user.username) }}" id="messageForm" class="d-flex gap-2">
                 <input type="text" class="form-control" name="content" id="messageInput"
                     placeholder="Digite sua mensagem..." required maxlength="1000"
                     style="border-radius:var(--radius-pill);">

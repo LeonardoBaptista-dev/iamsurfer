@@ -107,7 +107,7 @@ def index():
     feed_items = build_feed_items(following_ids, page=page)
 
     users_not_following = User.query.filter(~User.id.in_(following_ids), User.id != current_user.id).all()
-    suggested_users = random.sample(users_not_following, min(5, len(users_not_following))) if users_not_following else []
+    suggested_users = random.sample(users_not_following, min(12, len(users_not_following))) if users_not_following else []
 
     # Lista de picos para o formulário de novo post (spot tagging)
     spots = Spot.query.filter_by(status='approved', is_active=True).order_by(Spot.name).all()
@@ -133,7 +133,7 @@ def home():
         
     feed_items = build_feed_items(following_ids, page=page)
     users_not_following = User.query.filter(~User.id.in_(following_ids), User.id != current_user.id).all()
-    suggested_users = random.sample(users_not_following, min(5, len(users_not_following))) if users_not_following else []
+    suggested_users = random.sample(users_not_following, min(12, len(users_not_following))) if users_not_following else []
     spots = Spot.query.filter_by(status='approved', is_active=True).order_by(Spot.name).all()
     from routes.stories import build_story_bar
     story_bar = build_story_bar(current_user)

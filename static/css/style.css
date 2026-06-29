@@ -1607,6 +1607,101 @@ main h1.h2 {
     color: var(--brand);
 }
 
+/* ─── Suggested surfers carousel (mobile) ─────────── */
+.suggest-carousel {
+    margin-bottom: 1.5rem;
+}
+
+.suggest-carousel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    padding: 0 2px;
+}
+
+.suggest-carousel-head h6 {
+    font-weight: 700;
+    font-size: .92rem;
+    margin: 0;
+    color: var(--text-primary);
+}
+
+.suggest-carousel-head a {
+    font-size: .78rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-decoration: none;
+}
+
+.suggest-track {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 6px;
+    scrollbar-width: none;
+}
+
+.suggest-track::-webkit-scrollbar {
+    display: none;
+}
+
+.suggest-card {
+    scroll-snap-align: start;
+    flex: 0 0 auto;
+    width: 148px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 12px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.suggest-card-avatar {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--brand-faint);
+    margin-bottom: 8px;
+}
+
+.suggest-card-name {
+    font-weight: 700;
+    font-size: .85rem;
+    color: var(--text-primary);
+    text-decoration: none;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.suggest-card-meta {
+    font-size: .72rem;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.suggest-card-follow {
+    margin-top: auto;
+    width: 100%;
+    font-size: .8rem;
+    font-weight: 700;
+    padding: 6px 0;
+    border-radius: var(--radius-pill);
+    text-decoration: none;
+}
+
 /* ─── Alerts ──────────────────────────────────────── */
 .alert {
     border: none;

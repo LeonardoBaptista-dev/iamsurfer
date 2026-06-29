@@ -142,6 +142,33 @@
             {% include 'main/story_bar.html' %}
         {% endif %}
 
+        <!-- Suggested Surfers carousel (mobile only — sidebar covers desktop) -->
+        {% if current_user.is_authenticated and suggested_users %}
+        <div class="suggest-carousel d-lg-none">
+            <div class="suggest-carousel-head">
+                <h6>Surfistas para seguir</h6>
+                <a href="{{ url_for('main.explore') }}">Ver mais</a>
+            </div>
+            <div class="suggest-track">
+                {% for user in suggested_users %}
+                <div class="suggest-card">
+                    <a href="{{ url_for('main.user_profile', username=user.username) }}">
+                        <img src="{{ user.profile_image_urls|profile_thumbnail_url if user.profile_image_urls else user.profile_image|img_url }}"
+                            class="suggest-card-avatar" alt="{{ user.username }}">
+                    </a>
+                    <a href="{{ url_for('main.user_profile', username=user.username) }}"
+                        class="suggest-card-name">{{ user.username }}</a>
+                    <span class="suggest-card-meta">
+                        <i class="bi {{ user.patente.icon }}"></i> {{ user.patente.name }}
+                    </span>
+                    <a href="{{ url_for('main.follow', username=user.username) }}"
+                        class="suggest-card-follow btn btn-primary btn-sm">Seguir</a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
         <!-- Feed Items -->
         {% if feed_items %}
         <div id="feed-container">
@@ -194,7 +221,7 @@
         {% if suggested_users %}
         <div class="sidebar-card mb-3">
             <h6>Surfistas Sugeridos</h6>
-            {% for user in suggested_users %}
+            {% for user in suggested_users[:6] %}
             <div class="suggest-item">
                 <img src="{{ user.profile_image_urls|profile_thumbnail_url if user.profile_image_urls else user.profile_image|img_url }}"
                     class="suggest-avatar" alt="{{ user.username }}">
