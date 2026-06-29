@@ -96,7 +96,7 @@ def login():
 @jwt_required(refresh=True)
 def refresh():
     """Gera novo access + refresh e revoga o refresh usado (rotação)."""
-    user = current_api_user()
+    user = current_api_user(verify=False)  # @jwt_required(refresh=True) já validou
     revoke_token()  # invalida o refresh atual
     db.session.commit()
     tokens = issue_tokens(user)

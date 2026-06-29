@@ -26,15 +26,18 @@ def issue_tokens(user):
     }
 
 
-def current_api_user(optional=False):
+def current_api_user(optional=False, verify=True):
     """Retorna o User autenticado pelo JWT do request, ou levanta 401.
 
     Com `optional=True`, retorna None quando não há token (rota pública que
-    enriquece a resposta se logado).
+    enriquece a resposta se logado). Com `verify=False`, assume que um decorator
+    (ex.: `@jwt_required(refresh=True)`) já validou o token neste request — evita
+    revalidar como access token quando o request traz um refresh token.
     """
     from models import User
 
-    verify_jwt_in_request(optional=optional)
+    if verify:
+        verify_jwt_in_request(optional=optional)
     identity = get_jwt_identity()
     if identity is None:
         if optional:
