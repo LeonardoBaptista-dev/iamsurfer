@@ -1,6 +1,7 @@
-{% extends "base.html" %}
+{% extends "admin/base_admin.html" %}
 
 {% block title %}Gerenciar Usuários - Admin{% endblock %}
+{% block admin_title %}Usuários{% endblock %}
 
 {% block extra_head %}
 <style>
@@ -126,72 +127,7 @@
 </style>
 {% endblock %}
 
-{% block content %}
-<div class="container-fluid mt-4">
-    <div class="row">
-        <!-- Sidebar -->
-        <div class="col-md-3 col-lg-2 d-md-block bg-light sidebar">
-            <div class="position-sticky">
-                <ul class="nav flex-column">
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('admin.index') }}">
-                            <i class="bi bi-speedometer2 me-2"></i>
-                            Dashboard
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link active" href="{{ url_for('admin.users') }}">
-                            <i class="bi bi-people me-2"></i>
-                            Usuários
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('admin.posts') }}">
-                            <i class="bi bi-images me-2"></i>
-                            Posts
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('admin.spots') }}">
-                            <i class="bi bi-geo-alt me-2"></i>
-                            Spots de Surf
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('admin.messages') }}">
-                            <i class="bi bi-envelope me-2"></i>
-                            Mensagens
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('admin.comments') }}">
-                            <i class="bi bi-chat-dots me-2"></i>
-                            Comentários
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('admin.reports') }}">
-                            <i class="bi bi-bar-chart me-2"></i>
-                            Relatórios
-                        </a>
-                    </li>
-                </ul>
-            </div>
-        </div>
-
-        <!-- Conteúdo principal -->
-        <div class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
-            <div
-                class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                <h1 class="h2">Gerenciar Usuários</h1>
-                <div class="btn-toolbar mb-2 mb-md-0">
-                    <div class="btn-group me-2">
-                        <a href="{{ url_for('main.index') }}" class="btn btn-sm btn-outline-secondary">Voltar ao
-                            Site</a>
-                    </div>
-                </div>
-            </div>
-
+{% block admin_content %}
             <!-- Estatísticas -->
             <div class="stats-cards">
                 <div class="stat-card total">
@@ -242,17 +178,6 @@
                     </button>
                 </div>
             </div>
-
-            {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-            {% for category, message in messages if category in ['danger', 'error', 'warning'] %}
-            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                {{ message }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-            {% endfor %}
-            {% endif %}
-            {% endwith %}
 
             <div id="users-list">
                 {% for user in users.items %}
@@ -315,9 +240,6 @@
                 </div>
                 {% endfor %}
             </div>
-        </div>
-    </div>
-</div>
 {% endblock %}
 
 {% block scripts %}

@@ -16,7 +16,7 @@
                 <span class="patente-badge lg" title="{{ user.patente.points }} XP"><i class="bi {{ user.patente.icon }}"></i> {{ user.patente.name }}</span>
                 {% for r in user.active_roles %}<span class="role-badge lg" title="{{ BADGES[r].desc }}"><i class="bi {{ BADGES[r].icon }}"></i> {{ BADGES[r].label }}</span>{% endfor %}
 
-                {% if current_user.is_authenticated and current_user.id != user.id %}
+                {% if current_user.is_authenticated and current_user.id != user.id and not user.is_admin %}
                     {% if is_following %}
                     <a href="{{ url_for('main.unfollow', username=user.username) }}" class="btn btn-secondary btn-sm">
                         <i class="bi bi-person-check"></i> Seguindo

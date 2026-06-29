@@ -1,38 +1,15 @@
-{% extends "base.html" %}
+{% extends "admin/base_admin.html" %}
 
 {% block title %}Contribuições - Admin - IAmSurfer{% endblock %}
+{% block admin_title %}Contribuições de picos{% endblock %}
+{% block admin_actions %}<span class="badge bg-warning text-dark">{{ pending|length }} pendente(s)</span>{% endblock %}
 
-{% block content %}
+{% block admin_content %}
 {% set labels = {
     'wave_type': 'Tipo de onda', 'bottom_type': 'Tipo de fundo', 'difficulty': 'Dificuldade',
     'crowd_level': 'Nível de multidão', 'best_wind_direction': 'Melhor vento',
     'best_swell_direction': 'Melhor swell', 'best_tide': 'Melhor maré', 'description': 'Descrição'
 } %}
-<div class="container-fluid mt-4">
-    <div class="row">
-        <!-- Sidebar -->
-        <div class="col-md-3 col-lg-2 d-md-block bg-light sidebar">
-            <div class="position-sticky">
-                <ul class="nav flex-column">
-                    <li class="nav-item"><a class="nav-link" href="{{ url_for('admin.index') }}"><i class="bi bi-speedometer2 me-2"></i>Dashboard</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{{ url_for('admin.users') }}"><i class="bi bi-people me-2"></i>Usuários</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{{ url_for('admin.posts') }}"><i class="bi bi-images me-2"></i>Posts</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{{ url_for('admin.spots') }}"><i class="bi bi-geo-alt me-2"></i>Spots de Surf</a></li>
-                    <li class="nav-item"><a class="nav-link active" href="{{ url_for('admin.contributions') }}"><i class="bi bi-pencil-square me-2"></i>Contribuições</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{{ url_for('admin.messages') }}"><i class="bi bi-envelope me-2"></i>Mensagens</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{{ url_for('admin.comments') }}"><i class="bi bi-chat-dots me-2"></i>Comentários</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{{ url_for('admin.reports') }}"><i class="bi bi-bar-chart me-2"></i>Relatórios</a></li>
-                </ul>
-            </div>
-        </div>
-
-        <!-- Conteúdo principal -->
-        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
-            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                <h1 class="h2"><i class="bi bi-pencil-square me-2"></i>Contribuições de picos</h1>
-                <span class="badge bg-warning text-dark align-self-center">{{ pending|length }} pendente(s)</span>
-            </div>
-
             <p class="text-muted" style="font-size:.9rem;">Sugestões de informação enviadas pela comunidade. Ao aprovar, os campos são aplicados ao pico.</p>
 
             {% if not pending %}
@@ -110,7 +87,4 @@
                 </div>
             </div></div>
             {% endif %}
-        </main>
-    </div>
-</div>
 {% endblock %}

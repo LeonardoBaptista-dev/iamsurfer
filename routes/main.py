@@ -106,7 +106,7 @@ def index():
 
     feed_items = build_feed_items(following_ids, page=page)
 
-    users_not_following = User.query.filter(~User.id.in_(following_ids), User.id != current_user.id).all()
+    users_not_following = User.query.filter(~User.id.in_(following_ids), User.id != current_user.id, User.is_admin == False).all()
     suggested_users = random.sample(users_not_following, min(12, len(users_not_following))) if users_not_following else []
 
     # Lista de picos para o formulário de novo post (spot tagging)
@@ -132,7 +132,7 @@ def home():
         page = 1
         
     feed_items = build_feed_items(following_ids, page=page)
-    users_not_following = User.query.filter(~User.id.in_(following_ids), User.id != current_user.id).all()
+    users_not_following = User.query.filter(~User.id.in_(following_ids), User.id != current_user.id, User.is_admin == False).all()
     suggested_users = random.sample(users_not_following, min(12, len(users_not_following))) if users_not_following else []
     spots = Spot.query.filter_by(status='approved', is_active=True).order_by(Spot.name).all()
     from routes.stories import build_story_bar
@@ -192,10 +192,10 @@ def privacidade():
 @main.route('/ranking')
 def ranking():
     """Ranking de surfistas por XP (gamificação): pódio + lista."""
-    top = User.query.order_by(desc(User.points), User.username).limit(50).all()
+    top = User.query.filter(User.is_admin == False).order_by(desc(User.points), User.username).limit(50).all()
     my_rank = None
-    if current_user.is_authenticated:
-        my_rank = User.query.filter(User.points > (current_user.points or 0)).count() + 1
+    if current_user.is_authenticated and not current_user.is_admin:
+        my_rank = User.query.filter(User.is_admin == False, User.points > (current_user.points or 0)).count() + 1
     return render_template('main/ranking.html', top=top, my_rank=my_rank)
 
 @main.route('/reels')
@@ -231,8 +231,14 @@ def user_profile(username):
 @login_required
 def follow(username):
     user = User.query.filter_by(username=username).first_or_404()
+    if current_user.is_admin:
+        flash('Contas de administração não seguem usuários.', 'warning')
+        return redirect(url_for('main.user_profile', username=username))
     if user == current_user:
         flash('Você não pode seguir a si mesmo!', 'danger')
+        return redirect(url_for('main.user_profile', username=username))
+    if user.is_admin:
+        flash('Este perfil não pode ser seguido.', 'warning')
         return redirect(url_for('main.user_profile', username=username))
     current_user.follow(user)
     # Gamificação: quem ganhou um seguidor recebe XP
@@ -259,14 +265,14 @@ def unfollow(username):
 def followers(username):
     user = User.query.filter_by(username=username).first_or_404()
     follows = user.followers.all()
-    followers = [follow.follower for follow in follows]
+    followers = [follow.follower for follow in follows if not follow.follower.is_admin]
     return render_template('main/followers.html', user=user, followers=followers)
 
 @main.route('/following/<username>')
 def following(username):
     user = User.query.filter_by(username=username).first_or_404()
     follows = user.followed.all()
-    following = [follow.followed for follow in follows]
+    following = [follow.followed for follow in follows if not follow.followed.is_admin]
     return render_template('main/following.html', user=user, following=following)
 
 @main.route('/search')
@@ -274,5 +280,5 @@ def search():
     query = request.args.get('q', '')
     if not query:
         return render_template('main/search.html', results=None, query=None)
-    users = User.query.filter(User.username.ilike(f'%{query}%')).all()
+    users = User.query.filter(User.username.ilike(f'%{query}%'), User.is_admin == False).all()
     return render_template('main/search.html', results=users, query=query)
