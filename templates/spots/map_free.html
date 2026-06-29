@@ -732,23 +732,15 @@
         const lat = e.latlng.lat;
         const lng = e.latlng.lng;
 
-        // Marcador temporário arrastável no ponto escolhido
-        if (addModeMarker) map.removeLayer(addModeMarker);
-        addModeMarker = L.marker([lat, lng], { draggable: true }).addTo(map);
-        addModeMarker.bindTooltip('Arraste para ajustar', { direction: 'top', offset: [0, -10] });
-
-        // Preenche coordenadas (usadas só depois da confirmação)
+        // Preenche coordenadas e habilita o botão ANTES de mexer no marcador,
+        // garantindo que a confirmação libere mesmo se o marcador falhar.
         setSpotCoords(lat, lng);
-
-        // Ajusta as coordenadas quando o usuário arrasta o marcador
-        addModeMarker.on('dragend', function () {
-            const p = addModeMarker.getLatLng();
-            setSpotCoords(p.lat, p.lng);
-        });
-
-        // Habilita o botão de confirmar no painel abaixo do mapa
         const btn = document.getElementById('spotConfirmBtn');
         if (btn) btn.disabled = false;
+
+        // Marcador temporário no ponto escolhido (ícone de prancha, sem arrastar)
+        if (addModeMarker) map.removeLayer(addModeMarker);
+        addModeMarker = L.marker([lat, lng], { icon: createSpotIcon() }).addTo(map);
     }
 
     // Atualiza os campos de coordenadas (formulário + texto do painel)
@@ -758,18 +750,21 @@
         document.getElementById('spotLng').value = lng.toFixed(6);
         document.getElementById('spotCoordsLabel').textContent = label;
         const txt = document.getElementById('spotConfirmText');
-        if (txt) txt.innerHTML = `Local marcado: <strong>${label}</strong> · arraste o marcador para ajustar.`;
+        if (txt) txt.innerHTML = `Local marcado: <strong>${label}</strong>. Toque em outro ponto para corrigir.`;
     }
 
     // Controle do painel de confirmação (abaixo do mapa)
     function showAddPanel() {
         const bar = document.getElementById('spotConfirmBar');
         if (bar) bar.style.display = 'block';
+        // O painel altera a altura do mapa: recalcula para o clique casar com o ponto certo
+        if (map) setTimeout(() => map.invalidateSize(), 50);
     }
 
     function hideAddPanel() {
         const bar = document.getElementById('spotConfirmBar');
         if (bar) bar.style.display = 'none';
+        if (map) setTimeout(() => map.invalidateSize(), 50);
     }
 
     // Volta o painel ao estado inicial (sem ponto escolhido)
