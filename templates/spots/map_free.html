@@ -523,7 +523,7 @@
 
     // Configuração inicial do mapa
     const mapConfig = {
-        center: [-14.2350, -51.9253], // Centro do Brasil
+        center: [-15.5, -42.0], // Litoral brasileiro (costa atlântica enquadrada)
         zoom: 5,
         maxZoom: 18
     };
@@ -644,28 +644,80 @@
         });
     }
 
-    // Manipula clique no mapa (modo adicionar) → abre o formulário único
+    // Manipula clique no mapa (modo adicionar) → pede confirmação da localização
     function handleMapClick(e) {
         if (!isAddMode) return;
 
         const lat = e.latlng.lat;
         const lng = e.latlng.lng;
 
-        // Marcador temporário no ponto escolhido
+        // Marcador temporário arrastável no ponto escolhido
         if (addModeMarker) map.removeLayer(addModeMarker);
-        addModeMarker = L.marker([lat, lng]).addTo(map);
+        addModeMarker = L.marker([lat, lng], { draggable: true }).addTo(map);
 
-        // Preenche coordenadas no formulário
+        // Preenche coordenadas no formulário (usadas só depois da confirmação)
+        setSpotCoords(lat, lng);
+
+        // Ajusta as coordenadas quando o usuário arrasta o marcador
+        addModeMarker.on('dragend', function () {
+            const p = addModeMarker.getLatLng();
+            setSpotCoords(p.lat, p.lng);
+            addModeMarker.setPopupContent(buildConfirmPopup(p.lat, p.lng));
+        });
+
+        // Sai do modo adicionar (já temos o ponto); o balão de confirmação assume daqui
+        toggleAddMode();
+
+        // Balão de confirmação ancorado no próprio marcador
+        addModeMarker.bindPopup(buildConfirmPopup(lat, lng), {
+            closeButton: false,
+            autoClose: false,
+            closeOnClick: false,
+            className: 'spot-confirm-popup'
+        }).openPopup();
+    }
+
+    // Atualiza os campos de coordenadas do formulário
+    function setSpotCoords(lat, lng) {
         document.getElementById('spotLat').value = lat.toFixed(6);
         document.getElementById('spotLng').value = lng.toFixed(6);
         document.getElementById('spotCoordsLabel').textContent = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+    }
 
-        // Abre o modal único
+    // Monta o HTML do balão de confirmação
+    function buildConfirmPopup(lat, lng) {
+        return `
+            <div style="text-align:center; min-width:200px;">
+                <div style="font-weight:700; color:var(--text-primary); margin-bottom:2px;">
+                    <i class="bi bi-pin-map-fill text-primary"></i> Essa é a localização do pico?
+                </div>
+                <div style="font-size:.78rem; color:var(--text-muted); margin-bottom:2px;">
+                    ${lat.toFixed(5)}, ${lng.toFixed(5)}
+                </div>
+                <div style="font-size:.72rem; color:var(--text-muted); margin-bottom:10px;">
+                    <i class="bi bi-arrows-move"></i> Arraste o marcador para ajustar
+                </div>
+                <div style="display:flex; gap:8px; justify-content:center;">
+                    <button type="button" class="btn btn-sm btn-outline-secondary px-3" onclick="cancelSpotLocation()">Não</button>
+                    <button type="button" class="btn btn-sm btn-primary px-3 fw-bold" onclick="confirmSpotLocation()">Sim, continuar</button>
+                </div>
+            </div>`;
+    }
+
+    // Confirma a localização → abre o formulário de cadastro
+    function confirmSpotLocation() {
+        if (addModeMarker) addModeMarker.closePopup();
         const modal = new bootstrap.Modal(document.getElementById('addSpotModal'));
         modal.show();
+    }
 
-        // Sai do modo adicionar (já temos o ponto)
-        toggleAddMode();
+    // Recusa a localização → remove o marcador e volta ao modo adicionar
+    function cancelSpotLocation() {
+        if (addModeMarker) {
+            map.removeLayer(addModeMarker);
+            addModeMarker = null;
+        }
+        if (!isAddMode) toggleAddMode();
     }
 
     // Toggle modo adicionar
