@@ -202,6 +202,17 @@
         filter: brightness(0) invert(1);
     }
 
+    /* Marcador de spot cadastrado: só a prancha de surf (sem círculo) */
+    .spot-board-marker {
+        background: transparent !important;
+        border: none !important;
+    }
+
+    .spot-board-marker svg {
+        display: block;
+        filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .35));
+    }
+
     .user-marker {
         background: #111827;
     }
@@ -224,6 +235,52 @@
             transform: scale(1);
         }
     }
+
+    /* Botão "Adicionar pico" repaginado */
+    #addModeBtn {
+        background: linear-gradient(135deg, #4f46e5, #7c3aed);
+        border: none;
+        color: #fff;
+        padding: 9px 20px;
+        font-weight: 700;
+        letter-spacing: .2px;
+        box-shadow: 0 6px 16px rgba(79, 70, 229, .30);
+        transition: transform .15s ease, box-shadow .15s ease, background .2s ease;
+    }
+    #addModeBtn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 22px rgba(79, 70, 229, .38);
+    }
+    /* Estado "Cancelar" (modo adicionar ativo) sobrescreve o gradiente */
+    #addModeBtn.add-mode-active {
+        background: #111827 !important;
+        box-shadow: 0 4px 12px rgba(17, 24, 39, .25);
+    }
+
+    /* Barra flutuante de confirmação do local do pico */
+    #spotConfirmBar {
+        position: fixed;
+        left: 50%;
+        transform: translateX(-50%);
+        bottom: 24px;
+        z-index: 1200;
+        width: min(92vw, 440px);
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        box-shadow: 0 14px 38px rgba(17, 24, 39, .20);
+        padding: 16px;
+        display: none;
+        animation: confirmUp .25s ease;
+    }
+    @keyframes confirmUp {
+        from { opacity: 0; transform: translate(-50%, 12px); }
+        to   { opacity: 1; transform: translate(-50%, 0); }
+    }
+    /* No mobile, sobe acima da tabbar fixa (58px) */
+    @media (max-width: 991px) {
+        #spotConfirmBar { bottom: calc(58px + 14px); }
+    }
 </style>
 {% endblock %}
 
@@ -236,7 +293,7 @@
                 <div class="card-header bg-white border-0 pt-3 px-4 pb-0 d-flex justify-content-between align-items-center flex-shrink-0">
                     <h5 class="mb-0 fw-bold" style="font-size: 1.25rem; color: var(--text-primary);"><i class="bi bi-map me-2" style="color:var(--text-primary);"></i>Mapa Interativo de Spots</h5>
                     {% if current_user.is_authenticated %}
-                    <button class="btn btn-primary btn-sm px-3 fw-bold rounded-pill shadow-sm" onclick="toggleAddMode()" id="addModeBtn">
+                    <button class="btn fw-bold rounded-pill" onclick="toggleAddMode()" id="addModeBtn">
                         <i class="bi bi-geo-alt-fill me-1"></i> Adicionar pico
                     </button>
                     {% endif %}
@@ -352,6 +409,27 @@
             </div>
 
 
+</div>
+
+<!-- Barra flutuante: confirma o local escolhido e abre o cadastro -->
+<div id="spotConfirmBar">
+    <div class="d-flex align-items-center gap-2 mb-3">
+        <i class="bi bi-pin-map-fill text-primary fs-4"></i>
+        <div>
+            <div class="fw-bold" style="font-size:.95rem; color:var(--text-primary);">Essa é a localização do pico?</div>
+            <div class="text-muted" style="font-size:.78rem;">
+                <span id="spotConfirmCoords">—</span> · arraste o marcador para ajustar
+            </div>
+        </div>
+    </div>
+    <div class="d-flex gap-2">
+        <button type="button" class="btn btn-outline-secondary fw-bold rounded-pill flex-fill" onclick="cancelSpotLocation()">
+            Cancelar
+        </button>
+        <button type="button" class="btn btn-primary fw-bold rounded-pill flex-fill" onclick="confirmSpotLocation()">
+            <i class="bi bi-check-lg me-1"></i> Cadastrar pico aqui
+        </button>
+    </div>
 </div>
 
 <!-- Modal único para Adicionar Pico (principais + opcionais) -->
@@ -568,18 +646,28 @@
         console.log('✅ Mapa OpenStreetMap inicializado com sucesso!');
     }
 
+    // Ícone de spot cadastrado: prancha de surf (SVG, sem fundo)
+    function createSpotIcon() {
+        return L.divIcon({
+            className: 'spot-board-marker',
+            html: `
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="34" height="34">
+                    <path d="M12 1.5c2.9 3.6 4 8.4 4 11.5s-1.1 7.4-4 9.5c-2.9-2.1-4-6.4-4-9.5s1.1-7.9 4-11.5z"
+                          fill="#4f46e5" stroke="#ffffff" stroke-width="1.3" stroke-linejoin="round"/>
+                    <line x1="12" y1="4" x2="12" y2="20.5" stroke="#ffffff" stroke-width="0.9" opacity="0.85"/>
+                </svg>`,
+            iconSize: [34, 34],
+            iconAnchor: [17, 17],
+            popupAnchor: [0, -14]
+        });
+    }
+
     // Adiciona spots ao mapa
     function addSpotsToMap() {
         clearMarkers();
 
         spotsData.forEach(spot => {
-            // Cria ícone personalizado
-            const customIcon = L.divIcon({
-                className: 'custom-marker',
-                html: `<img src="{{ url_for('static', filename='uploads/spots/image.png') }}" alt="Spot">`,
-                iconSize: [32, 32],
-                iconAnchor: [16, 16]
-            });
+            const customIcon = createSpotIcon();
 
             const marker = L.marker([parseFloat(spot.lat), parseFloat(spot.lng)], {
                 icon: customIcon
@@ -644,7 +732,7 @@
         });
     }
 
-    // Manipula clique no mapa (modo adicionar) → pede confirmação da localização
+    // Manipula clique no mapa (modo adicionar) → marca o ponto e mostra a barra de confirmação
     function handleMapClick(e) {
         if (!isAddMode) return;
 
@@ -654,85 +742,69 @@
         // Marcador temporário arrastável no ponto escolhido
         if (addModeMarker) map.removeLayer(addModeMarker);
         addModeMarker = L.marker([lat, lng], { draggable: true }).addTo(map);
+        addModeMarker.bindTooltip('Arraste para ajustar', { direction: 'top', offset: [0, -10] });
 
-        // Preenche coordenadas no formulário (usadas só depois da confirmação)
+        // Preenche coordenadas (usadas só depois da confirmação)
         setSpotCoords(lat, lng);
 
         // Ajusta as coordenadas quando o usuário arrasta o marcador
         addModeMarker.on('dragend', function () {
             const p = addModeMarker.getLatLng();
             setSpotCoords(p.lat, p.lng);
-            addModeMarker.setPopupContent(buildConfirmPopup(p.lat, p.lng));
         });
 
-        // Sai do modo adicionar (já temos o ponto); o balão de confirmação assume daqui
-        toggleAddMode();
-
-        // Balão de confirmação ancorado no próprio marcador
-        addModeMarker.bindPopup(buildConfirmPopup(lat, lng), {
-            closeButton: false,
-            autoClose: false,
-            closeOnClick: false,
-            className: 'spot-confirm-popup'
-        }).openPopup();
+        // Sai do modo adicionar (mantendo o marcador) e mostra a barra de confirmação
+        setAddMode(false);
+        showConfirmBar();
     }
 
-    // Atualiza os campos de coordenadas do formulário
+    // Atualiza os campos de coordenadas (formulário + barra de confirmação)
     function setSpotCoords(lat, lng) {
+        const label = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
         document.getElementById('spotLat').value = lat.toFixed(6);
         document.getElementById('spotLng').value = lng.toFixed(6);
-        document.getElementById('spotCoordsLabel').textContent = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+        document.getElementById('spotCoordsLabel').textContent = label;
+        const cc = document.getElementById('spotConfirmCoords');
+        if (cc) cc.textContent = label;
     }
 
-    // Monta o HTML do balão de confirmação
-    function buildConfirmPopup(lat, lng) {
-        return `
-            <div style="text-align:center; min-width:200px;">
-                <div style="font-weight:700; color:var(--text-primary); margin-bottom:2px;">
-                    <i class="bi bi-pin-map-fill text-primary"></i> Essa é a localização do pico?
-                </div>
-                <div style="font-size:.78rem; color:var(--text-muted); margin-bottom:2px;">
-                    ${lat.toFixed(5)}, ${lng.toFixed(5)}
-                </div>
-                <div style="font-size:.72rem; color:var(--text-muted); margin-bottom:10px;">
-                    <i class="bi bi-arrows-move"></i> Arraste o marcador para ajustar
-                </div>
-                <div style="display:flex; gap:8px; justify-content:center;">
-                    <button type="button" class="btn btn-sm btn-outline-secondary px-3" onclick="cancelSpotLocation()">Não</button>
-                    <button type="button" class="btn btn-sm btn-primary px-3 fw-bold" onclick="confirmSpotLocation()">Sim, continuar</button>
-                </div>
-            </div>`;
+    function showConfirmBar() {
+        document.getElementById('spotConfirmBar').style.display = 'block';
+    }
+
+    function hideConfirmBar() {
+        document.getElementById('spotConfirmBar').style.display = 'none';
     }
 
     // Confirma a localização → abre o formulário de cadastro
     function confirmSpotLocation() {
-        if (addModeMarker) addModeMarker.closePopup();
+        hideConfirmBar();
         const modal = new bootstrap.Modal(document.getElementById('addSpotModal'));
         modal.show();
     }
 
     // Recusa a localização → remove o marcador e volta ao modo adicionar
     function cancelSpotLocation() {
+        hideConfirmBar();
         if (addModeMarker) {
             map.removeLayer(addModeMarker);
             addModeMarker = null;
         }
-        if (!isAddMode) toggleAddMode();
+        setAddMode(true); // volta ao modo adicionar para escolher outro ponto
     }
 
-    // Toggle modo adicionar
-    function toggleAddMode() {
-        // Verificar se elemento de botão existe (indica usuário autenticado)
+    // Define o estado do modo adicionar (botão + instruções). NÃO mexe no marcador.
+    function setAddMode(on) {
         const btn = document.getElementById('addModeBtn');
         if (!btn) {
             alert('Você precisa estar logado para adicionar spots.');
             return;
         }
 
-        isAddMode = !isAddMode;
+        isAddMode = on;
         const instructions = document.getElementById('mapInstructions');
 
-        if (isAddMode) {
+        if (on) {
             btn.classList.add('add-mode-active');
             btn.innerHTML = '<i class="bi bi-x-lg me-1"></i> Cancelar';
             if (instructions) instructions.style.display = 'block';
@@ -740,13 +812,26 @@
             btn.classList.remove('add-mode-active');
             btn.innerHTML = '<i class="bi bi-geo-alt-fill me-1"></i> Adicionar pico';
             if (instructions) instructions.style.display = 'none';
+        }
+    }
 
-            // Remove marcador temporário
+    // Botão do cabeçalho: alterna o modo e limpa marcador/barra pendentes ao cancelar
+    function toggleAddMode() {
+        const btn = document.getElementById('addModeBtn');
+        if (!btn) {
+            alert('Você precisa estar logado para adicionar spots.');
+            return;
+        }
+
+        if (isAddMode) {
+            // Cancelando: descarta ponto pendente
+            hideConfirmBar();
             if (addModeMarker) {
                 map.removeLayer(addModeMarker);
                 addModeMarker = null;
             }
         }
+        setAddMode(!isAddMode);
     }
 
     // Submete o pico (formulário único: principais + opcionais)
@@ -1158,12 +1243,7 @@
 
         // Adiciona apenas spots filtrados
         filteredSpots.forEach(spot => {
-            const customIcon = L.divIcon({
-                className: 'custom-marker',
-                html: `<img src="{{ url_for('static', filename='uploads/spots/image.png') }}" alt="Spot">`,
-                iconSize: [32, 32],
-                iconAnchor: [16, 16]
-            });
+            const customIcon = createSpotIcon();
 
             const marker = L.marker([parseFloat(spot.lat), parseFloat(spot.lng)], {
                 icon: customIcon
