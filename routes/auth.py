@@ -80,8 +80,13 @@ def signup():
     if request.method == 'POST':
         username = request.form.get('username')
         email = request.form.get('email')
-        password = request.form.get('password')
-        
+        password = request.form.get('password') or ''
+
+        # Validação de senha no servidor (não confiar só no minlength do HTML)
+        if len(password) < 8:
+            flash('A senha precisa ter ao menos 8 caracteres.', 'danger')
+            return redirect(url_for('auth.signup'))
+
         # Verifica se o usuário já existe
         user_check = User.query.filter_by(username=username).first()
         email_check = User.query.filter_by(email=email).first()

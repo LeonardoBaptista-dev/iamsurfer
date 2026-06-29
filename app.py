@@ -1,4 +1,5 @@
 from flask import Flask, Markup, jsonify
+from markupsafe import escape
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_migrate import Migrate
@@ -36,6 +37,28 @@ app.config['MAX_VIDEO_UPLOAD_SIZE'] = 100 * 1024 * 1024  # 100MB
 # Verificar se está em ambiente de produção
 is_production = os.environ.get('FLASK_ENV') == 'production'
 
+# ── Segurança da sessão/cookies ──────────────────────────────────────
+# HttpOnly: JS não lê o cookie (mitiga roubo via XSS).
+# SameSite=Lax: o cookie não é enviado em POST cross-site (mitiga CSRF).
+# Secure: só trafega em HTTPS — ativado apenas em produção, senão o login
+# quebraria em desenvolvimento local via HTTP.
+from datetime import timedelta
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['SESSION_COOKIE_SECURE'] = is_production
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=14)
+
+# ── Headers de segurança em todas as respostas ───────────────────────
+@app.after_request
+def _security_headers(response):
+    response.headers.setdefault('X-Content-Type-Options', 'nosniff')
+    response.headers.setdefault('X-Frame-Options', 'SAMEORIGIN')
+    response.headers.setdefault('Referrer-Policy', 'strict-origin-when-cross-origin')
+    if is_production:
+        response.headers.setdefault('Strict-Transport-Security',
+                                    'max-age=31536000; includeSubDomains')
+    return response
+
 # Configuração para desenvolvimento local vs produção
 # No Docker, mesmo em desenvolvimento, vamos usar armazenamento local
 USE_LOCAL_STORAGE = not is_production  # Use armazenamento local em desenvolvimento e Docker
@@ -68,7 +91,9 @@ print(f"Diretórios de upload criados: {len(upload_dirs)} pastas")
 @app.template_filter('nl2br')
 def nl2br(value):
     if value:
-        return Markup(value.replace('\n', '<br>'))
+        # Escapa o conteúdo do usuário ANTES de inserir os <br> reais,
+        # senão <script> em post/bio seria renderizado (XSS armazenado).
+        return Markup(str(escape(value)).replace('\n', '<br>'))
     return value
 
 # Filtro para processar URLs de imagem
@@ -93,7 +118,7 @@ def responsive_img_filter(urls, alt="", css_class=""):
         if isinstance(urls, dict):
             return Markup(ResponsiveImageHelper.get_responsive_img_tag(urls, alt, css_class))
     # Fallback para URLs simples
-    return Markup(f'<img src="{img_url(urls)}" alt="{alt}" class="{css_class}" loading="lazy">')
+    return Markup(f'<img src="{img_url(urls)}" alt="{escape(alt)}" class="{escape(css_class)}" loading="lazy">')
 
 @app.template_filter('thumbnail_url')
 def thumbnail_url_filter(urls):
@@ -144,7 +169,7 @@ def profile_avatar_filter(urls, alt="", css_class="rounded-circle", size="small"
         if isinstance(urls, dict):
             return Markup(ResponsiveImageHelper.get_profile_avatar_tag(urls, alt, css_class, size))
     # Fallback para compatibilidade com o sistema antigo
-    return Markup(f'<img src="{img_url(urls)}" alt="{alt}" class="{css_class}" loading="lazy">')
+    return Markup(f'<img src="{img_url(urls)}" alt="{escape(alt)}" class="{escape(css_class)}" loading="lazy">')
 
 @app.template_filter('profile_thumbnail_url')
 def profile_thumbnail_url_filter(urls):
@@ -358,7 +383,7 @@ if __name__ == '__main__':
     # Desenvolvimento local: cria o schema (SQLite) e semeia dados.
     if wait_for_db():
         init_db(create_schema=True)
-        app.run(debug=True, host='0.0.0.0')
+        app.run(debug=not is_production, host='0.0.0.0')
 # Em produção (gunicorn), o schema e a semeadura são aplicados pelo entrypoint
 # via migrate_db.py (migrações + seed) ANTES do servidor subir — por isso não
 # há mais init_db() no import do módulo (evita create_all competindo com o
