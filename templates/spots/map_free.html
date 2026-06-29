@@ -518,12 +518,13 @@
                         </div>
                     </div>
 
-                    <!-- ─── Opcionais (recolhível) ─── -->
+                    <!-- ─── Opcionais (recolhível, abertas por padrão) ─── -->
                     <button type="button" class="btn btn-link p-0 text-decoration-none fw-bold d-flex align-items-center gap-1 mb-2"
-                        data-bs-toggle="collapse" data-bs-target="#spotOptional" style="font-size:.9rem;">
-                        <i class="bi bi-chevron-down"></i> Informações opcionais
+                        data-bs-toggle="collapse" data-bs-target="#spotOptional"
+                        aria-expanded="true" aria-controls="spotOptional" style="font-size:.9rem;">
+                        <i class="bi bi-sliders me-1"></i> Mais detalhes do pico (opcional)
                     </button>
-                    <div class="collapse" id="spotOptional">
+                    <div class="collapse show" id="spotOptional">
                         <div class="mb-3">
                             <label class="form-label">Cidade</label>
                             <input type="text" class="form-control" id="spotCity" maxlength="100">
