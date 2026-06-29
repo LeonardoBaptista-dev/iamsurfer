@@ -44,120 +44,90 @@ def new_post():
         db.session.flush()  # Flush para ter o ID sem commit completo
         
         # Processamento de imagem ou vídeo
+        has_media = False        # há mídia válida (já processada ou na fila)
+        media_is_video = False   # a mídia é vídeo (importa para validar Reel)
+        pending_job = None       # (tmp_path, filename, is_image, is_video, is_reel) p/ enfileirar pós-commit
         if 'media' in request.files and request.files['media'].filename:
             file = request.files['media']
-            
-            if file and allowed_file(file.filename):
-                # Determina o tipo de mídia
-                file_ext = file.filename.rsplit('.', 1)[1].lower()
-                is_image = file_ext in ['jpg', 'jpeg', 'png', 'gif']
-                is_video = file_ext in ['mp4', 'mov']
-                
-                if is_image:
-                    # Usa o sistema apropriado de processamento de imagens
-                    processor = get_image_processor()
-                    
-                    if hasattr(processor, 'process_and_save'):
-                        # Processador local
-                        success, message, urls = processor.process_and_save(file)
-                        
-                        if success:
-                            # Gera hash para deduplicação
-                            file.seek(0)
-                            import hashlib
-                            file_hash = hashlib.md5(file.read()).hexdigest()
-                            file.seek(0)
-                            
-                            # Armazena as URLs múltiplas e hash
-                            post.image_urls = urls
-                            post.image_hash = file_hash
-                            # Mantém compatibilidade com campo antigo
-                            post.image_url = urls.get('medium', urls.get('small', ''))
-                            print(f"[img] processada: {len(urls)} tamanhos")
-                        else:
-                            flash(f"Erro no processamento da imagem: {message}", 'error')
-                            db.session.rollback()
-                            return redirect(url_for('posts.new_post'))
-                    
-                    else:
-                        # Processador do Cloudinary (produção)
-                        result = processor.process_and_upload_image(file, post.id)
-                        
-                        if result.get('success'):
-                            # Armazena as URLs múltiplas e hash
-                            post.image_urls = result['urls']
-                            post.image_hash = result['hash']
-                            # Mantém compatibilidade com campo antigo
-                            post.image_url = result['urls'].get('medium', result['urls'].get('small', ''))
-                            print(f"[img] processada (cloud): {len(result['urls'])} tamanhos")
-                        else:
-                            flash(f"Erro no processamento da imagem: {result.get('error')}", 'error')
-                            db.session.rollback()
-                            return redirect(url_for('posts.new_post'))
-                
-                elif is_video:
-                    # Guarda de tamanho no servidor (a validação do navegador é burlável).
-                    # Aceitamos vídeos grandes do celular; eles são comprimidos antes do upload.
-                    max_video = app.config.get('MAX_VIDEO_UPLOAD_SIZE', 100 * 1024 * 1024)
-                    file.seek(0, os.SEEK_END)
-                    video_size = file.tell()
-                    file.seek(0)
-                    if video_size > max_video:
-                        flash(f"Vídeo muito grande (máx {max_video // (1024*1024)}MB). Reduza antes de enviar.", 'danger')
-                        db.session.rollback()
-                        return redirect(url_for('posts.new_post'))
 
-                    # Usa o sistema de processamento que abstrai Nuvem/Local
-                    processor = get_image_processor()
-
-                    if hasattr(processor, 'process_and_save_video'):
-                        # Ambiente de Dev Local
-                        success, message, url_path = processor.process_and_save_video(file, is_reel=is_reel)
-                        if success:
-                            post.video_url = url_for('static', filename=url_path)
-                            print(message)  # Ex: Aviso dizendo se usou FFmpeg
-                        else:
-                            flash(f"Erro local: {message}", 'danger')
-                            db.session.rollback()
-                            return redirect(url_for('posts.new_post'))
-
-                    elif hasattr(processor, 'process_and_upload_video'):
-                        # Ambiente Produtivo Cloudinary
-                        result = processor.process_and_upload_video(file, post.id, is_reel=is_reel)
-                        if result.get('success'):
-                            post.video_url = result['url']
-                        else:
-                            flash(result.get('error', 'Erro desconhecido'), 'danger')
-                            db.session.rollback()
-                            return redirect(url_for('posts.new_post'))
-                    else:
-                        flash('Processador de vídeo não configurado', 'danger')
-                        return redirect(url_for('posts.new_post'))
-                else:
-                    flash('Erro ao fazer upload do arquivo. Tente novamente.', 'danger')
-                    return redirect(url_for('posts.new_post'))
-            else:
+            if not (file and allowed_file(file.filename)):
                 flash('Formato de arquivo não permitido.', 'danger')
+                db.session.rollback()
                 return redirect(url_for('posts.new_post'))
-        
+
+            file_ext = file.filename.rsplit('.', 1)[1].lower()
+            is_image = file_ext in ['jpg', 'jpeg', 'png', 'gif']
+            is_video = file_ext in ['mp4', 'mov']
+
+            if not (is_image or is_video):
+                flash('Erro ao fazer upload do arquivo. Tente novamente.', 'danger')
+                db.session.rollback()
+                return redirect(url_for('posts.new_post'))
+
+            if is_video:
+                # Guarda de tamanho no servidor (a validação do navegador é burlável).
+                max_video = app.config.get('MAX_VIDEO_UPLOAD_SIZE', 100 * 1024 * 1024)
+                file.seek(0, os.SEEK_END)
+                video_size = file.tell()
+                file.seek(0)
+                if video_size > max_video:
+                    flash(f"Vídeo muito grande (máx {max_video // (1024*1024)}MB). Reduza antes de enviar.", 'danger')
+                    db.session.rollback()
+                    return redirect(url_for('posts.new_post'))
+
+            has_media = True
+            media_is_video = is_video
+
+            from media_jobs import queue_enabled
+
+            if queue_enabled():
+                # Caminho ASSÍNCRONO: salva o arquivo e processa em background.
+                # O request retorna na hora; o worker preenche a mídia depois.
+                incoming = os.path.join(app.root_path, 'static', 'uploads', '_incoming')
+                os.makedirs(incoming, exist_ok=True)
+                tmp_path = os.path.join(incoming, f"{uuid.uuid4().hex}.{file_ext}")
+                file.save(tmp_path)
+                post.media_status = 'processing'
+                pending_job = (tmp_path, file.filename, is_image, is_video, is_reel)
+            else:
+                # Caminho SÍNCRONO (sem Redis): processa no próprio request, como antes.
+                from media_processing import apply_image_to_post, apply_video_to_post
+                if is_image:
+                    ok, msg = apply_image_to_post(post, file)
+                else:
+                    ok, msg = apply_video_to_post(post, file, is_reel=is_reel)
+                if not ok:
+                    flash(f"Erro no processamento da mídia: {msg}", 'error')
+                    db.session.rollback()
+                    return redirect(url_for('posts.new_post'))
+                post.media_status = 'ready'
+
         # Um Reel precisa obrigatoriamente de vídeo
-        if is_reel and not post.video_url:
+        if is_reel and not (post.video_url or media_is_video):
             flash('Um Reel precisa de um vídeo.', 'danger')
             db.session.rollback()
             return redirect(url_for('posts.new_post'))
 
         # Verifica se há conteúdo para postar
-        if not content and not post.image_url and not post.video_url:
+        if not content and not has_media and not post.image_url and not post.video_url:
             flash('O post deve ter texto, imagem ou vídeo.', 'danger')
+            db.session.rollback()
             return redirect(url_for('posts.new_post'))
-        
+
         db.session.add(post)
         # Gamificação: relato (post com pico) vale mais que post comum
         from gamification import award
         award(current_user, 'report' if post.spot_id else 'post')
         db.session.commit()
 
-        flash('Post criado com sucesso!', 'success')
+        # Enfileira o processamento da mídia agora que o post tem ID persistido.
+        if pending_job:
+            from media_jobs import enqueue_media
+            tmp_path, fname, is_image, is_video, is_reel_job = pending_job
+            enqueue_media(post.id, tmp_path, fname, is_image, is_video, is_reel_job)
+            flash('Post enviado! A mídia está sendo processada e aparecerá em instantes.', 'success')
+        else:
+            flash('Post criado com sucesso!', 'success')
         return redirect(url_for('main.index'))
 
     from models import Spot
@@ -182,6 +152,12 @@ def view_post(post_id):
         liked = like is not None
     
     return render_template('posts/view_post.html', post=post, comments=comments, liked=liked)
+
+@posts.route('/api/post/<int:post_id>/media-status')
+def media_status(post_id):
+    """Status do processamento de mídia de um post (para o front fazer polling)."""
+    post = Post.query.get_or_404(post_id)
+    return jsonify({'status': post.media_status or 'ready'})
 
 @posts.route('/post/<int:post_id>/delete', methods=['POST'])
 @login_required

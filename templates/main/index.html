@@ -324,5 +324,26 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     }
 });
+
+// Polling de mídia em processamento: quando os posts da fila ficam prontos,
+// recarrega o feed para exibir a imagem/vídeo já processado.
+(function () {
+    const pending = document.querySelectorAll('[data-processing-post]');
+    if (!pending.length) return;
+    const ids = [...pending].map(el => el.getAttribute('data-processing-post'));
+    const timer = setInterval(async () => {
+        for (const id of ids) {
+            try {
+                const r = await fetch(`/api/post/${id}/media-status`);
+                const d = await r.json();
+                if (d.status && d.status !== 'processing') {
+                    clearInterval(timer);
+                    location.reload();
+                    return;
+                }
+            } catch (e) { /* tenta de novo no próximo ciclo */ }
+        }
+    }, 5000);
+})();
 </script>
 {% endblock %}

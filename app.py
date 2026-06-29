@@ -379,6 +379,12 @@ def register_blueprints():
 
 register_blueprints()
 
+# ── API REST do app mobile (/api/v1) ─────────────────────────────────────────
+# Blueprint novo que convive com o site Jinja: mesmos models/DB/Cloudinary,
+# auth por JWT. Não altera nenhuma rota existente. Ver docs/MOBILE_APP_*.
+from routes.api import register_api
+register_api(app)
+
 if __name__ == '__main__':
     # Desenvolvimento local: cria o schema (SQLite) e semeia dados.
     if wait_for_db():

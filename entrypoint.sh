@@ -16,6 +16,19 @@ WORKERS="${GUNICORN_WORKERS:-$(( $(nproc) + 1 ))}"
 THREADS="${GUNICORN_THREADS:-4}"
 TIMEOUT="${GUNICORN_TIMEOUT:-300}"
 
+# Worker de processamento de mídia (RQ). Só sobe se houver Redis configurado;
+# sem REDIS_URL, os uploads são processados de forma síncrona (comportamento
+# antigo). Roda no mesmo container (compartilha o disco com a web, então lê os
+# arquivos temporários gravados pelo request). Reinicia sozinho se cair.
+if [ -n "$REDIS_URL" ]; then
+    echo "Iniciando worker de mídia (RQ)..."
+    ( while true; do
+        rq worker iamsurfer-media --url "$REDIS_URL" || true
+        echo "rq worker encerrou; reiniciando em 3s..."
+        sleep 3
+      done ) &
+fi
+
 echo "Iniciando a aplicação (workers=$WORKERS threads=$THREADS timeout=${TIMEOUT}s)..."
 exec gunicorn --bind 0.0.0.0:5000 \
     --worker-class gthread --workers "$WORKERS" --threads "$THREADS" \

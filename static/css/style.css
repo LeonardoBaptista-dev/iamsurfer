@@ -1702,6 +1702,25 @@ main h1.h2 {
     text-decoration: none;
 }
 
+/* ─── Placeholder de mídia em processamento (fila async) ─── */
+.post-media-processing {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    min-height: 180px;
+    background: var(--bg);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: .88rem;
+    font-weight: 600;
+}
+
+.post-media-processing.failed {
+    color: #b91c1c;
+}
+
 /* ─── Alerts ──────────────────────────────────────── */
 .alert {
     border: none;

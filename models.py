@@ -183,6 +183,9 @@ class Post(db.Model):
     image_urls = db.Column(db.JSON, nullable=True)  # Novas URLs múltiplas
     image_hash = db.Column(db.String(32), nullable=True)  # Hash para deduplicação
     video_url = db.Column(db.String(255), nullable=True)
+    # Estado do processamento da mídia: 'ready' (default) | 'processing' | 'failed'.
+    # Usado pela fila assíncrona; NULL em posts antigos é tratado como pronto.
+    media_status = db.Column(db.String(20), nullable=True, default='ready')
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, nullable=True, onupdate=datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
@@ -896,3 +899,47 @@ class SurfSession(db.Model):
 
     def __repr__(self):
         return f'<SurfSession {self.id} u{self.user_id} {self.spot_name}>'
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# API mobile (/api/v1) — modelos de suporte ao JWT e ao push.
+# Convivem com o site Jinja sem afetá-lo: o site continua usando Flask-Login.
+# ─────────────────────────────────────────────────────────────────────────────
+
+class TokenBlocklist(db.Model):
+    """Refresh tokens revogados (logout / rotação).
+
+    O JWT é stateless; para invalidar um refresh antes de expirar guardamos o
+    `jti` aqui. O access token (15 min) não é bloqueado — expira sozinho.
+    """
+    __tablename__ = 'token_blocklist'
+
+    id = db.Column(db.Integer, primary_key=True)
+    jti = db.Column(db.String(36), nullable=False, unique=True, index=True)
+    token_type = db.Column(db.String(16), nullable=False)  # 'access' | 'refresh'
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+
+    def __repr__(self):
+        return f'<TokenBlocklist {self.jti} {self.token_type}>'
+
+
+class DeviceToken(db.Model):
+    """Expo push token por device, para enviar notificações ao app.
+
+    Único por `token` (o mesmo aparelho não duplica). Um usuário pode ter vários
+    devices; um device pode trocar de dono (reatribuímos o user_id no upsert).
+    """
+    __tablename__ = 'device_token'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
+    token = db.Column(db.String(255), nullable=False, unique=True)
+    platform = db.Column(db.String(16), nullable=True)  # 'ios' | 'android'
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    user = db.relationship('User', backref=db.backref('device_tokens', lazy='dynamic', cascade='all, delete-orphan'))
+
+    def __repr__(self):
+        return f'<DeviceToken u{self.user_id} {self.platform}>'

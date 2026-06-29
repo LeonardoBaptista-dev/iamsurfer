@@ -39,6 +39,9 @@ def ensure_columns():
         'notification': [
             ('related_spot_id', 'INTEGER'),  # alertas de swell ligam ao pico
         ],
+        'post': [
+            ('media_status', 'VARCHAR(20)'),  # fila assíncrona de processamento de mídia
+        ],
     }
     with app.app_context():
         insp = db.inspect(db.engine)

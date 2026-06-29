@@ -43,6 +43,17 @@
             </div>
 
             <!-- Image / Video -->
+            {% if post.media_status == 'processing' %}
+            <div class="post-media-processing" data-processing-post="{{ post.id }}">
+                <div class="spinner-border spinner-border-sm" role="status"></div>
+                <span>Processando mídia…</span>
+            </div>
+            {% elif post.media_status == 'failed' %}
+            <div class="post-media-processing failed">
+                <i class="bi bi-exclamation-triangle"></i>
+                <span>Não foi possível processar a mídia.</span>
+            </div>
+            {% else %}
             {% if post.has_multiple_images %}
             <div style="line-height:0;overflow:hidden;">
                 {{ post.image_urls|responsive_img(post.content[:50], "post-image w-100") }}
@@ -67,6 +78,7 @@
                 <video src="{{ post.video_url|img_url }}" class="w-100" controls
                     style="max-height:480px;object-fit:cover;"></video>
                 {% endif %}
+            {% endif %}
             {% endif %}
 
             <!-- Actions -->
