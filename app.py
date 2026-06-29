@@ -382,8 +382,12 @@ register_blueprints()
 # ── API REST do app mobile (/api/v1) ─────────────────────────────────────────
 # Blueprint novo que convive com o site Jinja: mesmos models/DB/Cloudinary,
 # auth por JWT. Não altera nenhuma rota existente. Ver docs/MOBILE_APP_*.
-from routes.api import register_api
-register_api(app)
+# Isolada em try/except: um erro ao registrar a API NUNCA derruba o site.
+try:
+    from routes.api import register_api
+    register_api(app)
+except Exception as _api_err:
+    app.logger.error('Falha ao registrar a API mobile (/api/v1): %s', _api_err)
 
 if __name__ == '__main__':
     # Desenvolvimento local: cria o schema (SQLite) e semeia dados.
