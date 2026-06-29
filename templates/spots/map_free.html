@@ -213,6 +213,12 @@
         filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .35));
     }
 
+    /* No modo "adicionar pico", os marcadores existentes não capturam o toque,
+       deixando o clique sempre chegar ao mapa (mesmo perto de outros spots). */
+    #map.adding-spot .spot-board-marker {
+        pointer-events: none;
+    }
+
     .user-marker {
         background: #111827;
     }
@@ -738,9 +744,15 @@
         const btn = document.getElementById('spotConfirmBtn');
         if (btn) btn.disabled = false;
 
-        // Marcador temporário no ponto escolhido (ícone de prancha, sem arrastar)
+        // Marcador temporário no ponto escolhido (ícone de prancha, sem arrastar).
+        // interactive:false → o marcador não captura o toque, deixando o clique
+        // passar para o mapa e permitindo reescolher o ponto quantas vezes quiser.
         if (addModeMarker) map.removeLayer(addModeMarker);
-        addModeMarker = L.marker([lat, lng], { icon: createSpotIcon() }).addTo(map);
+        addModeMarker = L.marker([lat, lng], {
+            icon: createSpotIcon(),
+            interactive: false,
+            keyboard: false
+        }).addTo(map);
     }
 
     // Atualiza os campos de coordenadas (formulário + texto do painel)
@@ -802,17 +814,21 @@
 
         isAddMode = on;
         const instructions = document.getElementById('mapInstructions');
+        const mapEl = document.getElementById('map');
 
         if (on) {
             btn.classList.add('add-mode-active');
             btn.innerHTML = '<i class="bi bi-x-lg me-1"></i> Cancelar';
             if (instructions) instructions.style.display = 'block';
+            if (mapEl) mapEl.classList.add('adding-spot');
+            map.closePopup(); // fecha qualquer popup de spot aberto
             resetAddPanel();
             showAddPanel();
         } else {
             btn.classList.remove('add-mode-active');
             btn.innerHTML = '<i class="bi bi-geo-alt-fill me-1"></i> Adicionar pico';
             if (instructions) instructions.style.display = 'none';
+            if (mapEl) mapEl.classList.remove('adding-spot');
             hideAddPanel();
         }
     }
