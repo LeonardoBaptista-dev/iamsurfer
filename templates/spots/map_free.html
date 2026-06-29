@@ -597,6 +597,9 @@
     let markers = [];
     let isAddMode = false;
     let addModeMarker = null;
+    // Coordenadas do ponto escolhido (fonte da verdade — não depende do DOM do modal)
+    let pendingLat = null;
+    let pendingLng = null;
 
     // Configuração inicial do mapa
     const mapConfig = {
@@ -734,25 +737,16 @@
     }
 
     function setupMapEvents() {
-        // Loga TODO clique (mesmo fora do modo adicionar) para diagnóstico
         map.on('click', function (e) {
-            dbg(`click ok | zoom ${map.getZoom()} | addMode ${isAddMode}\n` +
-                `latlng ${e.latlng.lat.toFixed(4)}, ${e.latlng.lng.toFixed(4)}`);
             if (isAddMode) {
                 try {
                     handleMapClick(e);
-                    const b = document.getElementById('spotConfirmBtn');
-                    dbg(`handleMapClick OK | botao ${b ? (b.disabled ? 'DESABILITADO' : 'HABILITADO') : 'NAO ACHOU'}\n` +
-                        `zoom ${map.getZoom()} | ${e.latlng.lat.toFixed(4)}, ${e.latlng.lng.toFixed(4)}`);
                 } catch (err) {
-                    dbg('ERRO handleMapClick: ' + (err && err.message ? err.message : err));
+                    // Mostra na tela só se algo realmente quebrar
+                    dbg('ERRO ao marcar: ' + (err && err.message ? err.message : err));
                 }
             }
         });
-
-        // Diagnóstico de gestos de toque/zoom
-        map.on('zoomend', function () { dbg('zoomend | zoom ' + map.getZoom()); });
-        map.on('dragend', function () { dbg('dragend (arrastou o mapa)'); });
 
         // Atualiza contadores quando o mapa se move
         map.on('moveend', function () {
@@ -784,13 +778,18 @@
         }).addTo(map);
     }
 
-    // Atualiza os campos de coordenadas (formulário + texto do painel)
+    // Atualiza as coordenadas do ponto escolhido (variáveis + DOM, à prova de null)
     function setSpotCoords(lat, lng) {
+        pendingLat = lat;
+        pendingLng = lng;
         const label = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
-        document.getElementById('spotLat').value = lat.toFixed(6);
-        document.getElementById('spotLng').value = lng.toFixed(6);
-        document.getElementById('spotCoordsLabel').textContent = label;
+        const elLat = document.getElementById('spotLat');
+        const elLng = document.getElementById('spotLng');
+        const elLabel = document.getElementById('spotCoordsLabel');
         const txt = document.getElementById('spotConfirmText');
+        if (elLat) elLat.value = lat.toFixed(6);
+        if (elLng) elLng.value = lng.toFixed(6);
+        if (elLabel) elLabel.textContent = label;
         if (txt) txt.innerHTML = `Local marcado: <strong>${label}</strong>. Toque em outro ponto para corrigir.`;
     }
 
@@ -818,7 +817,9 @@
 
     // Confirma a localização → abre o formulário de cadastro
     function confirmSpotLocation() {
-        if (!addModeMarker) return;
+        if (pendingLat == null || pendingLng == null) return;
+        // Sincroniza os campos do modal a partir das variáveis (fonte da verdade)
+        if (pendingLat != null) setSpotCoords(pendingLat, pendingLng);
         const modal = new bootstrap.Modal(document.getElementById('addSpotModal'));
         modal.show();
         setAddMode(false); // mantém o marcador; só sai do modo de seleção
@@ -830,6 +831,8 @@
             map.removeLayer(addModeMarker);
             addModeMarker = null;
         }
+        pendingLat = null;
+        pendingLng = null;
         setAddMode(false);
     }
 
@@ -886,7 +889,7 @@
     function submitSpot(event) {
         event.preventDefault();
 
-        const val = id => (document.getElementById(id).value || '').trim();
+        const val = id => { const el = document.getElementById(id); return el ? (el.value || '').trim() : ''; };
         const num = id => { const v = val(id); return v ? parseFloat(v) : null; };
 
         // Estado: dropdown quando o país tem lista; senão campo de texto
@@ -900,8 +903,8 @@
             state: state,
             difficulty: val('spotDifficulty'),
             wave_type: val('spotWaveType'),
-            latitude: parseFloat(val('spotLat')),
-            longitude: parseFloat(val('spotLng')),
+            latitude: pendingLat,
+            longitude: pendingLng,
             // opcionais
             city: val('spotCity'),
             description: val('spotDescription'),
@@ -917,6 +920,12 @@
 
         if (!formData.name || !formData.country || !state) {
             alert('Preencha nome, país e estado/região.');
+            return;
+        }
+
+        if (formData.latitude == null || formData.longitude == null ||
+            isNaN(formData.latitude) || isNaN(formData.longitude)) {
+            alert('Selecione o local do pico no mapa antes de salvar.');
             return;
         }
 
@@ -936,6 +945,8 @@
                 if (data.success) {
                     bootstrap.Modal.getInstance(document.getElementById('addSpotModal')).hide();
                     if (addModeMarker) { map.removeLayer(addModeMarker); addModeMarker = null; }
+                    pendingLat = null;
+                    pendingLng = null;
                     document.getElementById('addSpotForm').reset();
                     onAddCountryChange();
                     alert('Pico enviado com sucesso! Ele será analisado pela nossa equipe antes de aparecer no mapa público.');
