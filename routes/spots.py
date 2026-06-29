@@ -221,21 +221,40 @@ def add_spot():
             # Verifica se é requisição JSON (modo rápido) ou HTML form (formulário completo)
             if request.is_json:
                 data = request.get_json()
+
+                def _num(key):
+                    v = data.get(key)
+                    try:
+                        return float(v) if v not in (None, '') else None
+                    except (TypeError, ValueError):
+                        return None
+
                 spot = Spot(
                     name=data['name'],
-                    description=data.get('description'),
+                    description=data.get('description') or None,
                     latitude=float(data['latitude']),
                     longitude=float(data['longitude']),
-                    difficulty=data.get('difficulty', 'Intermediário'),
-                    wave_type=data.get('wave_type', 'Beach Break'),
+                    address=data.get('address') or None,
+                    city=data.get('city') or None,
+                    state=data.get('state') or None,
+                    country=data.get('country') or 'Brasil',
+                    bottom_type=data.get('bottom_type') or None,
+                    wave_type=data.get('wave_type') or 'Beach Break',
+                    difficulty=data.get('difficulty') or 'Intermediário',
+                    crowd_level=data.get('crowd_level') or None,
+                    best_wind_direction=data.get('best_wind_direction') or None,
+                    best_swell_direction=data.get('best_swell_direction') or None,
+                    best_tide=data.get('best_tide') or None,
+                    min_swell_size=_num('min_swell_size'),
+                    max_swell_size=_num('max_swell_size'),
                     created_by=current_user.id,
                     status='pending',
                     is_active=True
                 )
-                
+
                 db.session.add(spot)
                 db.session.commit()
-                
+
                 return jsonify({
                     'success': True,
                     'message': 'Spot adicionado com sucesso! Aguardando aprovação.',

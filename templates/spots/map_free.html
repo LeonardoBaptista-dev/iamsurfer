@@ -236,14 +236,9 @@
                 <div class="card-header bg-white border-0 pt-3 px-4 pb-0 d-flex justify-content-between align-items-center flex-shrink-0">
                     <h5 class="mb-0 fw-bold" style="font-size: 1.25rem; color: var(--text-primary);"><i class="bi bi-map me-2" style="color:var(--text-primary);"></i>Mapa Interativo de Spots</h5>
                     {% if current_user.is_authenticated %}
-                    <div class="d-flex gap-2">
-                        <button class="btn btn-sm px-3 fw-bold rounded-pill" style="background: var(--brand-faint); color: var(--text-primary);" onclick="toggleAddMode()" id="addModeBtn">
-                            <i class="bi bi-geo-alt-fill me-1"></i> Adicionar
-                        </button>
-                        <a href="{{ url_for('spots.add_spot') }}" class="btn btn-primary btn-sm px-3 fw-bold rounded-pill shadow-sm">
-                            <i class="bi bi-plus-lg me-1"></i> Form
-                        </a>
-                    </div>
+                    <button class="btn btn-primary btn-sm px-3 fw-bold rounded-pill shadow-sm" onclick="toggleAddMode()" id="addModeBtn">
+                        <i class="bi bi-geo-alt-fill me-1"></i> Adicionar pico
+                    </button>
                     {% endif %}
                 </div>
                 <div class="card-body p-3 pt-2 d-flex flex-column flex-grow-1">
@@ -359,37 +354,61 @@
 
 </div>
 
-<!-- Modal para Adicionar Spot Rápido -->
-<div class="modal fade" id="quickAddModal" tabindex="-1">
-    <div class="modal-dialog">
+<!-- Modal único para Adicionar Pico (principais + opcionais) -->
+<div class="modal fade" id="addSpotModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
-            <form id="quickAddForm" onsubmit="submitQuickSpot(event)">
+            <form id="addSpotForm" onsubmit="submitSpot(event)">
                 <div class="modal-header">
-                    <h5 class="modal-title">Adicionar Spot Rápido</h5>
+                    <h5 class="modal-title fw-bold"><i class="bi bi-geo-alt-fill me-1 text-primary"></i> Adicionar pico</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label">Nome do Spot *</label>
-                        <input type="text" class="form-control" id="quickSpotName" required maxlength="100">
+                    <!-- Coordenadas (do clique no mapa) -->
+                    <div class="alert alert-light border d-flex align-items-center gap-2 py-2 mb-3" style="font-size:.82rem;">
+                        <i class="bi bi-pin-map-fill text-primary"></i>
+                        <span>Local marcado: <strong id="spotCoordsLabel">—</strong></span>
+                        <input type="hidden" id="spotLat">
+                        <input type="hidden" id="spotLng">
                     </div>
+
+                    <!-- ─── Principais (obrigatórios) ─── -->
                     <div class="mb-3">
-                        <label class="form-label">Descrição Breve</label>
-                        <textarea class="form-control" id="quickSpotDescription" rows="3" maxlength="500"></textarea>
+                        <label class="form-label fw-bold">Nome do pico <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="spotName" required maxlength="100"
+                            placeholder="Ex.: Praia da Cal">
                     </div>
-                    <div class="row">
-                        <div class="col-6">
-                            <label class="form-label">Dificuldade</label>
-                            <select class="form-select" id="quickSpotDifficulty">
+
+                    <div class="row g-2 mb-3">
+                        <div class="col-12 col-sm-6">
+                            <label class="form-label fw-bold">País <span class="text-danger">*</span></label>
+                            <select class="form-select" id="spotCountry" required onchange="onAddCountryChange()">
+                                <option value="">Selecione...</option>
+                            </select>
+                        </div>
+                        <div class="col-12 col-sm-6">
+                            <label class="form-label fw-bold">Estado/Região <span class="text-danger">*</span></label>
+                            <select class="form-select" id="spotState" required disabled>
+                                <option value="">Selecione o país primeiro</option>
+                            </select>
+                            <input type="text" class="form-control d-none" id="spotStateText" maxlength="100"
+                                placeholder="Estado/Região">
+                        </div>
+                    </div>
+
+                    <div class="row g-2 mb-3">
+                        <div class="col-12 col-sm-6">
+                            <label class="form-label fw-bold">Dificuldade <span class="text-danger">*</span></label>
+                            <select class="form-select" id="spotDifficulty" required>
                                 <option value="Iniciante">Iniciante</option>
                                 <option value="Intermediário" selected>Intermediário</option>
                                 <option value="Avançado">Avançado</option>
                                 <option value="Profissional">Profissional</option>
                             </select>
                         </div>
-                        <div class="col-6">
-                            <label class="form-label">Tipo de Onda</label>
-                            <select class="form-select" id="quickSpotWaveType">
+                        <div class="col-12 col-sm-6">
+                            <label class="form-label fw-bold">Tipo de onda <span class="text-danger">*</span></label>
+                            <select class="form-select" id="spotWaveType" required>
                                 <option value="Beach Break" selected>Beach Break</option>
                                 <option value="Point Break">Point Break</option>
                                 <option value="Reef Break">Reef Break</option>
@@ -397,30 +416,88 @@
                             </select>
                         </div>
                     </div>
-                    <div class="mt-3">
-                        <label class="form-label">Localização</label>
-                        <div class="row">
+
+                    <!-- ─── Opcionais (recolhível) ─── -->
+                    <button type="button" class="btn btn-link p-0 text-decoration-none fw-bold d-flex align-items-center gap-1 mb-2"
+                        data-bs-toggle="collapse" data-bs-target="#spotOptional" style="font-size:.9rem;">
+                        <i class="bi bi-chevron-down"></i> Informações opcionais
+                    </button>
+                    <div class="collapse" id="spotOptional">
+                        <div class="mb-3">
+                            <label class="form-label">Cidade</label>
+                            <input type="text" class="form-control" id="spotCity" maxlength="100">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Descrição</label>
+                            <textarea class="form-control" id="spotDescription" rows="2" maxlength="500"
+                                placeholder="Como é o pico, melhores condições, dicas..."></textarea>
+                        </div>
+                        <div class="row g-2 mb-3">
                             <div class="col-6">
-                                <input type="number" class="form-control" id="quickSpotLat" placeholder="Latitude"
-                                    step="any" readonly>
+                                <label class="form-label">Tipo de fundo</label>
+                                <select class="form-select" id="spotBottomType">
+                                    <option value="">—</option>
+                                    <option value="Areia">Areia</option>
+                                    <option value="Pedra">Pedra</option>
+                                    <option value="Coral">Coral</option>
+                                    <option value="Misto">Misto</option>
+                                </select>
                             </div>
                             <div class="col-6">
-                                <input type="number" class="form-control" id="quickSpotLng" placeholder="Longitude"
-                                    step="any" readonly>
+                                <label class="form-label">Crowd</label>
+                                <select class="form-select" id="spotCrowdLevel">
+                                    <option value="">—</option>
+                                    <option value="Baixo">Baixo</option>
+                                    <option value="Médio">Médio</option>
+                                    <option value="Alto">Alto</option>
+                                </select>
                             </div>
                         </div>
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <label class="form-label">Vento ideal</label>
+                                <input type="text" class="form-control" id="spotWind" maxlength="20" placeholder="Ex.: Terral / NE">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label">Swell ideal</label>
+                                <input type="text" class="form-control" id="spotSwell" maxlength="20" placeholder="Ex.: S / SE">
+                            </div>
+                        </div>
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <label class="form-label">Maré ideal</label>
+                                <select class="form-select" id="spotTide">
+                                    <option value="">—</option>
+                                    <option value="Baixa">Baixa</option>
+                                    <option value="Média">Média</option>
+                                    <option value="Alta">Alta</option>
+                                    <option value="Todas">Todas</option>
+                                </select>
+                            </div>
+                            <div class="col-3">
+                                <label class="form-label">Swell mín (m)</label>
+                                <input type="number" class="form-control" id="spotMinSwell" step="0.1" min="0">
+                            </div>
+                            <div class="col-3">
+                                <label class="form-label">Swell máx (m)</label>
+                                <input type="number" class="form-control" id="spotMaxSwell" step="0.1" min="0">
+                            </div>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label">Endereço / referência</label>
+                            <input type="text" class="form-control" id="spotAddress" maxlength="200">
+                        </div>
                     </div>
-                    <div class="mt-2">
-                        <small class="text-muted">
-                            <i class="fas fa-info-circle"></i>
-                            O spot será enviado para aprovação antes de aparecer no mapa público.
-                        </small>
-                    </div>
+
+                    <small class="text-muted d-block mt-2">
+                        <i class="bi bi-info-circle"></i>
+                        O pico será enviado para aprovação antes de aparecer no mapa público.
+                    </small>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-save"></i> Salvar Spot
+                    <button type="submit" class="btn btn-primary" id="addSpotSubmitBtn">
+                        <i class="bi bi-check-lg me-1"></i> Salvar pico
                     </button>
                 </div>
             </form>
@@ -567,77 +644,27 @@
         });
     }
 
-    // Manipula clique no mapa (modo adicionar)
+    // Manipula clique no mapa (modo adicionar) → abre o formulário único
     function handleMapClick(e) {
         if (!isAddMode) return;
 
-        const clickLat = e.latlng.lat;
-        const clickLng = e.latlng.lng;
+        const lat = e.latlng.lat;
+        const lng = e.latlng.lng;
 
-        // Remove marcador anterior se existir
-        if (addModeMarker) {
-            map.removeLayer(addModeMarker);
-        }
+        // Marcador temporário no ponto escolhido
+        if (addModeMarker) map.removeLayer(addModeMarker);
+        addModeMarker = L.marker([lat, lng]).addTo(map);
 
-        // Adiciona novo marcador temporário
-        // Criar modal personalizado com opções
-        const formattedLat = e.latlng.lat.toFixed(6);
-        const formattedLng = e.latlng.lng.toFixed(6);
+        // Preenche coordenadas no formulário
+        document.getElementById('spotLat').value = lat.toFixed(6);
+        document.getElementById('spotLng').value = lng.toFixed(6);
+        document.getElementById('spotCoordsLabel').textContent = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
 
-        const modalHTML = `
-            <div class="modal fade" id="addSpotOptionsModal" tabindex="-1">
-                <div class="modal-dialog">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title">Adicionar Spot Aqui</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                        </div>
-                        <div class="modal-body text-center">
-                            <div class="mb-3">
-                                <i class="fas fa-map-marker-alt fa-3x text-primary mb-3"></i>
-                                <p><strong>Localização selecionada:</strong></p>
-                                <p class="text-muted">Lat: ${formattedLat}, Lng: ${formattedLng}</p>
-                            </div>
-                            
-                            <div class="d-grid gap-2">
-                                <button type="button" class="btn btn-primary btn-lg" onclick="openFullForm('${formattedLat}', '${formattedLng}')">
-                                    <i class="fas fa-edit"></i> Formulário Completo
-                                    <small class="d-block">Todas as opções disponíveis</small>
-                                </button>
-                                
-                                <button type="button" class="btn btn-outline-primary" onclick="openQuickForm('${formattedLat}', '${formattedLng}')">
-                                    <i class="fas fa-bolt"></i> Cadastro Rápido
-                                    <small class="d-block">Apenas informações básicas</small>
-                                </button>
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-
-        // Remove modal anterior se existir
-        const existingModal = document.getElementById('addSpotOptionsModal');
-        if (existingModal) {
-            existingModal.remove();
-        }
-
-        // Adiciona o novo modal
-        document.body.insertAdjacentHTML('beforeend', modalHTML);
-
-        // Mostra o modal
-        const modal = new bootstrap.Modal(document.getElementById('addSpotOptionsModal'));
+        // Abre o modal único
+        const modal = new bootstrap.Modal(document.getElementById('addSpotModal'));
         modal.show();
 
-        // Remove o modal do DOM quando fechado
-        document.getElementById('addSpotOptionsModal').addEventListener('hidden.bs.modal', function () {
-            this.remove();
-        });
-
-        // Desativar modo de adição
+        // Sai do modo adicionar (já temos o ponto)
         toggleAddMode();
     }
 
@@ -651,15 +678,15 @@
         }
 
         isAddMode = !isAddMode;
-        const instructions = document.getElementById('addModeInstructions');
+        const instructions = document.getElementById('mapInstructions');
 
         if (isAddMode) {
             btn.classList.add('add-mode-active');
-            btn.innerHTML = '<i class="fas fa-times"></i> Cancelar Modo';
-            if (instructions) instructions.style.display = 'inline';
+            btn.innerHTML = '<i class="bi bi-x-lg me-1"></i> Cancelar';
+            if (instructions) instructions.style.display = 'block';
         } else {
             btn.classList.remove('add-mode-active');
-            btn.innerHTML = '<i class="fas fa-map-marker-alt"></i> Modo Adicionar';
+            btn.innerHTML = '<i class="bi bi-geo-alt-fill me-1"></i> Adicionar pico';
             if (instructions) instructions.style.display = 'none';
 
             // Remove marcador temporário
@@ -670,56 +697,135 @@
         }
     }
 
-    // Submete spot rápido
-    function submitQuickSpot(event) {
+    // Submete o pico (formulário único: principais + opcionais)
+    function submitSpot(event) {
         event.preventDefault();
 
+        const val = id => (document.getElementById(id).value || '').trim();
+        const num = id => { const v = val(id); return v ? parseFloat(v) : null; };
+
+        // Estado: dropdown quando o país tem lista; senão campo de texto
+        const stateSel = document.getElementById('spotState');
+        const stateTxt = document.getElementById('spotStateText');
+        const state = stateTxt.classList.contains('d-none') ? stateSel.value : stateTxt.value.trim();
+
         const formData = {
-            name: document.getElementById('quickSpotName').value,
-            description: document.getElementById('quickSpotDescription').value,
-            difficulty: document.getElementById('quickSpotDifficulty').value,
-            wave_type: document.getElementById('quickSpotWaveType').value,
-            latitude: parseFloat(document.getElementById('quickSpotLat').value),
-            longitude: parseFloat(document.getElementById('quickSpotLng').value)
+            name: val('spotName'),
+            country: val('spotCountry'),
+            state: state,
+            difficulty: val('spotDifficulty'),
+            wave_type: val('spotWaveType'),
+            latitude: parseFloat(val('spotLat')),
+            longitude: parseFloat(val('spotLng')),
+            // opcionais
+            city: val('spotCity'),
+            description: val('spotDescription'),
+            bottom_type: val('spotBottomType'),
+            crowd_level: val('spotCrowdLevel'),
+            best_wind_direction: val('spotWind'),
+            best_swell_direction: val('spotSwell'),
+            best_tide: val('spotTide'),
+            min_swell_size: num('spotMinSwell'),
+            max_swell_size: num('spotMaxSwell'),
+            address: val('spotAddress'),
         };
 
-        // Envia dados via AJAX
+        if (!formData.name || !formData.country || !state) {
+            alert('Preencha nome, país e estado/região.');
+            return;
+        }
+
+        const btn = document.getElementById('addSpotSubmitBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Salvando...';
+
         fetch('/spots/add', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(formData)
         })
             .then(response => response.json())
             .then(data => {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-check-lg me-1"></i> Salvar pico';
                 if (data.success) {
-                    // Sucesso
-                    bootstrap.Modal.getInstance(document.getElementById('quickAddModal')).hide();
-
-                    // Remove marcador temporário
-                    if (addModeMarker) {
-                        map.removeLayer(addModeMarker);
-                        addModeMarker = null;
-                    }
-
-                    // Desativa modo adicionar
-                    toggleAddMode();
-
-                    // Mostra mensagem de sucesso
-                    alert('Spot adicionado com sucesso! Ele será analisado por nossa equipe antes de aparecer no mapa público.');
-
-                    // Limpa formulário
-                    document.getElementById('quickAddForm').reset();
-
+                    bootstrap.Modal.getInstance(document.getElementById('addSpotModal')).hide();
+                    if (addModeMarker) { map.removeLayer(addModeMarker); addModeMarker = null; }
+                    document.getElementById('addSpotForm').reset();
+                    onAddCountryChange();
+                    alert('Pico enviado com sucesso! Ele será analisado pela nossa equipe antes de aparecer no mapa público.');
                 } else {
-                    alert('Erro ao adicionar spot: ' + (data.message || 'Erro desconhecido'));
+                    alert('Erro ao adicionar pico: ' + (data.message || 'Erro desconhecido'));
                 }
             })
             .catch(error => {
                 console.error('Erro:', error);
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-check-lg me-1"></i> Salvar pico';
                 alert('Erro de comunicação com o servidor');
             });
+    }
+
+    // ─── Cascata País → Estado/Região (padronizada) ───
+    const COUNTRY_STATES = {
+        'Brasil': ['Acre', 'Alagoas', 'Amapá', 'Amazonas', 'Bahia', 'Ceará', 'Distrito Federal',
+            'Espírito Santo', 'Goiás', 'Maranhão', 'Mato Grosso', 'Mato Grosso do Sul', 'Minas Gerais',
+            'Pará', 'Paraíba', 'Paraná', 'Pernambuco', 'Piauí', 'Rio de Janeiro', 'Rio Grande do Norte',
+            'Rio Grande do Sul', 'Rondônia', 'Roraima', 'Santa Catarina', 'São Paulo', 'Sergipe', 'Tocantins'],
+        'Portugal': ['Norte', 'Centro', 'Lisboa', 'Alentejo', 'Algarve', 'Açores', 'Madeira'],
+        'Espanha': ['País Basco', 'Cantábria', 'Astúrias', 'Galícia', 'Andaluzia', 'Catalunha',
+            'Comunidade Valenciana', 'Canárias'],
+        'França': ['Nova Aquitânia', 'Bretanha', 'Normandia', 'Occitânia', 'País do Loire'],
+        'Estados Unidos': ['Califórnia', 'Havaí', 'Flórida', 'Carolina do Norte', 'Texas',
+            'Nova Jersey', 'Nova York', 'Oregon', 'Carolina do Sul'],
+        'México': ['Baja California', 'Baja California Sur', 'Oaxaca', 'Jalisco', 'Guerrero', 'Nayarit'],
+        'Costa Rica': ['Guanacaste', 'Puntarenas', 'Limón'],
+        'Peru': ['Lima', 'La Libertad', 'Piura', 'Áncash', 'Arequipa'],
+        'Chile': ['Valparaíso', 'Coquimbo', 'Biobío', 'Araucanía', 'Los Lagos'],
+        'Austrália': ['Nova Gales do Sul', 'Queensland', 'Victoria', 'Austrália Ocidental',
+            'Austrália Meridional', 'Tasmânia'],
+        'Indonésia': ['Bali', 'Java', 'Sumatra', 'Lombok', 'Mentawai', 'Nusa Tenggara'],
+        'África do Sul': ['Cabo Ocidental', 'Cabo Oriental', 'KwaZulu-Natal'],
+        'Marrocos': ['Souss-Massa', 'Marraquexe-Safi', 'Casablanca-Settat'],
+        'Nova Zelândia': ['Ilha Norte', 'Ilha Sul'],
+        'Outro': [],
+    };
+
+    function initAddCountries() {
+        const sel = document.getElementById('spotCountry');
+        if (!sel) return;
+        sel.innerHTML = '<option value="">Selecione...</option>' +
+            Object.keys(COUNTRY_STATES).map(c => `<option value="${c}">${c}</option>`).join('');
+    }
+
+    function onAddCountryChange() {
+        const country = document.getElementById('spotCountry').value;
+        const stateSel = document.getElementById('spotState');
+        const stateTxt = document.getElementById('spotStateText');
+        const states = COUNTRY_STATES[country];
+
+        if (country && states && states.length) {
+            // País com lista → dropdown
+            stateTxt.classList.add('d-none');
+            stateTxt.value = '';
+            stateSel.classList.remove('d-none');
+            stateSel.disabled = false;
+            stateSel.innerHTML = '<option value="">Selecione...</option>' +
+                states.map(s => `<option value="${s}">${s}</option>`).join('');
+        } else if (country) {
+            // País sem lista (ex.: "Outro") → texto livre
+            stateSel.classList.add('d-none');
+            stateSel.disabled = true;
+            stateSel.innerHTML = '';
+            stateTxt.classList.remove('d-none');
+        } else {
+            // Nenhum país escolhido
+            stateSel.classList.remove('d-none');
+            stateSel.disabled = true;
+            stateSel.innerHTML = '<option value="">Selecione o país primeiro</option>';
+            stateTxt.classList.add('d-none');
+            stateTxt.value = '';
+        }
     }
 
     // Navegação rápida
@@ -1065,34 +1171,11 @@
     }
 
     // Função para abrir formulário completo
-    function openFullForm(lat, lng) {
-        const url = `{{ url_for('spots.add_spot') }}?lat=${lat}&lng=${lng}`;
-        window.open(url, '_blank');
-
-        // Fechar modal
-        const modal = bootstrap.Modal.getInstance(document.getElementById('addSpotOptionsModal'));
-        modal.hide();
-    }
-
-    // Função para abrir formulário rápido (modal atual)
-    function openQuickForm(lat, lng) {
-        // Fechar modal de opções
-        const optionsModal = bootstrap.Modal.getInstance(document.getElementById('addSpotOptionsModal'));
-        optionsModal.hide();
-
-        // Preencher coordenadas no modal rápido
-        document.getElementById('quickSpotLat').value = lat;
-        document.getElementById('quickSpotLng').value = lng;
-
-        // Abrir modal rápido
-        const quickModal = new bootstrap.Modal(document.getElementById('quickAddModal'));
-        quickModal.show();
-    }
-
     // Inicialização
     document.addEventListener('DOMContentLoaded', function () {
         loadSpotsData();
         initLocationFilters();
+        initAddCountries();
         initMap();
     });
 </script>
