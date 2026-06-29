@@ -257,29 +257,20 @@
         box-shadow: 0 4px 12px rgba(17, 24, 39, .25);
     }
 
-    /* Barra flutuante de confirmação do local do pico */
+    /* Painel de confirmação fixo logo abaixo do mapa */
     #spotConfirmBar {
-        position: fixed;
-        left: 50%;
-        transform: translateX(-50%);
-        bottom: 24px;
-        z-index: 1200;
-        width: min(92vw, 440px);
         background: #fff;
         border: 1px solid var(--border);
-        border-radius: 18px;
-        box-shadow: 0 14px 38px rgba(17, 24, 39, .20);
-        padding: 16px;
+        border-radius: 14px;
+        box-shadow: 0 6px 18px rgba(17, 24, 39, .10);
+        padding: 14px 16px;
+        margin-top: 12px;
         display: none;
         animation: confirmUp .25s ease;
     }
     @keyframes confirmUp {
-        from { opacity: 0; transform: translate(-50%, 12px); }
-        to   { opacity: 1; transform: translate(-50%, 0); }
-    }
-    /* No mobile, sobe acima da tabbar fixa (58px) */
-    @media (max-width: 991px) {
-        #spotConfirmBar { bottom: calc(58px + 14px); }
+        from { opacity: 0; transform: translateY(8px); }
+        to   { opacity: 1; transform: translateY(0); }
     }
 </style>
 {% endblock %}
@@ -313,6 +304,29 @@
                         <p class="mb-0 ms-2 d-inline" style="font-size: 0.85rem;">Carregando mapa...</p>
                     </div>
                     <div id="map" class="flex-grow-1" style="min-height: 200px; border-radius: 12px; border: 1px solid var(--border);"></div>
+
+                    {% if current_user.is_authenticated %}
+                    <!-- Painel fixo abaixo do mapa: confirma o local e abre o cadastro -->
+                    <div id="spotConfirmBar" class="flex-shrink-0">
+                        <div class="d-flex align-items-center gap-2 mb-3">
+                            <i class="bi bi-pin-map-fill text-primary fs-4"></i>
+                            <div>
+                                <div class="fw-bold" style="font-size:.95rem; color:var(--text-primary);">Tem certeza que o spot é aqui?</div>
+                                <div class="text-muted" id="spotConfirmText" style="font-size:.78rem;">
+                                    Clique no mapa para marcar o local do pico.
+                                </div>
+                            </div>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-outline-secondary fw-bold rounded-pill flex-fill" onclick="cancelSpotLocation()">
+                                Cancelar
+                            </button>
+                            <button type="button" class="btn btn-primary fw-bold rounded-pill flex-fill" id="spotConfirmBtn" onclick="confirmSpotLocation()" disabled>
+                                <i class="bi bi-check-lg me-1"></i> Sim, cadastrar pico
+                            </button>
+                        </div>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -409,27 +423,6 @@
             </div>
 
 
-</div>
-
-<!-- Barra flutuante: confirma o local escolhido e abre o cadastro -->
-<div id="spotConfirmBar">
-    <div class="d-flex align-items-center gap-2 mb-3">
-        <i class="bi bi-pin-map-fill text-primary fs-4"></i>
-        <div>
-            <div class="fw-bold" style="font-size:.95rem; color:var(--text-primary);">Essa é a localização do pico?</div>
-            <div class="text-muted" style="font-size:.78rem;">
-                <span id="spotConfirmCoords">—</span> · arraste o marcador para ajustar
-            </div>
-        </div>
-    </div>
-    <div class="d-flex gap-2">
-        <button type="button" class="btn btn-outline-secondary fw-bold rounded-pill flex-fill" onclick="cancelSpotLocation()">
-            Cancelar
-        </button>
-        <button type="button" class="btn btn-primary fw-bold rounded-pill flex-fill" onclick="confirmSpotLocation()">
-            <i class="bi bi-check-lg me-1"></i> Cadastrar pico aqui
-        </button>
-    </div>
 </div>
 
 <!-- Modal único para Adicionar Pico (principais + opcionais) -->
@@ -732,7 +725,7 @@
         });
     }
 
-    // Manipula clique no mapa (modo adicionar) → marca o ponto e mostra a barra de confirmação
+    // Manipula clique no mapa (modo adicionar) → marca o ponto e habilita a confirmação
     function handleMapClick(e) {
         if (!isAddMode) return;
 
@@ -753,47 +746,58 @@
             setSpotCoords(p.lat, p.lng);
         });
 
-        // Sai do modo adicionar (mantendo o marcador) e mostra a barra de confirmação
-        setAddMode(false);
-        showConfirmBar();
+        // Habilita o botão de confirmar no painel abaixo do mapa
+        const btn = document.getElementById('spotConfirmBtn');
+        if (btn) btn.disabled = false;
     }
 
-    // Atualiza os campos de coordenadas (formulário + barra de confirmação)
+    // Atualiza os campos de coordenadas (formulário + texto do painel)
     function setSpotCoords(lat, lng) {
         const label = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
         document.getElementById('spotLat').value = lat.toFixed(6);
         document.getElementById('spotLng').value = lng.toFixed(6);
         document.getElementById('spotCoordsLabel').textContent = label;
-        const cc = document.getElementById('spotConfirmCoords');
-        if (cc) cc.textContent = label;
+        const txt = document.getElementById('spotConfirmText');
+        if (txt) txt.innerHTML = `Local marcado: <strong>${label}</strong> · arraste o marcador para ajustar.`;
     }
 
-    function showConfirmBar() {
-        document.getElementById('spotConfirmBar').style.display = 'block';
+    // Controle do painel de confirmação (abaixo do mapa)
+    function showAddPanel() {
+        const bar = document.getElementById('spotConfirmBar');
+        if (bar) bar.style.display = 'block';
     }
 
-    function hideConfirmBar() {
-        document.getElementById('spotConfirmBar').style.display = 'none';
+    function hideAddPanel() {
+        const bar = document.getElementById('spotConfirmBar');
+        if (bar) bar.style.display = 'none';
+    }
+
+    // Volta o painel ao estado inicial (sem ponto escolhido)
+    function resetAddPanel() {
+        const txt = document.getElementById('spotConfirmText');
+        const btn = document.getElementById('spotConfirmBtn');
+        if (txt) txt.textContent = 'Clique no mapa para marcar o local do pico.';
+        if (btn) btn.disabled = true;
     }
 
     // Confirma a localização → abre o formulário de cadastro
     function confirmSpotLocation() {
-        hideConfirmBar();
+        if (!addModeMarker) return;
         const modal = new bootstrap.Modal(document.getElementById('addSpotModal'));
         modal.show();
+        setAddMode(false); // mantém o marcador; só sai do modo de seleção
     }
 
-    // Recusa a localização → remove o marcador e volta ao modo adicionar
+    // Cancela: remove o marcador e sai do modo adicionar
     function cancelSpotLocation() {
-        hideConfirmBar();
         if (addModeMarker) {
             map.removeLayer(addModeMarker);
             addModeMarker = null;
         }
-        setAddMode(true); // volta ao modo adicionar para escolher outro ponto
+        setAddMode(false);
     }
 
-    // Define o estado do modo adicionar (botão + instruções). NÃO mexe no marcador.
+    // Define o estado do modo adicionar (botão + instruções + painel). NÃO mexe no marcador.
     function setAddMode(on) {
         const btn = document.getElementById('addModeBtn');
         if (!btn) {
@@ -808,14 +812,17 @@
             btn.classList.add('add-mode-active');
             btn.innerHTML = '<i class="bi bi-x-lg me-1"></i> Cancelar';
             if (instructions) instructions.style.display = 'block';
+            resetAddPanel();
+            showAddPanel();
         } else {
             btn.classList.remove('add-mode-active');
             btn.innerHTML = '<i class="bi bi-geo-alt-fill me-1"></i> Adicionar pico';
             if (instructions) instructions.style.display = 'none';
+            hideAddPanel();
         }
     }
 
-    // Botão do cabeçalho: alterna o modo e limpa marcador/barra pendentes ao cancelar
+    // Botão do cabeçalho: liga/desliga o modo adicionar
     function toggleAddMode() {
         const btn = document.getElementById('addModeBtn');
         if (!btn) {
@@ -824,14 +831,15 @@
         }
 
         if (isAddMode) {
-            // Cancelando: descarta ponto pendente
-            hideConfirmBar();
+            // Cancelando pelo botão do cabeçalho: descarta ponto pendente
             if (addModeMarker) {
                 map.removeLayer(addModeMarker);
                 addModeMarker = null;
             }
+            setAddMode(false);
+        } else {
+            setAddMode(true);
         }
-        setAddMode(!isAddMode);
     }
 
     // Submete o pico (formulário único: principais + opcionais)
