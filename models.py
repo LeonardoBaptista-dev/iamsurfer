@@ -489,14 +489,16 @@ class Spot(db.Model):
     bottom_type = db.Column(db.String(50))  # pedra, areia, coral, etc.
     wave_type = db.Column(db.String(50))    # point break, beach break, reef break
     difficulty = db.Column(db.String(20))   # iniciante, intermediário, avançado
-    crowd_level = db.Column(db.String(20))  # baixo, médio, alto
-    
+    crowd_level = db.Column(db.String(60))  # vazio, tranquilo, moderado, cheio, cheio nos fins de semana
+
     # Condições ideais
     best_wind_direction = db.Column(db.String(20))
     best_swell_direction = db.Column(db.String(20))
-    best_tide = db.Column(db.String(20))    # baixa, média, alta, todas
+    best_tide = db.Column(db.String(120))   # uma ou mais: cheia, seca, enchendo, secando, meia maré
     min_swell_size = db.Column(db.Float)
     max_swell_size = db.Column(db.Float)
+    best_season = db.Column(db.String(120))  # melhor época: verão, outono, inverno, primavera
+    water_temp = db.Column(db.String(40))    # quente o ano todo, quente só no verão, morna, fria, fria só no inverno
     
     # Status e moderação
     status = db.Column(db.String(20), default='pending')  # pending, approved, rejected

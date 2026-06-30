@@ -142,9 +142,9 @@
             {% include 'main/story_bar.html' %}
         {% endif %}
 
-        <!-- Suggested Surfers carousel (mobile only — sidebar covers desktop) -->
+        <!-- Suggested Surfers carousel (rolagem horizontal — todas as larguras) -->
         {% if current_user.is_authenticated and suggested_users %}
-        <div class="suggest-carousel d-lg-none">
+        <div class="suggest-carousel">
             <div class="suggest-carousel-head">
                 <h6>Surfistas para seguir</h6>
                 <a href="{{ url_for('main.explore') }}">Ver mais</a>
@@ -216,32 +216,6 @@
 
     <!-- ── Right Sidebar ───────────────────────────────── -->
     <div class="col-lg-3 d-none d-lg-block">
-
-        <!-- Suggested Surfers -->
-        {% if suggested_users %}
-        <div class="sidebar-card mb-3">
-            <h6>Surfistas Sugeridos</h6>
-            {% for user in suggested_users[:6] %}
-            <div class="suggest-item">
-                <img src="{{ user.profile_image_urls|profile_thumbnail_url if user.profile_image_urls else user.profile_image|img_url }}"
-                    class="suggest-avatar" alt="{{ user.username }}">
-                <div class="flex-grow-1 min-w-0">
-                    <a href="{{ url_for('main.user_profile', username=user.username) }}"
-                        class="suggest-name text-decoration-none d-block text-truncate">{{ user.username }}</a>
-                    <span class="suggest-meta">{{ user.location or 'Brasil' }}</span>
-                </div>
-                {% if current_user.is_authenticated %}
-                <a href="{{ url_for('main.follow', username=user.username) }}"
-                    class="suggest-follow text-decoration-none">Seguir</a>
-                {% endif %}
-            </div>
-            {% endfor %}
-            <div class="mt-2">
-                <a href="{{ url_for('main.explore') }}"
-                    style="font-size:.8rem;color:var(--text-secondary);font-weight:600;">Ver mais</a>
-            </div>
-        </div>
-        {% endif %}
 
         <!-- Spot Map CTA -->
         <div class="sidebar-card mb-3" style="background:var(--surface);border:1px solid var(--border);color:var(--text-primary);">

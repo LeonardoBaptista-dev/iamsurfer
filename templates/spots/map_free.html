@@ -593,6 +593,28 @@
                                 {% endfor %}
                             </div>
                         </div>
+                        <div class="mb-3">
+                            <label class="form-label d-block">Melhor época do ano <span class="text-muted fw-normal" style="font-size:.78rem;">(pode marcar mais de uma)</span></label>
+                            <div class="d-flex flex-wrap gap-3">
+                                {% for s in ['Verão', 'Outono', 'Inverno', 'Primavera'] %}
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="spotSeason" value="{{ s }}" id="season-{{ loop.index }}">
+                                    <label class="form-check-label" for="season-{{ loop.index }}">{{ s }}</label>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Temperatura da água</label>
+                            <select class="form-select" id="spotWaterTemp">
+                                <option value="">—</option>
+                                <option value="Quente o ano todo">Quente o ano todo</option>
+                                <option value="Quente só no verão">Quente só no verão</option>
+                                <option value="Morna">Morna</option>
+                                <option value="Fria">Fria</option>
+                                <option value="Fria só no inverno">Fria só no inverno</option>
+                            </select>
+                        </div>
                         <div class="row g-2 mb-3">
                             <div class="col-6">
                                 <label class="form-label">Swell mín (m)</label>
@@ -961,6 +983,8 @@
             best_wind_direction: val('spotWind'),
             best_swell_direction: val('spotSwell'),
             best_tide: Array.from(document.querySelectorAll('input[name="spotTide"]:checked')).map(c => c.value).join(', '),
+            best_season: Array.from(document.querySelectorAll('input[name="spotSeason"]:checked')).map(c => c.value).join(', '),
+            water_temp: val('spotWaterTemp'),
             min_swell_size: num('spotMinSwell'),
             max_swell_size: num('spotMaxSwell'),
             address: val('spotAddress'),
@@ -1209,16 +1233,21 @@
     });
 
     // UF -> região (Brasil), para o filtro por região
-    const UF_REGION = {
-        AC: 'Norte', AP: 'Norte', AM: 'Norte', PA: 'Norte', RO: 'Norte', RR: 'Norte', TO: 'Norte',
-        AL: 'Nordeste', BA: 'Nordeste', CE: 'Nordeste', MA: 'Nordeste', PB: 'Nordeste',
-        PE: 'Nordeste', PI: 'Nordeste', RN: 'Nordeste', SE: 'Nordeste',
-        DF: 'Centro-Oeste', GO: 'Centro-Oeste', MT: 'Centro-Oeste', MS: 'Centro-Oeste',
-        ES: 'Sudeste', MG: 'Sudeste', RJ: 'Sudeste', SP: 'Sudeste',
-        PR: 'Sul', RS: 'Sul', SC: 'Sul'
+    // Os estados chegam padronizados (nome completo) do servidor — mapa por nome
+    const STATE_REGION = {
+        'Acre': 'Norte', 'Amapá': 'Norte', 'Amazonas': 'Norte', 'Pará': 'Norte',
+        'Rondônia': 'Norte', 'Roraima': 'Norte', 'Tocantins': 'Norte',
+        'Alagoas': 'Nordeste', 'Bahia': 'Nordeste', 'Ceará': 'Nordeste',
+        'Maranhão': 'Nordeste', 'Paraíba': 'Nordeste', 'Pernambuco': 'Nordeste',
+        'Piauí': 'Nordeste', 'Rio Grande do Norte': 'Nordeste', 'Sergipe': 'Nordeste',
+        'Distrito Federal': 'Centro-Oeste', 'Goiás': 'Centro-Oeste',
+        'Mato Grosso': 'Centro-Oeste', 'Mato Grosso do Sul': 'Centro-Oeste',
+        'Espírito Santo': 'Sudeste', 'Minas Gerais': 'Sudeste',
+        'Rio de Janeiro': 'Sudeste', 'São Paulo': 'Sudeste',
+        'Paraná': 'Sul', 'Rio Grande do Sul': 'Sul', 'Santa Catarina': 'Sul'
     };
     const REGION_ORDER = ['Norte', 'Nordeste', 'Centro-Oeste', 'Sudeste', 'Sul'];
-    function regionOf(uf) { return UF_REGION[(uf || '').toUpperCase()] || ''; }
+    function regionOf(state) { return STATE_REGION[(state || '').trim()] || ''; }
 
     // Filtros Geográficos e Ordenação
     function initLocationFilters() {

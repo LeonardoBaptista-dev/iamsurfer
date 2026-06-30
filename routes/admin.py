@@ -249,7 +249,8 @@ def spots():
 
 # Campos que uma contribuição pode alterar no pico (whitelist de segurança)
 ALLOWED_CONTRIB_FIELDS = {'wave_type', 'bottom_type', 'difficulty', 'crowd_level',
-                          'best_wind_direction', 'best_swell_direction', 'best_tide', 'description'}
+                          'best_wind_direction', 'best_swell_direction', 'best_tide',
+                          'best_season', 'water_temp', 'description'}
 
 
 @admin.route('/contributions')

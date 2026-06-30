@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request,
 from flask_login import login_required, current_user
 from models import State, City, SurfSpot, Photographer, SpotPhoto, Spot, SpotPhotoNew, PhotoSession, SessionPhoto, PhotoPurchase, SpotReport, Business, Coupon, SpotFollow, Notification, SpotContribution
 from extensions import db
+from br_states import normalize_state
 from werkzeug.utils import secure_filename
 import os
 import json
@@ -76,7 +77,7 @@ def spots_map():
             'id': spot.id,
             'name': spot.name,
             'city': spot.city or '',
-            'state': spot.state or '',
+            'state': normalize_state(spot.state) or '',
             'country': spot.country or 'Brasil',
             'last_interaction': last_interaction,
             'lat': spot.latitude,
@@ -236,7 +237,7 @@ def add_spot():
                     longitude=float(data['longitude']),
                     address=data.get('address') or None,
                     city=data.get('city') or None,
-                    state=data.get('state') or None,
+                    state=normalize_state(data.get('state')) or None,
                     country=data.get('country') or 'Brasil',
                     bottom_type=data.get('bottom_type') or None,
                     wave_type=data.get('wave_type') or 'Beach Break',
@@ -245,6 +246,8 @@ def add_spot():
                     best_wind_direction=data.get('best_wind_direction') or None,
                     best_swell_direction=data.get('best_swell_direction') or None,
                     best_tide=data.get('best_tide') or None,
+                    best_season=data.get('best_season') or None,
+                    water_temp=data.get('water_temp') or None,
                     min_swell_size=_num('min_swell_size'),
                     max_swell_size=_num('max_swell_size'),
                     created_by=current_user.id,
@@ -274,7 +277,7 @@ def add_spot():
                     longitude=float(request.form['longitude']),
                     address=request.form.get('address'),
                     city=request.form.get('city'),
-                    state=request.form.get('state'),
+                    state=normalize_state(request.form.get('state')),
                     country=request.form.get('country', 'Brasil'),
                     bottom_type=request.form.get('bottom_type'),
                     wave_type=request.form.get('wave_type'),
@@ -283,6 +286,8 @@ def add_spot():
                     best_wind_direction=request.form.get('best_wind_direction'),
                     best_swell_direction=request.form.get('best_swell_direction'),
                     best_tide=', '.join(request.form.getlist('best_tide')) or None,
+                    best_season=', '.join(request.form.getlist('best_season')) or None,
+                    water_temp=request.form.get('water_temp') or None,
                     min_swell_size=float(request.form['min_swell_size']) if request.form.get('min_swell_size') else None,
                     max_swell_size=float(request.form['max_swell_size']) if request.form.get('max_swell_size') else None,
                     created_by=current_user.id,
@@ -345,7 +350,8 @@ def new_spot_detail(spot_id):
 
 # Campos que um usuário comum pode sugerir para um pico (whitelist)
 CONTRIB_FIELDS = ['wave_type', 'bottom_type', 'difficulty', 'crowd_level',
-                  'best_wind_direction', 'best_swell_direction', 'best_tide', 'description']
+                  'best_wind_direction', 'best_swell_direction', 'best_tide',
+                  'best_season', 'water_temp', 'description']
 
 
 @spots.route('/spots/<int:spot_id>/contribute', methods=['POST'])
@@ -355,13 +361,14 @@ def contribute_spot(spot_id):
     (status pending) e só é aplicado ao pico quando um admin aprovar."""
     spot = Spot.query.get_or_404(spot_id)
     data = {}
+    multi_fields = ('best_tide', 'best_season')
     for f in CONTRIB_FIELDS:
-        if f == 'best_tide':
-            v = ', '.join(request.form.getlist('best_tide')).strip()
+        if f in multi_fields:
+            v = ', '.join(request.form.getlist(f)).strip()
         else:
             v = (request.form.get(f) or '').strip()
         if v:
-            data[f] = v[:600] if f == 'description' else v[:60]
+            data[f] = v[:600] if f == 'description' else v[:120]
     if not data:
         flash('Selecione ou preencha ao menos um campo para sugerir.', 'danger')
         return redirect(url_for('spots.new_spot_detail', spot_id=spot.id))

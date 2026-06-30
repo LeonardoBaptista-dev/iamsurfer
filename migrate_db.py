@@ -42,6 +42,18 @@ def ensure_columns():
         'post': [
             ('media_status', 'VARCHAR(20)'),  # fila assíncrona de processamento de mídia
         ],
+        'spot': [
+            ('best_season', 'VARCHAR(120)'),  # melhor época do ano
+            ('water_temp', 'VARCHAR(40)'),    # temperatura média da água
+        ],
+    }
+    # Colunas que precisaram ser alargadas (seleção múltipla / textos maiores).
+    # ALTER COLUMN TYPE só é necessário no PostgreSQL; o SQLite ignora tamanho.
+    widen = {
+        'spot': [
+            ('best_tide', 'VARCHAR(120)'),    # uma ou mais marés
+            ('crowd_level', 'VARCHAR(60)'),   # "Cheio nos fins de semana"
+        ],
     }
     with app.app_context():
         insp = db.inspect(db.engine)
@@ -54,6 +66,13 @@ def ensure_columns():
                 if name not in have:
                     print(f"  + {table}.{name}")
                     db.session.execute(text(f'ALTER TABLE {table} ADD COLUMN {name} {ddl}'))
+        if db.engine.dialect.name == 'postgresql':
+            for table, cols in widen.items():
+                if table not in tables:
+                    continue
+                for name, ddl in cols:
+                    print(f"  ~ {table}.{name} -> {ddl}")
+                    db.session.execute(text(f'ALTER TABLE {table} ALTER COLUMN {name} TYPE {ddl}'))
         db.session.commit()
 
 
