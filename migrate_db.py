@@ -76,6 +76,26 @@ def ensure_columns():
         db.session.commit()
 
 
+def normalize_existing_states():
+    """Padroniza o estado dos picos já cadastrados (PR/Parana -> Paraná, etc.).
+
+    Idempotente: só atualiza picos cujo estado muda, então pode rodar a cada
+    deploy sem efeito após a primeira passada."""
+    from models import Spot
+    from br_states import normalize_state
+    with app.app_context():
+        changed = 0
+        for s in Spot.query.all():
+            if s.state:
+                canon = normalize_state(s.state)
+                if canon != s.state:
+                    s.state = canon
+                    changed += 1
+        if changed:
+            db.session.commit()
+        print(f"  Estados normalizados: {changed} pico(s) atualizado(s).")
+
+
 def main():
     if not wait_for_db():
         print("Banco de dados indisponível. Abortando.", file=sys.stderr)
@@ -103,6 +123,10 @@ def main():
     # Garante colunas novas em tabelas pré-existentes (ex.: coordenadas de carona)
     print("Verificando colunas novas...")
     ensure_columns()
+
+    # Padroniza estados dos picos antigos (PR -> Paraná, etc.)
+    print("Padronizando estados dos picos...")
+    normalize_existing_states()
 
     print("Inicialização concluída.")
 
