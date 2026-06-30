@@ -74,7 +74,7 @@
                                             <small class="text-muted">{{ user.email }}</small>
                                         </div>
                                     </div>
-                                    <span class="badge bg-primary rounded-pill">{{ user.joined_at.strftime('%d/%m/%Y')
+                                    <span class="badge bg-primary rounded-pill">{{ user.joined_at|localdt('%d/%m/%Y')
                                         }}</span>
                                 </li>
                                 {% endfor %}
@@ -102,13 +102,13 @@
                                                 class="rounded-circle me-3" width="40" height="40">
                                             <div>
                                                 <h6 class="mb-0">{{ post.author.username }}</h6>
-                                                <small class="text-muted">{{ post.created_at.strftime('%d/%m/%Y %H:%M')
+                                                <small class="text-muted">{{ post.created_at|localdt('%d/%m/%Y %H:%M')
                                                     }}</small>
                                             </div>
                                         </div>
                                         <div class="text-end">
                                             <span class="badge bg-primary rounded-pill">{{
-                                                post.created_at.strftime('%d/%m/%Y') }}</span>
+                                                post.created_at|localdt('%d/%m/%Y') }}</span>
                                             <a href="{{ url_for('posts.view_post', post_id=post.id) }}"
                                                 class="btn btn-sm btn-outline-primary ms-2">Ver</a>
                                         </div>

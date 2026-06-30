@@ -96,6 +96,44 @@ def nl2br(value):
         return Markup(str(escape(value)).replace('\n', '<br>'))
     return value
 
+# ── Fuso horário de exibição ─────────────────────────────────────────
+# Os timestamps são gravados em UTC (datetime.utcnow()). A aplicação é
+# usada no Brasil (Curitiba = UTC-3, sem horário de verão desde 2019),
+# então exibimos sempre em horário de Brasília via o filtro `localdt`.
+BRT_OFFSET = timedelta(hours=-3)
+
+@app.template_filter('localdt')
+def localdt(value, fmt='%d/%m/%Y %H:%M'):
+    """Converte um datetime UTC para horário de Brasília e formata.
+
+    Use apenas em timestamps gerados pelo servidor (created_at, timestamp,
+    approved_at...). Não use em datas escolhidas pelo usuário (saída de
+    carona, data da sessão), que já são gravadas no horário local."""
+    if not value:
+        return ''
+    try:
+        return (value + BRT_OFFSET).strftime(fmt)
+    except Exception:
+        return value
+
+# ── Direções de vento/swell em português ─────────────────────────────
+# Converte abreviações em inglês (e nomes por extenso) para o padrão PT:
+# W→O (Oeste), SW→SO (Sudoeste), NW→NO (Noroeste), etc.
+_DIR_PT = {
+    'N': 'N', 'NNE': 'NNE', 'NE': 'NE', 'ENE': 'ENE', 'E': 'E', 'ESE': 'ESE',
+    'SE': 'SE', 'SSE': 'SSE', 'S': 'S', 'SSW': 'SSO', 'SW': 'SO', 'WSW': 'OSO',
+    'W': 'O', 'WNW': 'ONO', 'NW': 'NO', 'NNW': 'NNO',
+    'NORTH': 'N', 'SOUTH': 'S', 'EAST': 'E', 'WEST': 'O',
+    'NORTHEAST': 'NE', 'NORTHWEST': 'NO', 'SOUTHEAST': 'SE', 'SOUTHWEST': 'SO',
+}
+
+@app.template_filter('dir_pt')
+def dir_pt(value):
+    """Exibe a direção (vento/swell) em português. Mantém valores já em PT."""
+    if not value:
+        return value
+    return _DIR_PT.get(str(value).strip().upper(), value)
+
 # Filtro para processar URLs de imagem
 @app.template_filter('img_url')
 def img_url(path):

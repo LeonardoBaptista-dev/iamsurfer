@@ -26,7 +26,7 @@
 
             <div class="flex-grow-1 min-w-0">
                 <p class="mb-0" style="font-size:.88rem;{% if not notification.read %}font-weight:600;{% endif %}">{{ notification.content }}</p>
-                <span class="dm-time">{{ notification.created_at.strftime('%d/%m/%Y %H:%M') }}</span>
+                <span class="dm-time">{{ notification.created_at|localdt('%d/%m/%Y %H:%M') }}</span>
             </div>
 
             {% if notification.type == 'follow' and notification.related_user %}

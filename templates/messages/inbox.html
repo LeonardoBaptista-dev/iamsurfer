@@ -30,7 +30,7 @@
                 </div>
             </div>
             {% if unread %}<span class="dm-dot"></span>{% endif %}
-            <span class="dm-time">{{ message.timestamp.strftime('%d/%m') }}</span>
+            <span class="dm-time">{{ message.timestamp|localdt('%d/%m') }}</span>
         </a>
         {% endfor %}
     </div>

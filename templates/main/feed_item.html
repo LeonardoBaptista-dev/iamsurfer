@@ -20,7 +20,7 @@
                         </a>
                         {% endif %}
                     </div>
-                    <div class="post-time">{{ post.created_at.strftime('%d/%m/%Y %H:%M') }}</div>
+                    <div class="post-time">{{ post.created_at|localdt('%d/%m/%Y %H:%M') }}</div>
                 </div>
                 {% if current_user.is_authenticated and (post.user_id == current_user.id or current_user.is_admin) %}
                 <div class="dropdown">
@@ -148,7 +148,7 @@
                         </a>
                         {% endif %}
                     </div>
-                    <div class="post-time">{{ item.created_at.strftime('%d/%m/%Y %H:%M') }}</div>
+                    <div class="post-time">{{ item.created_at|localdt('%d/%m/%Y %H:%M') }}</div>
                 </div>
             </div>
 

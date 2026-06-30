@@ -49,7 +49,7 @@
                         <div>
                             <a href="{{ url_for('main.user_profile', username=participant.user.username) }}"
                                 class="dm-name text-decoration-none">{{ participant.user.username }}</a>
-                            <div style="font-size:.75rem;color:var(--text-muted);">{{ participant.request_time.strftime('%d/%m/%Y %H:%M') }}</div>
+                            <div style="font-size:.75rem;color:var(--text-muted);">{{ participant.request_time|localdt('%d/%m/%Y %H:%M') }}</div>
                             {% if participant.meeting_label %}
                             <div class="mt-1" style="font-size:.8rem;color:var(--text-secondary);"><i class="bi bi-geo-alt-fill" style="color:var(--text-secondary);"></i> {{ participant.meeting_label }}</div>
                             {% elif participant.meeting_lat %}
@@ -89,7 +89,7 @@
                     <div>
                         <div class="dm-name">{{ participant.user.username }}</div>
                         <span class="dm-preview">
-                            {% if participant.meeting_label %}<i class="bi bi-geo-alt-fill"></i> {{ participant.meeting_label }}{% else %}Confirmado em {{ participant.confirmation_time.strftime('%d/%m/%Y %H:%M') }}{% endif %}
+                            {% if participant.meeting_label %}<i class="bi bi-geo-alt-fill"></i> {{ participant.meeting_label }}{% else %}Confirmado em {{ participant.confirmation_time|localdt('%d/%m/%Y %H:%M') }}{% endif %}
                         </span>
                     </div>
                 </a>

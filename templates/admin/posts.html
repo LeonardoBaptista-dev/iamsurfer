@@ -182,7 +182,7 @@
                                                     class="text-decoration-none text-dark fw-bold">{{
                                                     post.author.username }}</a>
                                             </h6>
-                                            <small class="text-muted">{{ post.created_at.strftime('%d/%m/%Y %H:%M')
+                                            <small class="text-muted">{{ post.created_at|localdt('%d/%m/%Y %H:%M')
                                                 }}</small>
                                         </div>
                                     </div>

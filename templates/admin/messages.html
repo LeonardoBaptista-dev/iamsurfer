@@ -133,7 +133,7 @@
                                             </div>
                                         </td>
                                         <td>
-                                            <small>{{ message.timestamp.strftime('%d/%m/%Y %H:%M') }}</small>
+                                            <small>{{ message.timestamp|localdt('%d/%m/%Y %H:%M') }}</small>
                                         </td>
                                         <td>
                                             {% if message.read %}

@@ -174,7 +174,7 @@
                                                     class="text-decoration-none text-dark fw-bold">{{
                                                     comment.author.username }}</a>
                                             </h6>
-                                            <small class="text-muted">{{ comment.created_at.strftime('%d/%m/%Y %H:%M')
+                                            <small class="text-muted">{{ comment.created_at|localdt('%d/%m/%Y %H:%M')
                                                 }}</small>
                                         </div>
                                         <small class="text-muted">

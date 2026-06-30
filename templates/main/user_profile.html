@@ -63,7 +63,7 @@
                     {% if user.location %}
                     <span class="meta"><i class="bi bi-geo-alt-fill"></i> {{ user.location }}</span>
                     {% endif %}
-                    <span class="meta"><i class="bi bi-calendar3"></i> Desde {{ user.joined_at.strftime('%b %Y') }}</span>
+                    <span class="meta"><i class="bi bi-calendar3"></i> Desde {{ user.joined_at|localdt('%b %Y') }}</span>
                 </div>
             </div>
         </div>

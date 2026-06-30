@@ -34,7 +34,7 @@
                     <div class="chat-bubble">
                         {{ message.content }}
                         <span class="chat-meta">
-                            {{ message.timestamp.strftime('%d/%m %H:%M') }}
+                            {{ message.timestamp|localdt('%d/%m %H:%M') }}
                             {% if mine and message.read %}<i class="bi bi-check2-all"></i>
                             {% elif mine %}<i class="bi bi-check2"></i>{% endif %}
                         </span>

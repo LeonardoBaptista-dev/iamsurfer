@@ -223,7 +223,7 @@
                             <span class="mx-2">•</span>
                             <i class="fas fa-user"></i> Por: {{ spot.creator.username if spot.creator else 'N/A' }}
                             <span class="mx-2">•</span>
-                            <i class="fas fa-calendar"></i> {{ spot.created_at.strftime('%d/%m/%Y %H:%M') }}
+                            <i class="fas fa-calendar"></i> {{ spot.created_at|localdt('%d/%m/%Y %H:%M') }}
                         </div>
                         <div class="coordinates mt-1">
                             <i class="fas fa-crosshairs"></i>
@@ -346,7 +346,7 @@
                                     </tr>
                                     <tr>
                                         <td><strong>Melhor Vento:</strong></td>
-                                        <td>{{ spot.best_wind_direction or 'N/A' }}</td>
+                                        <td>{{ spot.best_wind_direction|dir_pt or 'N/A' }}</td>
                                     </tr>
                                 </table>
                                 </div>
@@ -369,7 +369,7 @@
                                 {% if spot.status == 'approved' %}
                                 <span class="text-success">
                                     <i class="fas fa-check"></i>
-                                    Aprovado em {{ spot.approved_at.strftime('%d/%m/%Y %H:%M') if spot.approved_at else
+                                    Aprovado em {{ spot.approved_at|localdt('%d/%m/%Y %H:%M') if spot.approved_at else
                                     'N/A' }}
                                     {% if spot.approver %}
                                     por {{ spot.approver.username }}
@@ -378,7 +378,7 @@
                                 {% elif spot.status == 'rejected' %}
                                 <span class="text-danger">
                                     <i class="fas fa-times"></i>
-                                    Rejeitado em {{ spot.rejected_at.strftime('%d/%m/%Y %H:%M') if spot.rejected_at else
+                                    Rejeitado em {{ spot.rejected_at|localdt('%d/%m/%Y %H:%M') if spot.rejected_at else
                                     'N/A' }}
                                     {% if spot.rejecter %}
                                     por {{ spot.rejecter.username }}

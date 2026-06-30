@@ -39,7 +39,7 @@
                                 <img src="{{ post.author.profile_image_urls|profile_thumbnail_url if post.author.profile_image_urls else post.author.profile_image|img_url }}" class="rounded-circle shadow-sm me-3" width="40" height="40" style="object-fit: cover; border: 2px solid var(--brand-faint);">
                                 <div>
                                     <a href="{{ url_for('main.user_profile', username=post.author.username) }}" class="fw-bold text-decoration-none d-block lh-1 mb-1" style="color: var(--text-primary); font-size: 0.95rem;">{{ post.author.username }}</a>
-                                    <small class="text-muted fw-medium" style="font-size: 0.75rem;">{{ post.created_at.strftime('%d/%m/%Y %H:%M') }}</small>
+                                    <small class="text-muted fw-medium" style="font-size: 0.75rem;">{{ post.created_at|localdt('%d/%m/%Y %H:%M') }}</small>
                                 </div>
                             </div>
                         </div>

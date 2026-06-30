@@ -163,9 +163,9 @@
                                 </div>
                                 <div class="col-md-6">
                                     <ul class="list-unstyled">
-                                        <li><strong>Melhor Vento:</strong> {{ spot.best_wind_direction if
+                                        <li><strong>Melhor Vento:</strong> {{ spot.best_wind_direction|dir_pt if
                                             spot.best_wind_direction else 'N/A' }}</li>
-                                        <li><strong>Melhor Swell:</strong> {{ spot.best_swell_direction if
+                                        <li><strong>Melhor Swell:</strong> {{ spot.best_swell_direction|dir_pt if
                                             spot.best_swell_direction else 'N/A' }}</li>
                                         <li><strong>Melhor Maré:</strong> {{ spot.best_tide.title() if spot.best_tide
                                             else 'N/A' }}</li>
@@ -557,9 +557,9 @@
                     <hr>
                     <small class="text-muted">
                         <strong>Criado por:</strong> {{ spot.creator.username }}<br>
-                        <strong>Criado em:</strong> {{ spot.created_at.strftime('%d/%m/%Y') }}<br>
+                        <strong>Criado em:</strong> {{ spot.created_at|localdt('%d/%m/%Y') }}<br>
                         {% if spot.approved_at %}
-                        <strong>Aprovado em:</strong> {{ spot.approved_at.strftime('%d/%m/%Y') }}
+                        <strong>Aprovado em:</strong> {{ spot.approved_at|localdt('%d/%m/%Y') }}
                         {% endif %}
                     </small>
                 </div>

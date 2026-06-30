@@ -25,7 +25,7 @@
                 <div class="dm-preview">{{ message.content[:60] }}{% if message.content|length > 60 %}…{% endif %}</div>
             </div>
             <div class="text-end">
-                <span class="dm-time d-block">{{ message.timestamp.strftime('%d/%m') }}</span>
+                <span class="dm-time d-block">{{ message.timestamp|localdt('%d/%m') }}</span>
                 <span class="badge {% if message.read %}bg-success{% else %}bg-secondary{% endif %} mt-1">{{ 'Lida' if message.read else 'Não lida' }}</span>
             </div>
         </a>
