@@ -243,7 +243,7 @@
                                             <label class="form-label">Nível de multidão</label>
                                             <select name="crowd_level" class="form-select form-select-sm">
                                                 <option value="">—</option>
-                                                {% for o in ['Baixo','Médio','Alto'] %}<option value="{{ o }}">{{ o }}</option>{% endfor %}
+                                                {% for o in ['Vazio','Tranquilo','Moderado','Cheio','Cheio nos fins de semana'] %}<option value="{{ o }}">{{ o }}</option>{% endfor %}
                                             </select>
                                         </div>
                                         <div class="col-sm-6">
@@ -261,11 +261,15 @@
                                             </select>
                                         </div>
                                         <div class="col-sm-6">
-                                            <label class="form-label">Melhor maré</label>
-                                            <select name="best_tide" class="form-select form-select-sm">
-                                                <option value="">—</option>
-                                                {% for o in ['Baixa','Média','Alta','Todas'] %}<option value="{{ o }}">{{ o }}</option>{% endfor %}
-                                            </select>
+                                            <label class="form-label">Melhor maré <span class="text-muted fw-normal" style="font-size:.75rem;">(uma ou mais)</span></label>
+                                            <div class="d-flex flex-wrap gap-2">
+                                                {% for o in ['Cheia','Seca','Enchendo','Secando','Meia maré'] %}
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" name="best_tide" value="{{ o }}" id="ctide-{{ loop.index }}">
+                                                    <label class="form-check-label" for="ctide-{{ loop.index }}">{{ o }}</label>
+                                                </div>
+                                                {% endfor %}
+                                            </div>
                                         </div>
                                         <div class="col-12">
                                             <label class="form-label">Descrição / complemento</label>

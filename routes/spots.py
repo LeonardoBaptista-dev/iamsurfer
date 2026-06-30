@@ -282,7 +282,7 @@ def add_spot():
                     crowd_level=request.form.get('crowd_level'),
                     best_wind_direction=request.form.get('best_wind_direction'),
                     best_swell_direction=request.form.get('best_swell_direction'),
-                    best_tide=request.form.get('best_tide'),
+                    best_tide=', '.join(request.form.getlist('best_tide')) or None,
                     min_swell_size=float(request.form['min_swell_size']) if request.form.get('min_swell_size') else None,
                     max_swell_size=float(request.form['max_swell_size']) if request.form.get('max_swell_size') else None,
                     created_by=current_user.id,
@@ -356,7 +356,10 @@ def contribute_spot(spot_id):
     spot = Spot.query.get_or_404(spot_id)
     data = {}
     for f in CONTRIB_FIELDS:
-        v = (request.form.get(f) or '').strip()
+        if f == 'best_tide':
+            v = ', '.join(request.form.getlist('best_tide')).strip()
+        else:
+            v = (request.form.get(f) or '').strip()
         if v:
             data[f] = v[:600] if f == 'description' else v[:60]
     if not data:

@@ -564,9 +564,11 @@
                                 <label class="form-label">Crowd</label>
                                 <select class="form-select" id="spotCrowdLevel">
                                     <option value="">—</option>
-                                    <option value="Baixo">Baixo</option>
-                                    <option value="Médio">Médio</option>
-                                    <option value="Alto">Alto</option>
+                                    <option value="Vazio">Vazio</option>
+                                    <option value="Tranquilo">Tranquilo</option>
+                                    <option value="Moderado">Moderado</option>
+                                    <option value="Cheio">Cheio</option>
+                                    <option value="Cheio nos fins de semana">Cheio nos fins de semana</option>
                                 </select>
                             </div>
                         </div>
@@ -580,22 +582,23 @@
                                 <input type="text" class="form-control" id="spotSwell" maxlength="20" placeholder="Ex.: S / SE">
                             </div>
                         </div>
+                        <div class="mb-3">
+                            <label class="form-label d-block">Maré ideal <span class="text-muted fw-normal" style="font-size:.78rem;">(pode marcar mais de uma)</span></label>
+                            <div class="d-flex flex-wrap gap-3">
+                                {% for t in ['Cheia', 'Seca', 'Enchendo', 'Secando', 'Meia maré'] %}
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="spotTide" value="{{ t }}" id="tide-{{ loop.index }}">
+                                    <label class="form-check-label" for="tide-{{ loop.index }}">{{ t }}</label>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
                         <div class="row g-2 mb-3">
                             <div class="col-6">
-                                <label class="form-label">Maré ideal</label>
-                                <select class="form-select" id="spotTide">
-                                    <option value="">—</option>
-                                    <option value="Baixa">Baixa</option>
-                                    <option value="Média">Média</option>
-                                    <option value="Alta">Alta</option>
-                                    <option value="Todas">Todas</option>
-                                </select>
-                            </div>
-                            <div class="col-3">
                                 <label class="form-label">Swell mín (m)</label>
                                 <input type="number" class="form-control" id="spotMinSwell" step="0.1" min="0">
                             </div>
-                            <div class="col-3">
+                            <div class="col-6">
                                 <label class="form-label">Swell máx (m)</label>
                                 <input type="number" class="form-control" id="spotMaxSwell" step="0.1" min="0">
                             </div>
@@ -957,7 +960,7 @@
             crowd_level: val('spotCrowdLevel'),
             best_wind_direction: val('spotWind'),
             best_swell_direction: val('spotSwell'),
-            best_tide: val('spotTide'),
+            best_tide: Array.from(document.querySelectorAll('input[name="spotTide"]:checked')).map(c => c.value).join(', '),
             min_swell_size: num('spotMinSwell'),
             max_swell_size: num('spotMaxSwell'),
             address: val('spotAddress'),

@@ -262,7 +262,8 @@
                                 <option value="Vazio">Vazio</option>
                                 <option value="Tranquilo">Tranquilo</option>
                                 <option value="Moderado">Moderado</option>
-                                <option value="Intenso">Intenso</option>
+                                <option value="Cheio">Cheio</option>
+                                <option value="Cheio nos fins de semana">Cheio nos fins de semana</option>
                             </select>
                         </div>
                         <div class="col-md-4">
@@ -296,15 +297,15 @@
                         </div>
 
                         <div class="col-md-4">
-                            <label for="best_tide" class="form-label">Melhor Maré</label>
-                            <select class="form-select" id="best_tide" name="best_tide">
-                                <option value="" selected disabled>Selecione...</option>
-                                <option value="Baixa">Seca (Baixa)</option>
-                                <option value="Enchendo">Enchendo</option>
-                                <option value="Cheia">Cheia</option>
-                                <option value="Secando">Secando</option>
-                                <option value="Todas">Todas as Marés</option>
-                            </select>
+                            <label class="form-label d-block">Melhor Maré <span class="text-muted fw-normal" style="font-size:.78rem;">(pode marcar mais de uma)</span></label>
+                            <div class="d-flex flex-wrap gap-3 pt-1">
+                                {% for t in ['Cheia', 'Seca', 'Enchendo', 'Secando', 'Meia maré'] %}
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="best_tide" value="{{ t }}" id="tide-{{ loop.index }}">
+                                    <label class="form-check-label" for="tide-{{ loop.index }}">{{ t }}</label>
+                                </div>
+                                {% endfor %}
+                            </div>
                         </div>
                         <div class="col-md-4">
                             <label for="min_swell_size" class="form-label">Swell Mín. (metros)</label>
