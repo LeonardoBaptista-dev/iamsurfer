@@ -219,6 +219,21 @@
         pointer-events: none;
     }
 
+    /* Corrige o scroll do modal de cadastro: o <form> envolve header/body/footer,
+       então precisa participar do layout flex para o corpo rolar (Bootstrap
+       modal-dialog-scrollable só funciona com filhos diretos de .modal-content). */
+    #addSpotModal .modal-content > form {
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        max-height: 100%;
+        overflow: hidden;
+    }
+    #addSpotModal .modal-body {
+        overflow-y: auto;
+        min-height: 0;
+    }
+
     /* Modal de sucesso (envio do pico) */
     #spotSuccessModal .modal-content {
         border: none;
