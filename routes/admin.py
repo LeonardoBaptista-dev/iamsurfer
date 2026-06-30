@@ -1,6 +1,10 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, abort, jsonify
 from flask_login import login_required, current_user
-from models import User, Post, Comment, Message, Spot, UserBadge, SpotContribution
+from models import (User, Post, Comment, Message, Spot, UserBadge, SpotContribution,
+                    Like, Follow, SpotFollow, SurfTrip, TripParticipant, Photographer,
+                    SpotPhotoNew, PhotoSession, SessionPhoto, PhotoPurchase, SpotReport,
+                    Notification, Business, Coupon, Story, StoryView, SurfSession,
+                    TokenBlocklist, DeviceToken)
 from extensions import db
 from functools import wraps
 from sqlalchemy import func
@@ -75,21 +79,94 @@ def toggle_admin(user_id):
     flash(f'Status de administrador {status} para {user.username}.', 'success')
     return redirect(url_for('admin.users'))
 
+def _purge_user(user, admin_user):
+    """Remove um usuário e todo o seu conteúdo pessoal. Os picos que ele criou
+    são PRESERVADOS e realocados para o admin que fez a exclusão."""
+    uid = user.id
+
+    # 1) Todos os picos criados pelo usuário passam a ser do admin (preservados)
+    Spot.query.filter_by(created_by=uid).update({'created_by': admin_user.id}, synchronize_session=False)
+
+    # FKs de moderação (nullable) que apontam para o usuário
+    Spot.query.filter_by(approved_by=uid).update({'approved_by': None}, synchronize_session=False)
+    Spot.query.filter_by(rejected_by=uid).update({'rejected_by': None}, synchronize_session=False)
+    SpotContribution.query.filter_by(reviewed_by=uid).update({'reviewed_by': None}, synchronize_session=False)
+    UserBadge.query.filter_by(granted_by=uid).update({'granted_by': None}, synchronize_session=False)
+
+    # 2) Conteúdo do usuário referenciado por outras tabelas
+    post_ids = [p.id for p in Post.query.filter_by(user_id=uid).all()]
+    if post_ids:
+        Comment.query.filter(Comment.post_id.in_(post_ids)).delete(synchronize_session=False)
+        Like.query.filter(Like.post_id.in_(post_ids)).delete(synchronize_session=False)
+        Notification.query.filter(Notification.related_post_id.in_(post_ids)).delete(synchronize_session=False)
+    msg_ids = [m.id for m in Message.query.filter((Message.sender_id == uid) | (Message.recipient_id == uid)).all()]
+    if msg_ids:
+        Notification.query.filter(Notification.related_message_id.in_(msg_ids)).delete(synchronize_session=False)
+    story_ids = [s.id for s in Story.query.filter_by(user_id=uid).all()]
+    if story_ids:
+        StoryView.query.filter(StoryView.story_id.in_(story_ids)).delete(synchronize_session=False)
+    sess_ids = [s.id for s in PhotoSession.query.filter_by(photographer_id=uid).all()]
+    if sess_ids:
+        photo_ids = [p.id for p in SessionPhoto.query.filter(SessionPhoto.session_id.in_(sess_ids)).all()]
+        if photo_ids:
+            PhotoPurchase.query.filter(PhotoPurchase.photo_id.in_(photo_ids)).delete(synchronize_session=False)
+            SessionPhoto.query.filter(SessionPhoto.session_id.in_(sess_ids)).delete(synchronize_session=False)
+        PhotoSession.query.filter(PhotoSession.id.in_(sess_ids)).delete(synchronize_session=False)
+    trip_ids = [t.id for t in SurfTrip.query.filter_by(creator_id=uid).all()]
+    if trip_ids:
+        TripParticipant.query.filter(TripParticipant.trip_id.in_(trip_ids)).delete(synchronize_session=False)
+        SurfTrip.query.filter(SurfTrip.id.in_(trip_ids)).delete(synchronize_session=False)
+    for biz in Business.query.filter_by(owner_id=uid).all():
+        Coupon.query.filter_by(business_id=biz.id).delete(synchronize_session=False)
+
+    # 3) Linhas que pertencem diretamente ao usuário
+    Comment.query.filter_by(user_id=uid).delete(synchronize_session=False)
+    Like.query.filter_by(user_id=uid).delete(synchronize_session=False)
+    Follow.query.filter((Follow.follower_id == uid) | (Follow.followed_id == uid)).delete(synchronize_session=False)
+    SpotFollow.query.filter_by(user_id=uid).delete(synchronize_session=False)
+    TripParticipant.query.filter_by(user_id=uid).delete(synchronize_session=False)
+    PhotoPurchase.query.filter_by(user_id=uid).delete(synchronize_session=False)
+    SpotReport.query.filter_by(user_id=uid).delete(synchronize_session=False)
+    SpotContribution.query.filter_by(user_id=uid).delete(synchronize_session=False)
+    SpotPhotoNew.query.filter_by(uploaded_by=uid).delete(synchronize_session=False)
+    Photographer.query.filter_by(user_id=uid).delete(synchronize_session=False)
+    StoryView.query.filter_by(user_id=uid).delete(synchronize_session=False)
+    Story.query.filter_by(user_id=uid).delete(synchronize_session=False)
+    SurfSession.query.filter_by(user_id=uid).delete(synchronize_session=False)
+    UserBadge.query.filter_by(user_id=uid).delete(synchronize_session=False)
+    Business.query.filter_by(owner_id=uid).delete(synchronize_session=False)
+    Notification.query.filter((Notification.user_id == uid) | (Notification.related_user_id == uid)).delete(synchronize_session=False)
+    Message.query.filter((Message.sender_id == uid) | (Message.recipient_id == uid)).delete(synchronize_session=False)
+    Post.query.filter_by(user_id=uid).delete(synchronize_session=False)
+    TokenBlocklist.query.filter_by(user_id=uid).delete(synchronize_session=False)
+    DeviceToken.query.filter_by(user_id=uid).delete(synchronize_session=False)
+
+    # 4) Finalmente o usuário
+    db.session.delete(user)
+    db.session.commit()
+
+
 @admin.route('/user/<int:user_id>/delete', methods=['POST'])
 @login_required
 @admin_required
 def delete_user(user_id):
     user = User.query.get_or_404(user_id)
-    
+
     # Impede que o administrador exclua sua própria conta
     if user.id == current_user.id:
         flash('Você não pode excluir sua própria conta.', 'danger')
         return redirect(url_for('admin.users'))
-    
-    db.session.delete(user)
-    db.session.commit()
-    
-    flash(f'Usuário {user.username} excluído com sucesso.', 'success')
+
+    username = user.username
+    try:
+        _purge_user(user, current_user)
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Erro ao excluir o usuário {username}: {e}', 'danger')
+        return redirect(url_for('admin.users'))
+
+    flash(f'Usuário {username} e todo o conteúdo dele foram excluídos. '
+          f'Os picos que ele criou foram mantidos e estão sob sua conta.', 'success')
     return redirect(url_for('admin.users'))
 
 @admin.route('/posts')
