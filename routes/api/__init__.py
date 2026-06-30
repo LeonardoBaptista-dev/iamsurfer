@@ -107,7 +107,13 @@ def register_api(app):
 
     # Registra os sub-blueprints de cada feature.
     from .auth import auth_api
+    from .spots import spots_api
+    from .media import media_api
+    from .users import users_api
     api.register_blueprint(auth_api)
+    api.register_blueprint(spots_api)
+    api.register_blueprint(media_api)
+    api.register_blueprint(users_api)
 
     register_error_handlers(app, api)
     app.register_blueprint(api)
