@@ -4,7 +4,7 @@
 > construindo, o que já está pronto e funcionando, as decisões/armadilhas do
 > ambiente, e o próximo passo concreto.
 >
-> Última atualização: **2026-06-29**.
+> Última atualização: **2026-06-30**.
 
 ---
 
@@ -96,16 +96,61 @@ Detalhes no [`iamsurfer-app/README.md`](../../iamsurfer-app/README.md).
 
 ---
 
+### Prompt A11 (upload assinado) + A2 (usuários/follow) — backend ✅
+- `routes/api/media.py` — `POST /media/sign` (assinatura Cloudinary, folder confinada a `iamsurfer/`, 503 se Cloudinary off) e `POST /media/confirm`.
+- `routes/api/users.py` — `GET /users/:u` (+counts/viewer_state), `/posts` (cursor, respeita `is_public`), `/followers`, `/following`, `POST|DELETE /users/:u/follow` (idempotente, XP+notificação, sem self/admin), `GET/PATCH /me`, `PATCH /me/avatar`, `GET /search/users`.
+- `serializers.py` — `post_card`, `post_media`, `can_view_content` (privacidade).
+- Testes: `tests/test_api_users.py` (10) + `tests/test_api_media.py` (6). **Suíte API: 24 passando.**
+
+> Obs.: o **A7 (picos/SurfMap)** também já está no backend (`routes/api/spots.py`,
+> `br_states.py`, `tests/test_api_spots.py`) — feito em paralelo.
+
+### Prompt B6 (perfil + follow) — app ✅
+- `src/api/users.ts`, `src/api/media.ts` (`uploadMedia` direto pro Cloudinary).
+- `src/hooks/useProfile.ts` — `useProfile`, `useUserPosts` (infinite), `useFollowToggle` (otimista).
+- `src/components/ProfileHeader.tsx`, `PostGrid.tsx`.
+- `app/user/[username].tsx` — perfil de terceiros, follow/unfollow, bloqueio de perfil privado.
+- `app/edit-profile.tsx` — avatar (expo-image-picker → upload assinado), bio, localização, privacidade.
+- `app/search.tsx` — busca de surfistas → perfil. Aba **Perfil** com grid de posts.
+- **Aba Explorar reservada para Picos (B8)** — só tem atalho de busca por ora.
+- `app/_layout.tsx` agora é **Stack** (rotas user/edit/search com header). `tsc` limpo, bundle Android OK.
+
+### Prompt A3 (feed/posts/likes/comentários) — backend ✅
+- `routes/api/posts.py` — `GET /feed` (segue+próprios, cursor), `GET /explore` (públicos), `GET /posts/:id` (respeita privacidade), `POST /posts` (texto + media[] do Cloudinary + spot), `DELETE /posts/:id`, `POST|DELETE /posts/:id/like` (idempotente, XP+notificação), `GET|POST /posts/:id/comments`, `DELETE /comments/:id`.
+- `serializers.py` — `comment_card`.
+- Testes: `tests/test_api_posts.py` (10). **Suíte API total agora: 34.**
+
+### Prompt B3 (feed + post + criar post) — app ✅
+- `src/api/posts.ts`, `src/hooks/useFeed.ts`, `src/lib/time.ts` (timeAgo pt-BR).
+- `src/components/PostCardView.tsx` — card com **like otimista**, mídia, contadores.
+- `app/(tabs)/index.tsx` — feed infinito + pull-to-refresh + estados vazio/erro.
+- `app/(tabs)/create.tsx` — criar post (foto/vídeo via expo-image-picker → upload assinado → cria → invalida feed).
+- `app/post/[id].tsx` — detalhe + comentários (lista + enviar).
+
+### A7 (picos) + telas de picos — feito pelo build paralelo ✅
+- Backend `routes/api/spots.py` e app: aba **Explorar = SurfMap** (lista/busca),
+  `app/spot/[id].tsx`, `app/spot/new.tsx`, `src/hooks/useSpots.ts`,
+  `src/api/spots.ts`, tipos `Spot`/`SpotBrief`. Integra com o resto (bundle OK).
+
+> **Estado app:** `tsc` limpo e **bundle Android OK** com tudo junto
+> (auth, perfil/follow, feed/posts, criar, picos). Abas: Início (feed) ·
+> Explorar (picos) · Criar · Reels (placeholder) · Perfil.
+
 ## 4. Próximo passo (caminho recomendado)
 
-O caminho crítico (`A0→A1→B0→B1→B2`, login real) **está fechado**. Agora cada par
-`An/Bn` de feature é independente. Sugestão de ordem (do plano, seção 6):
+**Concluídos:** A0/A1 (fundação+auth), A2 (users/follow), A3 (posts/feed),
+A7 (picos), A11 (mídia) · B0/B1/B2 (auth app), B3 (feed/criar post), B6 (perfil),
+**B8 (picos: lista/detalhe/cadastro com GPS)**. Suíte API: **34 testes**; app
+`tsc` limpo + bundle Android OK.
 
-1. **A11 (upload Cloudinary assinado)** — desbloqueia mídia de posts/stories/reels.
-2. **A2 + B6 (perfil/follow)** — bom primeiro par "vertical" ponta a ponta.
-3. **A3 + B3 (feed/posts)** — núcleo do app.
-4. Depois: A4/B4 (stories), A5/B5 (reels), A7/B8 (mapa/previsão), A6+A12/B7 (msgs+push), A8/B9 (caronas), A9/B10 (fotos+pagamento), A10/B11 (ranking).
-5. Fechamento: A13 (OpenAPI/contrato), B12 (deep links), B13 (EAS build + lojas).
+**Falta (pares independentes):**
+1. **A10 + B11 (ranking)** — simples e já pedido pelo Emanuel; reusa `main.ranking`/`gamification.py`. Bom próximo.
+2. **A5 + B5 (reels)** — vídeos verticais (a aba Reels ainda é placeholder).
+3. **A4 + B4 (stories)** — efêmeros 24h.
+4. **A6 + A12 + B7 (mensagens + push)** — DMs e notificações push (Expo).
+5. **A8 + B9 (caronas)**, **A9 + B10 (fotos à venda + pagamento)**.
+6. **A7 extra:** previsão (Open-Meteo) e contribuição de pico na tela de detalhe do app.
+7. Fechamento: **A13 (OpenAPI/contrato)**, **B12 (deep links)**, **B13 (EAS build + publicação nas lojas)**.
 
 **Padrões obrigatórios** (Definition of Done, seção 4 do plano): formato de erro,
 paginação e serializers da fundação; `@jwt_required()` + respeitar
@@ -113,7 +158,8 @@ paginação e serializers da fundação; `@jwt_required()` + respeitar
 (gamificação, badges, forecast Open-Meteo, Cloudinary); nada de segredo hardcoded.
 
 ### Sugestão para começar amanhã
-> "Implemente o Prompt A11 (upload assinado pro Cloudinary) e, em seguida, o par
-> A2/B6 (perfil + follow), seguindo os contratos já estabelecidos em
-> `routes/api/` e o cliente do app. Rode os testes do backend e o typecheck do
-> app ao final."
+> "Implemente o par **A10 + B11 (ranking)**: endpoint `GET /api/v1/ranking`
+> (paginado, reusando `main.ranking`/`gamification.py`, com `patente`/`points`
+> no serializer) e a tela de ranking no app (pódio + lista). Em seguida
+> **A5 + B5 (reels)**. Rode `pytest` do backend e `npm run typecheck` do app ao
+> final. Os contratos e padrões já estão em `routes/api/` e no cliente do app."

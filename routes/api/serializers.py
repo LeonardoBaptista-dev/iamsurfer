@@ -182,6 +182,16 @@ def post_card(post, viewer=None):
     }
 
 
+def comment_card(comment):
+    """Serializer de Comment (item de lista de comentários)."""
+    return {
+        'id': comment.id,
+        'content': comment.content,
+        'created_at': iso(comment.created_at),
+        'author': user_brief(comment.author),
+    }
+
+
 # ── Spot (pico) ──────────────────────────────────────────────────────────────
 
 def _spot_cover_url(spot):
