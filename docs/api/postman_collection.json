@@ -1,0 +1,2029 @@
+{
+  "info": {
+    "name": "IAmSurfer API",
+    "_postman_id": "iamsurfer-api-v1",
+    "description": "Collection gerada do OpenAPI (/api/v1). Defina {{base_url}} (ex.: http://localhost:5000/api/v1) e {{access_token}} (obtido em POST /auth/login).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "auth",
+      "item": [
+        {
+          "name": "POST /auth/push-token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/push-token",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "push-token"
+              ]
+            },
+            "description": "Upsert do Expo push token do device atual.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "POST /auth/register",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/register",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            },
+            "description": "POST /auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "POST /auth/refresh",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/refresh",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "refresh"
+              ]
+            },
+            "description": "Gera novo access + refresh e revoga o refresh usado (rotação).",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "POST /auth/logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/logout",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "logout"
+              ]
+            },
+            "description": "Revoga o refresh atual. O access expira sozinho em até 15 min.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "POST /auth/login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "POST /auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /auth/me",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/me",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "me"
+              ]
+            },
+            "description": "GET /auth/me",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "media",
+      "item": [
+        {
+          "name": "POST /media/confirm",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/media/confirm",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "media",
+                "confirm"
+              ]
+            },
+            "description": "Normaliza o descritor da mídia após o upload (opcional).",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "POST /media/sign",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/media/sign",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "media",
+                "sign"
+              ]
+            },
+            "description": "Gera assinatura/timestamp/folder para o app subir direto no Cloudinary.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "messages",
+      "item": [
+        {
+          "name": "GET /notifications/count",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/notifications/count",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "notifications",
+                "count"
+              ]
+            },
+            "description": "GET /notifications/count",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /notifications/read",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/notifications/read",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "notifications",
+                "read"
+              ]
+            },
+            "description": "POST /notifications/read",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /conversations",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/conversations",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "conversations"
+              ]
+            },
+            "description": "GET /conversations",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /notifications",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/notifications",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "notifications"
+              ]
+            },
+            "description": "GET /notifications",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /conversations/{username}/messages",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/conversations/{username}/messages",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "conversations",
+                "{username}",
+                "messages"
+              ]
+            },
+            "description": "POST /conversations/{username}/messages",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /conversations/{username}",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/conversations/{username}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "conversations",
+                "{username}"
+              ]
+            },
+            "description": "GET /conversations/{username}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "meta",
+      "item": [
+        {
+          "name": "GET /openapi.json",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/openapi.json",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "openapi.json"
+              ]
+            },
+            "description": "Spec OpenAPI 3.1 da API (público). Gerado do url_map em runtime."
+          }
+        },
+        {
+          "name": "GET /ping",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/ping",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "ping"
+              ]
+            },
+            "description": "Healthcheck público da API."
+          }
+        }
+      ]
+    },
+    {
+      "name": "photos",
+      "item": [
+        {
+          "name": "POST /webhooks/payments",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/webhooks/payments",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "webhooks",
+                "payments"
+              ]
+            },
+            "description": "Confirma pagamentos. Público (não usa JWT) e IDEMPOTENTE.",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /me/purchases",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/me/purchases",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "me",
+                "purchases"
+              ]
+            },
+            "description": "GET /me/purchases",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /photo-sessions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/photo-sessions",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "photo-sessions"
+              ]
+            },
+            "description": "GET /photo-sessions"
+          }
+        },
+        {
+          "name": "POST /photos/{photo_id}/purchase",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/photos/{photo_id}/purchase",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "photos",
+                "{photo_id}",
+                "purchase"
+              ]
+            },
+            "description": "POST /photos/{photo_id}/purchase",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /photo-sessions/{session_id}",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/photo-sessions/{session_id}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "photo-sessions",
+                "{session_id}"
+              ]
+            },
+            "description": "GET /photo-sessions/{session_id}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "posts",
+      "item": [
+        {
+          "name": "GET /explore",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/explore",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "explore"
+              ]
+            },
+            "description": "GET /explore"
+          }
+        },
+        {
+          "name": "POST /posts",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/posts",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "posts"
+              ]
+            },
+            "description": "POST /posts",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /feed",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/feed",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "feed"
+              ]
+            },
+            "description": "GET /feed",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /posts/{post_id}/comments",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/posts/{post_id}/comments",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "posts",
+                "{post_id}",
+                "comments"
+              ]
+            },
+            "description": "GET /posts/{post_id}/comments"
+          }
+        },
+        {
+          "name": "POST /posts/{post_id}/comments",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/posts/{post_id}/comments",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "posts",
+                "{post_id}",
+                "comments"
+              ]
+            },
+            "description": "POST /posts/{post_id}/comments",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "POST /posts/{post_id}/like",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/posts/{post_id}/like",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "posts",
+                "{post_id}",
+                "like"
+              ]
+            },
+            "description": "POST /posts/{post_id}/like",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "DELETE /posts/{post_id}/like",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/posts/{post_id}/like",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "posts",
+                "{post_id}",
+                "like"
+              ]
+            },
+            "description": "DELETE /posts/{post_id}/like",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "DELETE /comments/{comment_id}",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/comments/{comment_id}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "comments",
+                "{comment_id}"
+              ]
+            },
+            "description": "DELETE /comments/{comment_id}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /posts/{post_id}",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/posts/{post_id}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "posts",
+                "{post_id}"
+              ]
+            },
+            "description": "GET /posts/{post_id}"
+          }
+        },
+        {
+          "name": "DELETE /posts/{post_id}",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/posts/{post_id}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "posts",
+                "{post_id}"
+              ]
+            },
+            "description": "DELETE /posts/{post_id}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "ranking",
+      "item": [
+        {
+          "name": "GET /ranking",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/ranking",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "ranking"
+              ]
+            },
+            "description": "Ranking por XP (offset/limit). Cada item traz `rank` e `points`."
+          }
+        },
+        {
+          "name": "GET /users/{username}/badges",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/users/{username}/badges",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "users",
+                "{username}",
+                "badges"
+              ]
+            },
+            "description": "Selos de papel ativos do usuário (fotógrafo, atleta, etc.)."
+          }
+        }
+      ]
+    },
+    {
+      "name": "reels",
+      "item": [
+        {
+          "name": "GET /reels",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/reels",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "reels"
+              ]
+            },
+            "description": "Feed de reels (cursor), mais recentes primeiro, de perfis públicos."
+          }
+        },
+        {
+          "name": "POST /reels",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/reels",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "reels"
+              ]
+            },
+            "description": "Cria um reel. Exige um vídeo (via mídia do Cloudinary).",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "spots",
+      "item": [
+        {
+          "name": "GET /spots",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/spots",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "spots"
+              ]
+            },
+            "description": "Lista picos aprovados (com filtros opcionais)."
+          }
+        },
+        {
+          "name": "POST /spots",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/spots",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "spots"
+              ]
+            },
+            "description": "Cadastra um pico (entra como pendente e notifica os admins).",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "POST /spots/{spot_id}/follow",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/spots/{spot_id}/follow",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "spots",
+                "{spot_id}",
+                "follow"
+              ]
+            },
+            "description": "Segue/deixa de seguir um pico (toggle).",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /spots/{spot_id}",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/spots/{spot_id}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "spots",
+                "{spot_id}"
+              ]
+            },
+            "description": "Detalhe de um pico aprovado."
+          }
+        }
+      ]
+    },
+    {
+      "name": "stories",
+      "item": [
+        {
+          "name": "GET /stories",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/stories",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "stories"
+              ]
+            },
+            "description": "Story bar agrupada por usuário (mesmo comportamento do site).",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /stories",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/stories",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "stories"
+              ]
+            },
+            "description": "Cria um story a partir de uma mídia já enviada ao Cloudinary (A11).",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "POST /stories/{story_id}/seen",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/stories/{story_id}/seen",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "stories",
+                "{story_id}",
+                "seen"
+              ]
+            },
+            "description": "Marca um story como visto (idempotente).",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "DELETE /stories/{story_id}",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/stories/{story_id}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "stories",
+                "{story_id}"
+              ]
+            },
+            "description": "Apaga um story próprio (também remove a mídia do Cloudinary).",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "trips",
+      "item": [
+        {
+          "name": "GET /me/trips",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/me/trips",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "me",
+                "trips"
+              ]
+            },
+            "description": "GET /me/trips",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /trips",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/trips",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "trips"
+              ]
+            },
+            "description": "GET /trips"
+          }
+        },
+        {
+          "name": "POST /trips",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/trips",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "trips"
+              ]
+            },
+            "description": "POST /trips",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "POST /trips/{trip_id}/leave",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/trips/{trip_id}/leave",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "trips",
+                "{trip_id}",
+                "leave"
+              ]
+            },
+            "description": "POST /trips/{trip_id}/leave",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "POST /trips/{trip_id}/join",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/trips/{trip_id}/join",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "trips",
+                "{trip_id}",
+                "join"
+              ]
+            },
+            "description": "POST /trips/{trip_id}/join",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /trips/{trip_id}",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/trips/{trip_id}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "trips",
+                "{trip_id}"
+              ]
+            },
+            "description": "GET /trips/{trip_id}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "users",
+      "item": [
+        {
+          "name": "GET /search/users",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/search/users",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "search",
+                "users"
+              ]
+            },
+            "description": "GET /search/users"
+          }
+        },
+        {
+          "name": "PATCH /me/avatar",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/me/avatar",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "me",
+                "avatar"
+              ]
+            },
+            "description": "Atualiza o avatar a partir de uma mídia já enviada ao Cloudinary (A11).",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /me",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/me",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "me"
+              ]
+            },
+            "description": "GET /me",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "PATCH /me",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/me",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "me"
+              ]
+            },
+            "description": "PATCH /me",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /users/{username}/followers",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/users/{username}/followers",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "users",
+                "{username}",
+                "followers"
+              ]
+            },
+            "description": "GET /users/{username}/followers"
+          }
+        },
+        {
+          "name": "GET /users/{username}/following",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/users/{username}/following",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "users",
+                "{username}",
+                "following"
+              ]
+            },
+            "description": "GET /users/{username}/following"
+          }
+        },
+        {
+          "name": "POST /users/{username}/follow",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/users/{username}/follow",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "users",
+                "{username}",
+                "follow"
+              ]
+            },
+            "description": "POST /users/{username}/follow",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "DELETE /users/{username}/follow",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/users/{username}/follow",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "users",
+                "{username}",
+                "follow"
+              ]
+            },
+            "description": "DELETE /users/{username}/follow",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /users/{username}/posts",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/users/{username}/posts",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "users",
+                "{username}",
+                "posts"
+              ]
+            },
+            "description": "GET /users/{username}/posts"
+          }
+        },
+        {
+          "name": "GET /users/{username}",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/users/{username}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "users",
+                "{username}"
+              ]
+            },
+            "description": "GET /users/{username}"
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:5000/api/v1"
+    },
+    {
+      "key": "access_token",
+      "value": ""
+    }
+  ]
+}

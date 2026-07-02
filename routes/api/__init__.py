@@ -13,7 +13,7 @@ Uso (em app.py, após registrar os blueprints do site):
 import os
 from datetime import timedelta
 
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, current_app
 
 from .errors import register_error_handlers, error_response
 
@@ -111,11 +111,23 @@ def register_api(app):
     from .media import media_api
     from .users import users_api
     from .posts import posts_api
+    from .ranking import ranking_api
+    from .reels import reels_api
+    from .stories import stories_api
+    from .messages import messages_api
+    from .trips import trips_api
+    from .photos import photos_api
     api.register_blueprint(auth_api)
     api.register_blueprint(spots_api)
     api.register_blueprint(media_api)
     api.register_blueprint(users_api)
     api.register_blueprint(posts_api)
+    api.register_blueprint(ranking_api)
+    api.register_blueprint(reels_api)
+    api.register_blueprint(stories_api)
+    api.register_blueprint(messages_api)
+    api.register_blueprint(trips_api)
+    api.register_blueprint(photos_api)
 
     register_error_handlers(app, api)
     app.register_blueprint(api)
@@ -126,3 +138,10 @@ def register_api(app):
 def ping():
     """Healthcheck público da API."""
     return jsonify({'ok': True, 'version': API_VERSION})
+
+
+@api.route('/openapi.json')
+def openapi_json():
+    """Spec OpenAPI 3.1 da API (público). Gerado do url_map em runtime."""
+    from .openapi import build_openapi_spec
+    return jsonify(build_openapi_spec(current_app._get_current_object()))

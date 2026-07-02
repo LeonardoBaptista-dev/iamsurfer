@@ -612,8 +612,12 @@ class PhotoPurchase(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     purchase_date = db.Column(db.DateTime, default=datetime.utcnow)
     amount_paid = db.Column(db.Float, nullable=False)
-    status = db.Column(db.String(20), default='completed')  # pending, completed, refunded
-    
+    status = db.Column(db.String(20), default='completed')  # pending, paid, completed, reserved, refunded
+    # Pagamento (API mobile A9): provedor e referência externa p/ o webhook.
+    provider = db.Column(db.String(20), nullable=True)          # 'mercadopago' | 'test'
+    provider_ref = db.Column(db.String(120), nullable=True, index=True)  # id externo (preference/payment)
+    coupon_code = db.Column(db.String(40), nullable=True)       # cupom aplicado, se houver
+
     user = db.relationship('User', backref='photo_purchases')
 
     def __repr__(self):

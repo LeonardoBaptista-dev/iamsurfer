@@ -26,6 +26,10 @@ try:
 except Exception:
     pass
 
+# Os blueprints de messages/trips/photos agora são registrados oficialmente em
+# routes/api/register_api() (chamado no import de app), então não há registro
+# aditivo aqui.
+
 
 @pytest.fixture()
 def app():

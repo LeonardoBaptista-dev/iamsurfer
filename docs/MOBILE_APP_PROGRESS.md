@@ -136,6 +136,64 @@ Detalhes no [`iamsurfer-app/README.md`](../../iamsurfer-app/README.md).
 > (auth, perfil/follow, feed/posts, criar, picos). Abas: Início (feed) ·
 > Explorar (picos) · Criar · Reels (placeholder) · Perfil.
 
+### Prompt A10 (ranking/badges) + B11 — ✅
+- Backend `routes/api/ranking.py` — `GET /ranking` (offset/limit + `my_rank`), `GET /users/:u/badges`. Testes `test_api_ranking.py` (5).
+- App: `src/api/ranking.ts`, `hooks/useRanking.ts`, `app/ranking.tsx` (pódio + minha posição), selos no `ProfileHeader`, atalho na aba Perfil.
+
+### Prompt A5 (reels) + B5 — ✅
+- Backend `routes/api/reels.py` — `GET /reels` (cursor, públicos), `POST /reels` (exige vídeo). Like/comentário reusam os endpoints de posts. Testes `test_api_reels.py` (4).
+- App: `src/api/reels.ts`, `hooks/useReels.ts`, `app/(tabs)/reels.tsx` (pager vertical full-screen, autoplay no item visível via `expo-video`, mute ao tocar, like otimista, pausa ao sair da aba). Criar post agora tem toggle **"Publicar como Reel"** quando o vídeo é escolhido. Dep: `expo-video@56.1.4`.
+
+### Prompt A4 (stories) + B4 — ✅
+- Backend `routes/api/stories.py` — `GET /stories` (story bar agrupada, eu primeiro), `POST /stories` (mídia Cloudinary, expira 24h), `POST /stories/:id/seen` (idempotente), `DELETE /stories/:id`. Testes `test_api_stories.py` (5).
+- App: `src/api/stories.ts`, `hooks/useStories.ts`, `components/StoryBar.tsx` (topo do feed, anel visto/não-visto, adicionar story), `app/stories/[userId].tsx` (viewer full-screen: barras de progresso, toque avança/volta, autoplay imagem/vídeo, marca visto, apagar próprio).
+
+### Prompts A6+A12 (mensagens+push), A8 (caronas), A9 (fotos+pagamento) — backend ✅ (subagentes)
+Construídos em paralelo por subagentes e integrados (blueprints registrados em `routes/api/__init__.py`):
+- **A6/A12** `routes/api/messages.py` + `push.py` — `GET /conversations` (inbox), `GET/POST /conversations/:username[/messages]`, `GET /notifications`, `POST /notifications/read`, `GET /notifications/count`. Serviço Expo Push em lote (remove token morto `DeviceNotRegistered`), disparado no envio de mensagem. Testes (14).
+- **A8** `routes/api/trips.py` — `GET/POST /trips`, `GET /trips/:id`, `POST /trips/:id/join|leave` (idempotente, lotação, XP), `GET /me/trips`. Testes (11).
+- **A9** `routes/api/photos.py` + `payments.py` — `GET /photo-sessions[/:id]`, `POST /photos/:id/purchase`, `POST /webhooks/payments` (idempotente), `GET /me/purchases`. Preço sempre no servidor; foto só liberada após pago; **Mercado Pago** (Pix+cartão) com modo-teste quando não há credencial. +3 colunas em `PhotoPurchase` (migration `f4a5b6c7d8e9`). Envs: `MERCADOPAGO_ACCESS_TOKEN` etc. Testes (9).
+
+### B7 (push — recebimento) parcial no app ✅
+- `src/lib/notifications.ts` — handler de foreground + deep-link ao tocar (like/comentário→post, follow→perfil, mensagem→conversa). Ligado no `_layout`.
+- Correções de config (expo-doctor): `expo-font` instalado, `splash` migrado para o plugin `expo-splash-screen`, navegação com becos sem saída resolvidos (pico do post e grades de perfil agora abrem a tela certa).
+
+### Telas B7 (mensagens/notificações), B9 (caronas), B10 (fotos/checkout) — app ✅ (subagentes + integração)
+Construídas em paralelo por 3 subagentes (cada uma lendo o contrato real no backend) e **integradas** por mim:
+- **B7** `src/api/messages.ts` + `hooks/useMessages.ts` + `app/messages/index.tsx` (inbox), `app/messages/[username].tsx` (chat, FlatList inverted + KeyboardAvoiding), `app/notifications.tsx` (marca lidas ao abrir; toca → perfil/conversa).
+- **B9** `src/api/trips.ts` + `hooks/useTrips.ts` + `app/trips/index.tsx` (lista/busca + "minhas caronas" + FAB), `app/trips/[id].tsx` (detalhe, participar/sair otimista, trata lotação), `app/trips/new.tsx` (criar).
+- **B10** `src/api/photos.ts` + `hooks/usePhotos.ts` + `lib/money.ts` + `app/photos/index.tsx` (vitrine), `app/photos/[id].tsx` (grade com preview/marca d'água), `app/photos/checkout.tsx` (Mercado Pago via `expo-web-browser` + Pix + "simular pagamento" no modo-teste + polling até pago), `app/purchases.tsx` (minhas compras + download). Dep nova: `expo-web-browser`.
+- **Integração:** 10 rotas registradas no `_layout.tsx`; header do feed com **ícones de notificações (badge de não-lidas) + mensagens**; **Reels full-screen** (sem header); menu no Perfil com **Caronas · Fotos à venda · Minhas compras**. `tsc` limpo + **bundle Android OK (4.6MB)**.
+
+### Prompt B13 (build + publicação) — ✅ config / ⚠️ passos manuais
+- `eas.json` — perfis `development`/`preview`/`production` (+ `EXPO_PUBLIC_API_URL` por perfil apontando pra API de produção; `submit` com placeholders Apple/Google).
+- `app.json` — `runtimeVersion` (appVersion), `ios.buildNumber`, `android.versionCode`, bundle ids/permissões/ícone/splash já prontos.
+- `.gitignore` — segredos de publicação (service account, keystore, .p8/.p12, .env).
+- `docs/BUILD_AND_PUBLISH.md` — runbook completo (login/init, arte final, build preview/produção, submit TestFlight/Internal, metadados, conta demo do revisor, OTA).
+- **Falta (manual, seu):** `eas login`+`eas init`, arte final nos `assets/`, **deploy do backend `/api/v1` em produção**, contas **Apple ($99/ano)** e **Google ($25)**, rodar `eas build`/`eas submit`.
+
+### Prompt B12 (shell de navegação + resiliência) — ✅
+- **Offline:** `src/lib/network.ts` liga NetInfo ao `onlineManager` do React Query (pausa queries sem conexão) e AppState ao `focusManager` (refetch ao voltar pro foreground); `src/components/OfflineBanner.tsx` (faixa "sem conexão" global no `_layout`). Dep: `@react-native-community/netinfo`.
+- **ErrorBoundary** global exportado no `_layout` (sem tela branca em erro de render).
+- **Shell:** tabs definitivos + header do feed com notificações(badge)/mensagens + menus no perfil (já integrados). Deep links por esquema `iamsurfer://` funcionam.
+- **Universal links (https):** adiados para B13 — exigem domínio estável (o de produção hoje é um host efêmero `sslip.io`); documentado como pré-requisito.
+
+### Correção de roteamento — ✅
+- `app/index.tsx` decide o destino por auth (deslogado → login) em vez de sempre `/(tabs)` — evitava corrida e um 401 no feed para quem não está logado.
+
+---
+
+## Checklist de progresso
+
+**Backend:** ✅A0 ✅A1 ✅A2 ✅A3 ✅A4 ✅A5 ✅A6 ✅A7 ✅A8 ✅A9 ✅A10 ✅A11 ✅A12 ✅A13 — **completo**
+**App:** ✅B0 ✅B1 ✅B2 ✅B3 ✅B4 ✅B5 ✅B6 ✅B7 ✅B8 ✅B9 ✅B10 ✅B11 ✅B12 · ✅B13 config (⚠️ build/submit manual: contas Apple/Google)
+
+**TODAS as features estão implementadas.** Só resta a execução manual da publicação (B13): contas pagas, arte final, deploy do backend e rodar `eas build`/`eas submit`.
+
+**Suíte de testes backend: 93** (86 + 7 de contrato) (auth 8 · users 10 · media 6 · posts 10 · spots 4 · ranking 5 · reels 4 · stories 5 · messages 14 · trips 11 · photos 9). App: `tsc` limpo + **bundle Android OK (4.6MB)**.
+
+**Todas as features do app estão implementadas.** Falta: **A13** (OpenAPI/contrato — opcional), **B12** (polish final) e **B13** (ícone/splash finais, EAS Build, contas Apple/Google, submissão às lojas).
+
 ## 4. Próximo passo (caminho recomendado)
 
 **Concluídos:** A0/A1 (fundação+auth), A2 (users/follow), A3 (posts/feed),
